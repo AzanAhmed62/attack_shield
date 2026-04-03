@@ -1,0 +1,3 @@
+class TechniqueDetailData {
+  // Placeholder
+}

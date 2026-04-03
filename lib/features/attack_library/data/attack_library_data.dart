@@ -1,0 +1,3 @@
+class AttackLibraryData {
+  // Placeholder
+}
