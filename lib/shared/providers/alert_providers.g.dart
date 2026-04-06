@@ -6,7 +6,7 @@ part of 'alert_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$allAlertsHash() => r'70e7e827703574ee284b31bbff88fb3c362ca419';
+String _$allAlertsHash() => r'2852fa59f8d5387b30a583b549c7152007b3202d';
 
 /// See also [allAlerts].
 @ProviderFor(allAlerts)
@@ -23,42 +23,7 @@ final allAlertsProvider = AutoDisposeFutureProvider<List<AlertItem>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AllAlertsRef = AutoDisposeFutureProviderRef<List<AlertItem>>;
-String _$selectedAlertStatusHash() =>
-    r'8492c30a49382ead8ce087d21820432b4f7cb1d8';
-
-/// See also [selectedAlertStatus].
-@ProviderFor(selectedAlertStatus)
-final selectedAlertStatusProvider = AutoDisposeProvider<String>.internal(
-  selectedAlertStatus,
-  name: r'selectedAlertStatusProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$selectedAlertStatusHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SelectedAlertStatusRef = AutoDisposeProviderRef<String>;
-String _$alertSearchQueryHash() => r'8d5d3874ac059019ba6cfc4a1324d4d3ac0f3ed6';
-
-/// See also [alertSearchQuery].
-@ProviderFor(alertSearchQuery)
-final alertSearchQueryProvider = AutoDisposeProvider<String>.internal(
-  alertSearchQuery,
-  name: r'alertSearchQueryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$alertSearchQueryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef AlertSearchQueryRef = AutoDisposeProviderRef<String>;
-String _$filteredAlertsHash() => r'7154a9fb49616656d1a0925a2ad741d797c29058';
+String _$filteredAlertsHash() => r'd2e367027a0a4995fa78dcf7c0e5cab7842f78e8';
 
 /// See also [filteredAlerts].
 @ProviderFor(filteredAlerts)
@@ -76,42 +41,25 @@ final filteredAlertsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FilteredAlertsRef = AutoDisposeFutureProviderRef<List<AlertItem>>;
-String _$alertCountHash() => r'490ee36f8bf6a7ef62a35ea1f0f29d4da0ef95e4';
+String _$alertCountProviderHash() =>
+    r'a708b469e9f1dfa8d6dfaf3befb99ce640d1a318';
 
-/// See also [alertCount].
-@ProviderFor(alertCount)
-final alertCountProvider = AutoDisposeFutureProvider<int>.internal(
-  alertCount,
-  name: r'alertCountProvider',
+/// See also [alertCountProvider].
+@ProviderFor(alertCountProvider)
+final alertCountProviderProvider = AutoDisposeFutureProvider<int>.internal(
+  alertCountProvider,
+  name: r'alertCountProviderProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$alertCountHash,
+      : _$alertCountProviderHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AlertCountRef = AutoDisposeFutureProviderRef<int>;
-String _$criticalAlertCountHash() =>
-    r'01b2df8cee8a246fc5ab42e88bfd92891f062034';
-
-/// See also [criticalAlertCount].
-@ProviderFor(criticalAlertCount)
-final criticalAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
-  criticalAlertCount,
-  name: r'criticalAlertCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$criticalAlertCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef CriticalAlertCountRef = AutoDisposeFutureProviderRef<int>;
-String _$openAlertCountHash() => r'7dcbd9a792438cebdb8be6cc888681316f4852b4';
+typedef AlertCountProviderRef = AutoDisposeFutureProviderRef<int>;
+String _$openAlertCountHash() => r'0c388a7f5bd721994e96653a7bdf4055a05f228e';
 
 /// See also [openAlertCount].
 @ProviderFor(openAlertCount)
@@ -128,7 +76,25 @@ final openAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef OpenAlertCountRef = AutoDisposeFutureProviderRef<int>;
-String _$createAlertHash() => r'5e39eea243e592bf056a033f2f30ee5cd8fe8ff0';
+String _$criticalAlertCountHash() =>
+    r'e7ce79c52c6313b2b245eaf2ead31d3fb400c665';
+
+/// See also [criticalAlertCount].
+@ProviderFor(criticalAlertCount)
+final criticalAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
+  criticalAlertCount,
+  name: r'criticalAlertCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$criticalAlertCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CriticalAlertCountRef = AutoDisposeFutureProviderRef<int>;
+String _$createAlertHash() => r'959ff0b2cbffe3b93b25af33ceb42e2c5fc0b959';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -267,7 +233,7 @@ class _CreateAlertProviderElement extends AutoDisposeFutureProviderElement<void>
   AlertItem get alert => (origin as CreateAlertProvider).alert;
 }
 
-String _$updateAlertHash() => r'2812abcfc0a4c9a54bbba7142153645feb4ab7e7';
+String _$updateAlertHash() => r'e4398bea65efaa43e2023b2925ba80c3d229bcc6';
 
 /// See also [updateAlert].
 @ProviderFor(updateAlert)
@@ -385,7 +351,7 @@ class _UpdateAlertProviderElement extends AutoDisposeFutureProviderElement<void>
   AlertItem get alert => (origin as UpdateAlertProvider).alert;
 }
 
-String _$deleteAlertHash() => r'4f450930c780d033eb31ce7d01c48564e3997bbd';
+String _$deleteAlertHash() => r'c610af8e829f970c1c359f0019e5353156d0e939';
 
 /// See also [deleteAlert].
 @ProviderFor(deleteAlert)
@@ -503,5 +469,61 @@ class _DeleteAlertProviderElement extends AutoDisposeFutureProviderElement<void>
   String get id => (origin as DeleteAlertProvider).id;
 }
 
+String _$alertSearchQueryHash() => r'8833276897fb2da32e8c5a06f5f71467434c7b34';
+
+/// Search query for the alerts screen.
+///
+/// Copied from [AlertSearchQuery].
+@ProviderFor(AlertSearchQuery)
+final alertSearchQueryProvider =
+    AutoDisposeNotifierProvider<AlertSearchQuery, String>.internal(
+      AlertSearchQuery.new,
+      name: r'alertSearchQueryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$alertSearchQueryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$AlertSearchQuery = AutoDisposeNotifier<String>;
+String _$selectedAlertStatusHash() =>
+    r'898629df601c5700f03ee24df238795fe09fae1b';
+
+/// Selected alert status filter (empty = all).
+///
+/// Copied from [SelectedAlertStatus].
+@ProviderFor(SelectedAlertStatus)
+final selectedAlertStatusProvider =
+    AutoDisposeNotifierProvider<SelectedAlertStatus, String>.internal(
+      SelectedAlertStatus.new,
+      name: r'selectedAlertStatusProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$selectedAlertStatusHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$SelectedAlertStatus = AutoDisposeNotifier<String>;
+String _$selectedAlertPriorityHash() =>
+    r'9d9c155b22ac327dfd39a6f527b5f84f443cb20f';
+
+/// Selected alert priority filter (null = all).
+///
+/// Copied from [SelectedAlertPriority].
+@ProviderFor(SelectedAlertPriority)
+final selectedAlertPriorityProvider =
+    AutoDisposeNotifierProvider<SelectedAlertPriority, AlertPriority?>.internal(
+      SelectedAlertPriority.new,
+      name: r'selectedAlertPriorityProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$selectedAlertPriorityHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$SelectedAlertPriority = AutoDisposeNotifier<AlertPriority?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

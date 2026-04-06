@@ -3,24 +3,61 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'attack_technique.freezed.dart';
 part 'attack_technique.g.dart';
 
-/// Represents a MITRE ATT&CK technique
+/// Represents a MITRE ATT&CK sub-technique (e.g. T1566.001)
+@freezed
+class AttackSubTechnique with _$AttackSubTechnique {
+  const factory AttackSubTechnique({
+    required String id,           // e.g. "T1566.001"
+    required String name,         // e.g. "Spearphishing Attachment"
+    required String description,
+    @Default([]) List<String> platforms,
+    @Default([]) List<String> detectionIds,
+    @Default([]) List<String> mitigationIds,
+    @Default(5.0) double riskScore,
+  }) = _AttackSubTechnique;
+
+  factory AttackSubTechnique.fromJson(Map<String, dynamic> json) =>
+      _$AttackSubTechniqueFromJson(json);
+}
+
+/// Represents a MITRE ATT&CK technique (parent, e.g. T1566)
 @freezed
 class AttackTechnique with _$AttackTechnique {
   const factory AttackTechnique({
-    required String id,
-    required String name,
+    required String id,                         // e.g. "T1566"
+    required String name,                       // e.g. "Phishing"
     required String description,
-    required List<String> tactics,
+    required List<String> tactics,              // tactic names this belongs to
     @Default([]) List<String> platforms,
     @Default([]) List<String> detectionIds,
     @Default([]) List<String> mitigationIds,
     @Default([]) List<String> relatedTechniqueIds,
-    @Default(5.0) double riskScore,
+    @Default([]) List<AttackSubTechnique> subTechniques,
+    @Default(5.0) double riskScore,             // 0.0 – 10.0
     String? source,
     DateTime? lastModified,
     String? externalUrl,
+    // Defensive enrichment fields
+    @Default([]) List<String> detectionNotes,   // free-text detection hints
+    @Default([]) List<String> mitigationNotes,  // free-text mitigation hints
+    String? dataSource,                         // e.g. "Process monitoring"
   }) = _AttackTechnique;
 
   factory AttackTechnique.fromJson(Map<String, dynamic> json) =>
       _$AttackTechniqueFromJson(json);
+}
+
+/// Represents a MITRE ATT&CK tactic (the kill-chain phase)
+@freezed
+class AttackTactic with _$AttackTactic {
+  const factory AttackTactic({
+    required String id,          // e.g. "TA0001"
+    required String name,        // e.g. "Initial Access"
+    required String description,
+    @Default([]) List<String> techniqueIds,
+    String? shortName,           // e.g. "initial-access"
+  }) = _AttackTactic;
+
+  factory AttackTactic.fromJson(Map<String, dynamic> json) =>
+      _$AttackTacticFromJson(json);
 }

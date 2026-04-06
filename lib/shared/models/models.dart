@@ -1,5 +1,4 @@
-export 'attack_technique.dart';
-export 'attack_tactic.dart';
+export 'attack_technique.dart'; // Contains AttackTechnique, AttackTactic, AttackSubTechnique
 export 'technique_detection.dart';
 export 'technique_mitigation.dart';
 export 'coverage_status.dart';

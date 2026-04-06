@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:attackshield/shared/models/models.dart';
 import '../../core/constants/constants.dart';
 import '../../core/errors/errors.dart';
@@ -25,7 +24,10 @@ class CoverageRepositoryImpl implements CoverageRepository {
       if (data == null) return [];
 
       return data
-          .map((item) => CoverageStatus.fromJson(jsonDecode(jsonEncode(item))))
+          .map(
+            (item) =>
+                CoverageStatus.fromJson(Map<String, dynamic>.from(item as Map)),
+          )
           .toList();
     } catch (e) {
       throw DataException(message: 'Failed to fetch coverage statuses: $e');
@@ -36,13 +38,9 @@ class CoverageRepositoryImpl implements CoverageRepository {
   Future<CoverageStatus?> getCoverageStatus(String techniqueId) async {
     try {
       final statuses = await getAllCoverageStatuses();
-      return statuses.firstWhere(
-        (s) => s.techniqueId == techniqueId,
-        orElse: () => CoverageStatus(
-          techniqueId: techniqueId,
-          level: CoverageLevel.unknown,
-        ),
-      );
+      final found = statuses.where((s) => s.techniqueId == techniqueId);
+      if (found.isEmpty) return null;
+      return found.first;
     } catch (e) {
       return null;
     }
@@ -56,10 +54,12 @@ class CoverageRepositoryImpl implements CoverageRepository {
         (s) => s.techniqueId == status.techniqueId,
       );
 
+      final updated = status.copyWith(lastUpdated: DateTime.now());
+
       if (index >= 0) {
-        statuses[index] = status;
+        statuses[index] = updated;
       } else {
-        statuses.add(status);
+        statuses.add(updated);
       }
 
       await _storageService.write(
@@ -92,15 +92,13 @@ class CoverageRepositoryImpl implements CoverageRepository {
       final statuses = await getAllCoverageStatuses();
       if (statuses.isEmpty) return 0.0;
 
-      final covered = statuses
-          .where(
-            (s) =>
-                s.level == CoverageLevel.covered ||
-                s.level == CoverageLevel.partiallyCovered,
-          )
-          .length;
-
-      return (covered / statuses.length) * 100;
+      // Weighted: covered=2pts, partial=1pt, max=2pts per technique
+      int score = 0;
+      for (final s in statuses) {
+        if (s.level == CoverageLevel.covered) score += 2;
+        if (s.level == CoverageLevel.partiallyCovered) score += 1;
+      }
+      return (score / (statuses.length * 2)) * 100.0;
     } catch (e) {
       throw DataException(message: 'Failed to calculate coverage: $e');
     }
@@ -111,18 +109,15 @@ class CoverageRepositoryImpl implements CoverageRepository {
     try {
       final statuses = await getAllCoverageStatuses();
       return {
-        'covered': statuses
-            .where((s) => s.level == CoverageLevel.covered)
-            .length,
+        'covered':
+            statuses.where((s) => s.level == CoverageLevel.covered).length,
         'partiallyCovered': statuses
             .where((s) => s.level == CoverageLevel.partiallyCovered)
             .length,
-        'notCovered': statuses
-            .where((s) => s.level == CoverageLevel.notCovered)
-            .length,
-        'unknown': statuses
-            .where((s) => s.level == CoverageLevel.unknown)
-            .length,
+        'notCovered':
+            statuses.where((s) => s.level == CoverageLevel.notCovered).length,
+        'unknown':
+            statuses.where((s) => s.level == CoverageLevel.unknown).length,
       };
     } catch (e) {
       throw DataException(message: 'Failed to get coverage breakdown: $e');

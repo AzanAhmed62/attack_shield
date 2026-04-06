@@ -7,9 +7,11 @@ part of 'coverage_providers.dart';
 // **************************************************************************
 
 String _$allCoverageStatusesHash() =>
-    r'92aebbbdeed320805f6758d12ab7a6c7da9531bf';
+    r'91d1368de7c1191418f868af09391afc7e656614';
 
-/// See also [allCoverageStatuses].
+/// All saved coverage statuses from local storage.
+///
+/// Copied from [allCoverageStatuses].
 @ProviderFor(allCoverageStatuses)
 final allCoverageStatusesProvider =
     AutoDisposeFutureProvider<List<CoverageStatus>>.internal(
@@ -27,9 +29,12 @@ final allCoverageStatusesProvider =
 typedef AllCoverageStatusesRef =
     AutoDisposeFutureProviderRef<List<CoverageStatus>>;
 String _$coveragePercentageHash() =>
-    r'70e2584b658ab4b62cce9fe1c8a0aa17635b711b';
+    r'aaee4a4ccf33b030a4201b7c33600319f5316800';
 
-/// See also [coveragePercentage].
+/// Coverage percentage (0–100) calculated by repository.
+/// Note: RiskEngine also provides a richer version via riskEngineCoveragePercentageProvider.
+///
+/// Copied from [coveragePercentage].
 @ProviderFor(coveragePercentage)
 final coveragePercentageProvider = AutoDisposeFutureProvider<double>.internal(
   coveragePercentage,
@@ -44,9 +49,11 @@ final coveragePercentageProvider = AutoDisposeFutureProvider<double>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CoveragePercentageRef = AutoDisposeFutureProviderRef<double>;
-String _$coverageBreakdownHash() => r'e45a939dd35d3bd9295d7bf12a50b40b83a1054a';
+String _$coverageBreakdownHash() => r'c3974fd4ecd4eb295fa3bf2b1e2a2c6f2d1afcd0';
 
-/// See also [coverageBreakdown].
+/// Coverage breakdown by level.
+///
+/// Copied from [coverageBreakdown].
 @ProviderFor(coverageBreakdown)
 final coverageBreakdownProvider =
     AutoDisposeFutureProvider<Map<String, int>>.internal(
@@ -63,7 +70,7 @@ final coverageBreakdownProvider =
 // ignore: unused_element
 typedef CoverageBreakdownRef = AutoDisposeFutureProviderRef<Map<String, int>>;
 String _$techniqueCoverageStatusHash() =>
-    r'e0635be2725b8f4d8bd0848568edb0178a243888';
+    r'679704d67e1c9fe33d265be7358a3e4a641bf31e';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -86,17 +93,25 @@ class _SystemHash {
   }
 }
 
-/// See also [techniqueCoverageStatus].
+/// Coverage status for a single technique.
+///
+/// Copied from [techniqueCoverageStatus].
 @ProviderFor(techniqueCoverageStatus)
 const techniqueCoverageStatusProvider = TechniqueCoverageStatusFamily();
 
-/// See also [techniqueCoverageStatus].
+/// Coverage status for a single technique.
+///
+/// Copied from [techniqueCoverageStatus].
 class TechniqueCoverageStatusFamily
     extends Family<AsyncValue<CoverageStatus?>> {
-  /// See also [techniqueCoverageStatus].
+  /// Coverage status for a single technique.
+  ///
+  /// Copied from [techniqueCoverageStatus].
   const TechniqueCoverageStatusFamily();
 
-  /// See also [techniqueCoverageStatus].
+  /// Coverage status for a single technique.
+  ///
+  /// Copied from [techniqueCoverageStatus].
   TechniqueCoverageStatusProvider call(String techniqueId) {
     return TechniqueCoverageStatusProvider(techniqueId);
   }
@@ -123,10 +138,14 @@ class TechniqueCoverageStatusFamily
   String? get name => r'techniqueCoverageStatusProvider';
 }
 
-/// See also [techniqueCoverageStatus].
+/// Coverage status for a single technique.
+///
+/// Copied from [techniqueCoverageStatus].
 class TechniqueCoverageStatusProvider
     extends AutoDisposeFutureProvider<CoverageStatus?> {
-  /// See also [techniqueCoverageStatus].
+  /// Coverage status for a single technique.
+  ///
+  /// Copied from [techniqueCoverageStatus].
   TechniqueCoverageStatusProvider(String techniqueId)
     : this._internal(
         (ref) => techniqueCoverageStatus(
@@ -214,18 +233,26 @@ class _TechniqueCoverageStatusProviderElement
 }
 
 String _$updateCoverageStatusHash() =>
-    r'882c0057e51918fd779814f67eb3993b3b8ae152';
+    r'0e3ed9ad2ad21eb14539e0ebf6fb5ee8b686e9ce';
 
-/// See also [updateCoverageStatus].
+/// Update coverage status and refresh all related providers.
+///
+/// Copied from [updateCoverageStatus].
 @ProviderFor(updateCoverageStatus)
 const updateCoverageStatusProvider = UpdateCoverageStatusFamily();
 
-/// See also [updateCoverageStatus].
+/// Update coverage status and refresh all related providers.
+///
+/// Copied from [updateCoverageStatus].
 class UpdateCoverageStatusFamily extends Family<AsyncValue<void>> {
-  /// See also [updateCoverageStatus].
+  /// Update coverage status and refresh all related providers.
+  ///
+  /// Copied from [updateCoverageStatus].
   const UpdateCoverageStatusFamily();
 
-  /// See also [updateCoverageStatus].
+  /// Update coverage status and refresh all related providers.
+  ///
+  /// Copied from [updateCoverageStatus].
   UpdateCoverageStatusProvider call(CoverageStatus status) {
     return UpdateCoverageStatusProvider(status);
   }
@@ -252,9 +279,13 @@ class UpdateCoverageStatusFamily extends Family<AsyncValue<void>> {
   String? get name => r'updateCoverageStatusProvider';
 }
 
-/// See also [updateCoverageStatus].
+/// Update coverage status and refresh all related providers.
+///
+/// Copied from [updateCoverageStatus].
 class UpdateCoverageStatusProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [updateCoverageStatus].
+  /// Update coverage status and refresh all related providers.
+  ///
+  /// Copied from [updateCoverageStatus].
   UpdateCoverageStatusProvider(CoverageStatus status)
     : this._internal(
         (ref) => updateCoverageStatus(ref as UpdateCoverageStatusRef, status),
@@ -335,18 +366,26 @@ class _UpdateCoverageStatusProviderElement
 }
 
 String _$deleteCoverageStatusHash() =>
-    r'3524ade43bf8cb9408c3f589b4d64e56b70d19dc';
+    r'712fb98e6400969a4cf0c542d91832ede7d30589';
 
-/// See also [deleteCoverageStatus].
+/// Delete coverage status for a technique.
+///
+/// Copied from [deleteCoverageStatus].
 @ProviderFor(deleteCoverageStatus)
 const deleteCoverageStatusProvider = DeleteCoverageStatusFamily();
 
-/// See also [deleteCoverageStatus].
+/// Delete coverage status for a technique.
+///
+/// Copied from [deleteCoverageStatus].
 class DeleteCoverageStatusFamily extends Family<AsyncValue<void>> {
-  /// See also [deleteCoverageStatus].
+  /// Delete coverage status for a technique.
+  ///
+  /// Copied from [deleteCoverageStatus].
   const DeleteCoverageStatusFamily();
 
-  /// See also [deleteCoverageStatus].
+  /// Delete coverage status for a technique.
+  ///
+  /// Copied from [deleteCoverageStatus].
   DeleteCoverageStatusProvider call(String techniqueId) {
     return DeleteCoverageStatusProvider(techniqueId);
   }
@@ -373,9 +412,13 @@ class DeleteCoverageStatusFamily extends Family<AsyncValue<void>> {
   String? get name => r'deleteCoverageStatusProvider';
 }
 
-/// See also [deleteCoverageStatus].
+/// Delete coverage status for a technique.
+///
+/// Copied from [deleteCoverageStatus].
 class DeleteCoverageStatusProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [deleteCoverageStatus].
+  /// Delete coverage status for a technique.
+  ///
+  /// Copied from [deleteCoverageStatus].
   DeleteCoverageStatusProvider(String techniqueId)
     : this._internal(
         (ref) =>

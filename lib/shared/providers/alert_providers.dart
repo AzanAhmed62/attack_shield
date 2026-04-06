@@ -1,96 +1,144 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:attackshield/shared/models/models.dart';
 import 'repository_providers.dart';
 
 part 'alert_providers.g.dart';
 
-@Riverpod()
-Future<List<AlertItem>> allAlerts(AllAlertsRef ref) async {
+// ─── Raw data ─────────────────────────────────────────────────────────────────
+
+@Riverpod(keepAlive: false)
+Future<List<AlertItem>> allAlerts(Ref ref) async {
   final repository = ref.watch(alertRepositoryProvider);
   return repository.getAllAlerts();
 }
 
-@Riverpod()
-String selectedAlertStatus(SelectedAlertStatusRef ref) => '';
+// ─── Filter state ─────────────────────────────────────────────────────────────
 
-@Riverpod()
-String alertSearchQuery(AlertSearchQueryRef ref) => '';
+/// Search query for the alerts screen.
+@Riverpod(keepAlive: false)
+class AlertSearchQuery extends _$AlertSearchQuery {
+  @override
+  String build() => '';
 
-@Riverpod()
-Future<List<AlertItem>> filteredAlerts(FilteredAlertsRef ref) async {
-  final allAlerts = await ref.watch(allAlertsProvider.future);
-  final statusFilter = ref.watch(selectedAlertStatusProvider);
+  void update(String query) => state = query;
+  void clear() => state = '';
+}
+
+/// Selected alert status filter (empty = all).
+@Riverpod(keepAlive: false)
+class SelectedAlertStatus extends _$SelectedAlertStatus {
+  @override
+  String build() => '';
+
+  void select(String statusName) => state = statusName;
+  void clear() => state = '';
+}
+
+/// Selected alert priority filter (null = all).
+@Riverpod(keepAlive: false)
+class SelectedAlertPriority extends _$SelectedAlertPriority {
+  @override
+  AlertPriority? build() => null;
+
+  void select(AlertPriority priority) => state = priority;
+  void clear() => state = null;
+}
+
+// ─── Computed ─────────────────────────────────────────────────────────────────
+
+@Riverpod(keepAlive: false)
+Future<List<AlertItem>> filteredAlerts(Ref ref) async {
+  final alerts = await ref.watch(allAlertsProvider.future);
   final query = ref.watch(alertSearchQueryProvider);
+  final status = ref.watch(selectedAlertStatusProvider);
+  final priority = ref.watch(selectedAlertPriorityProvider);
 
-  var result = allAlerts;
+  var result = alerts;
 
-  // Filter by status
-  if (statusFilter.isNotEmpty) {
-    final status = AlertStatus.values.firstWhere(
-      (s) => s.toString().split('.').last == statusFilter,
-      orElse: () => AlertStatus.open,
-    );
-    result = result.where((a) => a.status == status).toList();
+  if (status.isNotEmpty) {
+    result = result
+        .where((a) => a.status.name == status)
+        .toList();
   }
 
-  // Search by query
+  if (priority != null) {
+    result = result.where((a) => a.priority == priority).toList();
+  }
+
   if (query.isNotEmpty) {
-    final lowerQuery = query.toLowerCase();
+    final q = query.toLowerCase();
     result = result
         .where(
           (a) =>
-              a.title.toLowerCase().contains(lowerQuery) ||
-              a.description.toLowerCase().contains(lowerQuery) ||
-              a.source.toLowerCase().contains(lowerQuery),
+              a.title.toLowerCase().contains(q) ||
+              a.description.toLowerCase().contains(q) ||
+              a.source.toLowerCase().contains(q) ||
+              (a.relatedTechniqueId?.toLowerCase().contains(q) ?? false),
         )
         .toList();
   }
 
-  // Sort by date (newest first) and priority
+  // Sort: critical first, then by date
   result.sort((a, b) {
-    final dateCompare = b.createdAt.compareTo(a.createdAt);
-    if (dateCompare != 0) return dateCompare;
-    return b.priority.index.compareTo(a.priority.index);
+    final pc = b.priority.index.compareTo(a.priority.index);
+    if (pc != 0) return pc;
+    return b.createdAt.compareTo(a.createdAt);
   });
 
   return result;
 }
 
-@Riverpod()
-Future<int> alertCount(AlertCountRef ref) async {
+@Riverpod(keepAlive: false)
+Future<int> alertCountProvider(Ref ref) async {
   final alerts = await ref.watch(allAlertsProvider.future);
   return alerts.length;
 }
 
-@Riverpod()
-Future<int> criticalAlertCount(CriticalAlertCountRef ref) async {
-  final alerts = await ref.watch(allAlertsProvider.future);
-  return alerts.where((a) => a.priority == AlertPriority.critical).length;
-}
-
-@Riverpod()
-Future<int> openAlertCount(OpenAlertCountRef ref) async {
+@Riverpod(keepAlive: false)
+Future<int> openAlertCount(Ref ref) async {
   final alerts = await ref.watch(allAlertsProvider.future);
   return alerts.where((a) => a.status == AlertStatus.open).length;
 }
 
-@Riverpod()
-Future<void> createAlert(CreateAlertRef ref, AlertItem alert) async {
+@Riverpod(keepAlive: false)
+Future<int> criticalAlertCount(Ref ref) async {
+  final alerts = await ref.watch(allAlertsProvider.future);
+  return alerts
+      .where((a) =>
+          a.priority == AlertPriority.critical &&
+          a.status == AlertStatus.open)
+      .length;
+}
+
+// ─── Mutations ────────────────────────────────────────────────────────────────
+
+@Riverpod(keepAlive: false)
+Future<void> createAlert(Ref ref, AlertItem alert) async {
   final repository = ref.watch(alertRepositoryProvider);
   await repository.createAlert(alert);
   ref.invalidate(allAlertsProvider);
+  ref.invalidate(filteredAlertsProvider);
+  ref.invalidate(openAlertCountProvider);
+  ref.invalidate(criticalAlertCountProvider);
 }
 
-@Riverpod()
-Future<void> updateAlert(UpdateAlertRef ref, AlertItem alert) async {
+@Riverpod(keepAlive: false)
+Future<void> updateAlert(Ref ref, AlertItem alert) async {
   final repository = ref.watch(alertRepositoryProvider);
   await repository.updateAlert(alert);
   ref.invalidate(allAlertsProvider);
+  ref.invalidate(filteredAlertsProvider);
+  ref.invalidate(openAlertCountProvider);
+  ref.invalidate(criticalAlertCountProvider);
 }
 
-@Riverpod()
-Future<void> deleteAlert(DeleteAlertRef ref, String id) async {
+@Riverpod(keepAlive: false)
+Future<void> deleteAlert(Ref ref, String id) async {
   final repository = ref.watch(alertRepositoryProvider);
   await repository.deleteAlert(id);
   ref.invalidate(allAlertsProvider);
+  ref.invalidate(filteredAlertsProvider);
+  ref.invalidate(openAlertCountProvider);
+  ref.invalidate(criticalAlertCountProvider);
 }

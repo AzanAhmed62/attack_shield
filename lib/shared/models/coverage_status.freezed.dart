@@ -24,7 +24,7 @@ mixin _$CoverageStatus {
   String get techniqueId => throw _privateConstructorUsedError;
   CoverageLevel get level => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
-  List<String>? get relatedControls => throw _privateConstructorUsedError;
+  List<String> get relatedControls => throw _privateConstructorUsedError;
   DateTime? get lastUpdated => throw _privateConstructorUsedError;
 
   /// Serializes this CoverageStatus to a JSON map.
@@ -48,7 +48,7 @@ abstract class $CoverageStatusCopyWith<$Res> {
     String techniqueId,
     CoverageLevel level,
     String? notes,
-    List<String>? relatedControls,
+    List<String> relatedControls,
     DateTime? lastUpdated,
   });
 }
@@ -71,7 +71,7 @@ class _$CoverageStatusCopyWithImpl<$Res, $Val extends CoverageStatus>
     Object? techniqueId = null,
     Object? level = null,
     Object? notes = freezed,
-    Object? relatedControls = freezed,
+    Object? relatedControls = null,
     Object? lastUpdated = freezed,
   }) {
     return _then(
@@ -88,10 +88,10 @@ class _$CoverageStatusCopyWithImpl<$Res, $Val extends CoverageStatus>
                 ? _value.notes
                 : notes // ignore: cast_nullable_to_non_nullable
                       as String?,
-            relatedControls: freezed == relatedControls
+            relatedControls: null == relatedControls
                 ? _value.relatedControls
                 : relatedControls // ignore: cast_nullable_to_non_nullable
-                      as List<String>?,
+                      as List<String>,
             lastUpdated: freezed == lastUpdated
                 ? _value.lastUpdated
                 : lastUpdated // ignore: cast_nullable_to_non_nullable
@@ -115,7 +115,7 @@ abstract class _$$CoverageStatusImplCopyWith<$Res>
     String techniqueId,
     CoverageLevel level,
     String? notes,
-    List<String>? relatedControls,
+    List<String> relatedControls,
     DateTime? lastUpdated,
   });
 }
@@ -137,7 +137,7 @@ class __$$CoverageStatusImplCopyWithImpl<$Res>
     Object? techniqueId = null,
     Object? level = null,
     Object? notes = freezed,
-    Object? relatedControls = freezed,
+    Object? relatedControls = null,
     Object? lastUpdated = freezed,
   }) {
     return _then(
@@ -154,10 +154,10 @@ class __$$CoverageStatusImplCopyWithImpl<$Res>
             ? _value.notes
             : notes // ignore: cast_nullable_to_non_nullable
                   as String?,
-        relatedControls: freezed == relatedControls
+        relatedControls: null == relatedControls
             ? _value._relatedControls
             : relatedControls // ignore: cast_nullable_to_non_nullable
-                  as List<String>?,
+                  as List<String>,
         lastUpdated: freezed == lastUpdated
             ? _value.lastUpdated
             : lastUpdated // ignore: cast_nullable_to_non_nullable
@@ -174,7 +174,7 @@ class _$CoverageStatusImpl implements _CoverageStatus {
     required this.techniqueId,
     required this.level,
     this.notes,
-    final List<String>? relatedControls,
+    final List<String> relatedControls = const [],
     this.lastUpdated,
   }) : _relatedControls = relatedControls;
 
@@ -187,14 +187,13 @@ class _$CoverageStatusImpl implements _CoverageStatus {
   final CoverageLevel level;
   @override
   final String? notes;
-  final List<String>? _relatedControls;
+  final List<String> _relatedControls;
   @override
-  List<String>? get relatedControls {
-    final value = _relatedControls;
-    if (value == null) return null;
+  @JsonKey()
+  List<String> get relatedControls {
     if (_relatedControls is EqualUnmodifiableListView) return _relatedControls;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
+    return EqualUnmodifiableListView(_relatedControls);
   }
 
   @override
@@ -255,7 +254,7 @@ abstract class _CoverageStatus implements CoverageStatus {
     required final String techniqueId,
     required final CoverageLevel level,
     final String? notes,
-    final List<String>? relatedControls,
+    final List<String> relatedControls,
     final DateTime? lastUpdated,
   }) = _$CoverageStatusImpl;
 
@@ -269,7 +268,7 @@ abstract class _CoverageStatus implements CoverageStatus {
   @override
   String? get notes;
   @override
-  List<String>? get relatedControls;
+  List<String> get relatedControls;
   @override
   DateTime? get lastUpdated;
 

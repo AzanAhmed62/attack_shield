@@ -11,9 +11,11 @@ _$CoverageStatusImpl _$$CoverageStatusImplFromJson(Map<String, dynamic> json) =>
       techniqueId: json['techniqueId'] as String,
       level: $enumDecode(_$CoverageLevelEnumMap, json['level']),
       notes: json['notes'] as String?,
-      relatedControls: (json['relatedControls'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
+      relatedControls:
+          (json['relatedControls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       lastUpdated: json['lastUpdated'] == null
           ? null
           : DateTime.parse(json['lastUpdated'] as String),

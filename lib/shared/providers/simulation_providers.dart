@@ -1,103 +1,70 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:attackshield/shared/models/models.dart';
 import 'repository_providers.dart';
 
 part 'simulation_providers.g.dart';
 
-@Riverpod()
-Future<List<SimulationScenario>> allSimulationScenarios(
-  AllSimulationScenariosRef ref,
-) async {
+@Riverpod(keepAlive: false)
+Future<List<SimulationScenario>> allSimulationScenarios(Ref ref) async {
   final repository = ref.watch(simulationRepositoryProvider);
   return repository.getAllScenarios();
 }
 
-@Riverpod()
-Future<List<SimulationResult>> allSimulationResults(
-  AllSimulationResultsRef ref,
-) async {
+@Riverpod(keepAlive: false)
+Future<List<SimulationResult>> allSimulationResults(Ref ref) async {
   final repository = ref.watch(simulationRepositoryProvider);
   return repository.getAllResults();
 }
 
-@Riverpod()
-Future<Map<String, int>> simulationReadiness(SimulationReadinessRef ref) async {
+@Riverpod(keepAlive: false)
+Future<Map<String, int>> simulationReadiness(Ref ref) async {
   final repository = ref.watch(simulationRepositoryProvider);
   return repository.overallReadiness();
 }
 
-@Riverpod()
-Future<int> totalScenariosPassed(TotalScenariosPassedRef ref) async {
+@Riverpod(keepAlive: false)
+Future<double> readinessPercentage(Ref ref) async {
   final readiness = await ref.watch(simulationReadinessProvider.future);
-  return readiness['passed'] ?? 0;
-}
-
-@Riverpod()
-Future<int> totalScenariosFailed(TotalScenariosFailedRef ref) async {
-  final readiness = await ref.watch(simulationReadinessProvider.future);
-  return readiness['failed'] ?? 0;
-}
-
-@Riverpod()
-Future<int> totalScenariosPartiallyPassed(
-  TotalScenariosPartiallyPassedRef ref,
-) async {
-  final readiness = await ref.watch(simulationReadinessProvider.future);
-  return readiness['partiallyPassed'] ?? 0;
-}
-
-@Riverpod()
-Future<double> readinessPercentage(ReadinessPercentageRef ref) async {
-  final readiness = await ref.watch(simulationReadinessProvider.future);
-  final total =
-      (readiness['notTested'] ?? 0) +
+  final total = (readiness['notTested'] ?? 0) +
       (readiness['passed'] ?? 0) +
       (readiness['failed'] ?? 0) +
       (readiness['partiallyPassed'] ?? 0);
-
   if (total == 0) return 0.0;
-
-  final tested =
-      (readiness['passed'] ?? 0) + (readiness['partiallyPassed'] ?? 0);
-  return (tested / total) * 100;
+  final score =
+      ((readiness['passed'] ?? 0) * 2) + (readiness['partiallyPassed'] ?? 0);
+  return (score / (total * 2)) * 100.0;
 }
 
-@Riverpod()
+@Riverpod(keepAlive: false)
+Future<List<SimulationResult>> resultsByScenario(
+    Ref ref, String scenarioId) async {
+  final repository = ref.watch(simulationRepositoryProvider);
+  return repository.getResultsByScenario(scenarioId);
+}
+
+@Riverpod(keepAlive: false)
 Future<void> createSimulationScenario(
-  CreateSimulationScenarioRef ref,
-  SimulationScenario scenario,
-) async {
+    Ref ref, SimulationScenario scenario) async {
   final repository = ref.watch(simulationRepositoryProvider);
   await repository.createScenario(scenario);
   ref.invalidate(allSimulationScenariosProvider);
 }
 
-@Riverpod()
+@Riverpod(keepAlive: false)
 Future<void> createSimulationResult(
-  CreateSimulationResultRef ref,
-  SimulationResult result,
-) async {
+    Ref ref, SimulationResult result) async {
   final repository = ref.watch(simulationRepositoryProvider);
   await repository.createResult(result);
   ref.invalidate(allSimulationResultsProvider);
   ref.invalidate(simulationReadinessProvider);
+  ref.invalidate(readinessPercentageProvider);
+  ref.invalidate(resultsByScenarioProvider(result.scenarioId));
 }
 
-@Riverpod()
-Future<void> deleteSimulationScenario(
-  DeleteSimulationScenarioRef ref,
-  String id,
-) async {
+@Riverpod(keepAlive: false)
+Future<void> deleteSimulationScenario(Ref ref, String id) async {
   final repository = ref.watch(simulationRepositoryProvider);
   await repository.deleteScenario(id);
   ref.invalidate(allSimulationScenariosProvider);
-}
-
-@Riverpod()
-Future<List<SimulationResult>> resultsByScenario(
-  ResultsByScenarioRef ref,
-  String scenarioId,
-) async {
-  final repository = ref.watch(simulationRepositoryProvider);
-  return repository.getResultsByScenario(scenarioId);
 }
