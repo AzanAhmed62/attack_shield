@@ -23,9 +23,10 @@ TechniqueMitigation _$TechniqueMitigationFromJson(Map<String, dynamic> json) {
 mixin _$TechniqueMitigation {
   String get id => throw _privateConstructorUsedError;
   String get techniqueId => throw _privateConstructorUsedError;
-  String get mitigationId => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  String? get type => throw _privateConstructorUsedError;
+  String? get mitreId => throw _privateConstructorUsedError; // e.g. 'M1017'
+  List<String> get controlFrameworks => throw _privateConstructorUsedError;
 
   /// Serializes this TechniqueMitigation to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -47,9 +48,10 @@ abstract class $TechniqueMitigationCopyWith<$Res> {
   $Res call({
     String id,
     String techniqueId,
-    String mitigationId,
+    String name,
     String description,
-    String? type,
+    String? mitreId,
+    List<String> controlFrameworks,
   });
 }
 
@@ -70,9 +72,10 @@ class _$TechniqueMitigationCopyWithImpl<$Res, $Val extends TechniqueMitigation>
   $Res call({
     Object? id = null,
     Object? techniqueId = null,
-    Object? mitigationId = null,
+    Object? name = null,
     Object? description = null,
-    Object? type = freezed,
+    Object? mitreId = freezed,
+    Object? controlFrameworks = null,
   }) {
     return _then(
       _value.copyWith(
@@ -84,18 +87,22 @@ class _$TechniqueMitigationCopyWithImpl<$Res, $Val extends TechniqueMitigation>
                 ? _value.techniqueId
                 : techniqueId // ignore: cast_nullable_to_non_nullable
                       as String,
-            mitigationId: null == mitigationId
-                ? _value.mitigationId
-                : mitigationId // ignore: cast_nullable_to_non_nullable
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
                       as String,
             description: null == description
                 ? _value.description
                 : description // ignore: cast_nullable_to_non_nullable
                       as String,
-            type: freezed == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
+            mitreId: freezed == mitreId
+                ? _value.mitreId
+                : mitreId // ignore: cast_nullable_to_non_nullable
                       as String?,
+            controlFrameworks: null == controlFrameworks
+                ? _value.controlFrameworks
+                : controlFrameworks // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
           )
           as $Val,
     );
@@ -114,9 +121,10 @@ abstract class _$$TechniqueMitigationImplCopyWith<$Res>
   $Res call({
     String id,
     String techniqueId,
-    String mitigationId,
+    String name,
     String description,
-    String? type,
+    String? mitreId,
+    List<String> controlFrameworks,
   });
 }
 
@@ -136,9 +144,10 @@ class __$$TechniqueMitigationImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? techniqueId = null,
-    Object? mitigationId = null,
+    Object? name = null,
     Object? description = null,
-    Object? type = freezed,
+    Object? mitreId = freezed,
+    Object? controlFrameworks = null,
   }) {
     return _then(
       _$TechniqueMitigationImpl(
@@ -150,18 +159,22 @@ class __$$TechniqueMitigationImplCopyWithImpl<$Res>
             ? _value.techniqueId
             : techniqueId // ignore: cast_nullable_to_non_nullable
                   as String,
-        mitigationId: null == mitigationId
-            ? _value.mitigationId
-            : mitigationId // ignore: cast_nullable_to_non_nullable
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
                   as String,
         description: null == description
             ? _value.description
             : description // ignore: cast_nullable_to_non_nullable
                   as String,
-        type: freezed == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
+        mitreId: freezed == mitreId
+            ? _value.mitreId
+            : mitreId // ignore: cast_nullable_to_non_nullable
                   as String?,
+        controlFrameworks: null == controlFrameworks
+            ? _value._controlFrameworks
+            : controlFrameworks // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
       ),
     );
   }
@@ -173,10 +186,11 @@ class _$TechniqueMitigationImpl implements _TechniqueMitigation {
   const _$TechniqueMitigationImpl({
     required this.id,
     required this.techniqueId,
-    required this.mitigationId,
-    required this.description,
-    this.type,
-  });
+    required this.name,
+    this.description = '',
+    this.mitreId,
+    final List<String> controlFrameworks = const [],
+  }) : _controlFrameworks = controlFrameworks;
 
   factory _$TechniqueMitigationImpl.fromJson(Map<String, dynamic> json) =>
       _$$TechniqueMitigationImplFromJson(json);
@@ -186,15 +200,27 @@ class _$TechniqueMitigationImpl implements _TechniqueMitigation {
   @override
   final String techniqueId;
   @override
-  final String mitigationId;
+  final String name;
   @override
+  @JsonKey()
   final String description;
   @override
-  final String? type;
+  final String? mitreId;
+  // e.g. 'M1017'
+  final List<String> _controlFrameworks;
+  // e.g. 'M1017'
+  @override
+  @JsonKey()
+  List<String> get controlFrameworks {
+    if (_controlFrameworks is EqualUnmodifiableListView)
+      return _controlFrameworks;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_controlFrameworks);
+  }
 
   @override
   String toString() {
-    return 'TechniqueMitigation(id: $id, techniqueId: $techniqueId, mitigationId: $mitigationId, description: $description, type: $type)';
+    return 'TechniqueMitigation(id: $id, techniqueId: $techniqueId, name: $name, description: $description, mitreId: $mitreId, controlFrameworks: $controlFrameworks)';
   }
 
   @override
@@ -205,11 +231,14 @@ class _$TechniqueMitigationImpl implements _TechniqueMitigation {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.techniqueId, techniqueId) ||
                 other.techniqueId == techniqueId) &&
-            (identical(other.mitigationId, mitigationId) ||
-                other.mitigationId == mitigationId) &&
+            (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.type, type) || other.type == type));
+            (identical(other.mitreId, mitreId) || other.mitreId == mitreId) &&
+            const DeepCollectionEquality().equals(
+              other._controlFrameworks,
+              _controlFrameworks,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -218,9 +247,10 @@ class _$TechniqueMitigationImpl implements _TechniqueMitigation {
     runtimeType,
     id,
     techniqueId,
-    mitigationId,
+    name,
     description,
-    type,
+    mitreId,
+    const DeepCollectionEquality().hash(_controlFrameworks),
   );
 
   /// Create a copy of TechniqueMitigation
@@ -244,9 +274,10 @@ abstract class _TechniqueMitigation implements TechniqueMitigation {
   const factory _TechniqueMitigation({
     required final String id,
     required final String techniqueId,
-    required final String mitigationId,
-    required final String description,
-    final String? type,
+    required final String name,
+    final String description,
+    final String? mitreId,
+    final List<String> controlFrameworks,
   }) = _$TechniqueMitigationImpl;
 
   factory _TechniqueMitigation.fromJson(Map<String, dynamic> json) =
@@ -257,11 +288,13 @@ abstract class _TechniqueMitigation implements TechniqueMitigation {
   @override
   String get techniqueId;
   @override
-  String get mitigationId;
+  String get name;
   @override
   String get description;
   @override
-  String? get type;
+  String? get mitreId; // e.g. 'M1017'
+  @override
+  List<String> get controlFrameworks;
 
   /// Create a copy of TechniqueMitigation
   /// with the given fields replaced by the non-null parameter values.

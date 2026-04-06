@@ -16,6 +16,7 @@ _$AttackTacticImpl _$$AttackTacticImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      shortName: json['shortName'] as String?,
     );
 
 Map<String, dynamic> _$$AttackTacticImplToJson(_$AttackTacticImpl instance) =>
@@ -24,4 +25,5 @@ Map<String, dynamic> _$$AttackTacticImplToJson(_$AttackTacticImpl instance) =>
       'name': instance.name,
       'description': instance.description,
       'techniqueIds': instance.techniqueIds,
+      'shortName': instance.shortName,
     };

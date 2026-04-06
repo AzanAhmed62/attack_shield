@@ -11,20 +11,22 @@ _$OrganizationProfileImpl _$$OrganizationProfileImplFromJson(
 ) => _$OrganizationProfileImpl(
   id: json['id'] as String,
   name: json['name'] as String,
-  context: $enumDecode(_$AppContextEnumMap, json['context']),
-  preferredSectors: (json['preferredSectors'] as List<dynamic>?)
-      ?.map((e) => e as String)
-      .toList(),
-  preferredPlatforms: (json['preferredPlatforms'] as List<dynamic>?)
-      ?.map((e) => e as String)
-      .toList(),
-  description: json['description'] as String?,
-  createdAt: json['createdAt'] == null
-      ? null
-      : DateTime.parse(json['createdAt'] as String),
-  lastModified: json['lastModified'] == null
-      ? null
-      : DateTime.parse(json['lastModified'] as String),
+  context:
+      $enumDecodeNullable(_$AppContextEnumMap, json['context']) ??
+      AppContext.personalLearning,
+  description: json['description'] as String? ?? '',
+  preferredSectors:
+      (json['preferredSectors'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  preferredPlatforms:
+      (json['preferredPlatforms'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  lastModified: DateTime.parse(json['lastModified'] as String),
 );
 
 Map<String, dynamic> _$$OrganizationProfileImplToJson(
@@ -33,11 +35,11 @@ Map<String, dynamic> _$$OrganizationProfileImplToJson(
   'id': instance.id,
   'name': instance.name,
   'context': _$AppContextEnumMap[instance.context]!,
+  'description': instance.description,
   'preferredSectors': instance.preferredSectors,
   'preferredPlatforms': instance.preferredPlatforms,
-  'description': instance.description,
-  'createdAt': instance.createdAt?.toIso8601String(),
-  'lastModified': instance.lastModified?.toIso8601String(),
+  'createdAt': instance.createdAt.toIso8601String(),
+  'lastModified': instance.lastModified.toIso8601String(),
 };
 
 const _$AppContextEnumMap = {

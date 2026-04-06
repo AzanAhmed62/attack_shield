@@ -225,11 +225,11 @@ class _$ReportSummaryImpl implements _ReportSummary {
   const _$ReportSummaryImpl({
     required this.id,
     required this.title,
-    required this.totalTechniquesReviewed,
-    required this.coveragePercentage,
-    required final List<String> topRiskyTechniques,
-    required final List<String> unresolvedGaps,
-    required final List<String> recommendedActions,
+    this.totalTechniquesReviewed = 0,
+    this.coveragePercentage = 0.0,
+    final List<String> topRiskyTechniques = const [],
+    final List<String> unresolvedGaps = const [],
+    final List<String> recommendedActions = const [],
     this.generatedAt,
     this.notes,
   }) : _topRiskyTechniques = topRiskyTechniques,
@@ -244,11 +244,14 @@ class _$ReportSummaryImpl implements _ReportSummary {
   @override
   final String title;
   @override
+  @JsonKey()
   final int totalTechniquesReviewed;
   @override
+  @JsonKey()
   final double coveragePercentage;
   final List<String> _topRiskyTechniques;
   @override
+  @JsonKey()
   List<String> get topRiskyTechniques {
     if (_topRiskyTechniques is EqualUnmodifiableListView)
       return _topRiskyTechniques;
@@ -258,6 +261,7 @@ class _$ReportSummaryImpl implements _ReportSummary {
 
   final List<String> _unresolvedGaps;
   @override
+  @JsonKey()
   List<String> get unresolvedGaps {
     if (_unresolvedGaps is EqualUnmodifiableListView) return _unresolvedGaps;
     // ignore: implicit_dynamic_type
@@ -266,6 +270,7 @@ class _$ReportSummaryImpl implements _ReportSummary {
 
   final List<String> _recommendedActions;
   @override
+  @JsonKey()
   List<String> get recommendedActions {
     if (_recommendedActions is EqualUnmodifiableListView)
       return _recommendedActions;
@@ -347,11 +352,11 @@ abstract class _ReportSummary implements ReportSummary {
   const factory _ReportSummary({
     required final String id,
     required final String title,
-    required final int totalTechniquesReviewed,
-    required final double coveragePercentage,
-    required final List<String> topRiskyTechniques,
-    required final List<String> unresolvedGaps,
-    required final List<String> recommendedActions,
+    final int totalTechniquesReviewed,
+    final double coveragePercentage,
+    final List<String> topRiskyTechniques,
+    final List<String> unresolvedGaps,
+    final List<String> recommendedActions,
     final DateTime? generatedAt,
     final String? notes,
   }) = _$ReportSummaryImpl;

@@ -25,7 +25,7 @@ mixin _$BookmarkItem {
   String get techniqueId => throw _privateConstructorUsedError;
   String get techniqueName => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
-  DateTime? get bookmarkedAt => throw _privateConstructorUsedError;
+  DateTime get bookmarkedAt => throw _privateConstructorUsedError;
 
   /// Serializes this BookmarkItem to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -49,7 +49,7 @@ abstract class $BookmarkItemCopyWith<$Res> {
     String techniqueId,
     String techniqueName,
     String? notes,
-    DateTime? bookmarkedAt,
+    DateTime bookmarkedAt,
   });
 }
 
@@ -72,7 +72,7 @@ class _$BookmarkItemCopyWithImpl<$Res, $Val extends BookmarkItem>
     Object? techniqueId = null,
     Object? techniqueName = null,
     Object? notes = freezed,
-    Object? bookmarkedAt = freezed,
+    Object? bookmarkedAt = null,
   }) {
     return _then(
       _value.copyWith(
@@ -92,10 +92,10 @@ class _$BookmarkItemCopyWithImpl<$Res, $Val extends BookmarkItem>
                 ? _value.notes
                 : notes // ignore: cast_nullable_to_non_nullable
                       as String?,
-            bookmarkedAt: freezed == bookmarkedAt
+            bookmarkedAt: null == bookmarkedAt
                 ? _value.bookmarkedAt
                 : bookmarkedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
+                      as DateTime,
           )
           as $Val,
     );
@@ -116,7 +116,7 @@ abstract class _$$BookmarkItemImplCopyWith<$Res>
     String techniqueId,
     String techniqueName,
     String? notes,
-    DateTime? bookmarkedAt,
+    DateTime bookmarkedAt,
   });
 }
 
@@ -138,7 +138,7 @@ class __$$BookmarkItemImplCopyWithImpl<$Res>
     Object? techniqueId = null,
     Object? techniqueName = null,
     Object? notes = freezed,
-    Object? bookmarkedAt = freezed,
+    Object? bookmarkedAt = null,
   }) {
     return _then(
       _$BookmarkItemImpl(
@@ -158,10 +158,10 @@ class __$$BookmarkItemImplCopyWithImpl<$Res>
             ? _value.notes
             : notes // ignore: cast_nullable_to_non_nullable
                   as String?,
-        bookmarkedAt: freezed == bookmarkedAt
+        bookmarkedAt: null == bookmarkedAt
             ? _value.bookmarkedAt
             : bookmarkedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
+                  as DateTime,
       ),
     );
   }
@@ -175,7 +175,7 @@ class _$BookmarkItemImpl implements _BookmarkItem {
     required this.techniqueId,
     required this.techniqueName,
     this.notes,
-    this.bookmarkedAt,
+    required this.bookmarkedAt,
   });
 
   factory _$BookmarkItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -190,7 +190,7 @@ class _$BookmarkItemImpl implements _BookmarkItem {
   @override
   final String? notes;
   @override
-  final DateTime? bookmarkedAt;
+  final DateTime bookmarkedAt;
 
   @override
   String toString() {
@@ -243,7 +243,7 @@ abstract class _BookmarkItem implements BookmarkItem {
     required final String techniqueId,
     required final String techniqueName,
     final String? notes,
-    final DateTime? bookmarkedAt,
+    required final DateTime bookmarkedAt,
   }) = _$BookmarkItemImpl;
 
   factory _BookmarkItem.fromJson(Map<String, dynamic> json) =
@@ -258,7 +258,7 @@ abstract class _BookmarkItem implements BookmarkItem {
   @override
   String? get notes;
   @override
-  DateTime? get bookmarkedAt;
+  DateTime get bookmarkedAt;
 
   /// Create a copy of BookmarkItem
   /// with the given fields replaced by the non-null parameter values.

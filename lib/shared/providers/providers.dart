@@ -1,5 +1,5 @@
-// Barrel export for all Riverpod providers.
-// Import this single file anywhere you need providers.
+// Single import for all Riverpod providers.
+// Add new provider files here as the project grows.
 
 export 'repository_providers.dart';
 export 'theme_providers.dart';

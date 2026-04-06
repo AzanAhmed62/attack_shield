@@ -121,7 +121,7 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             topGapsAsync.when(
               data: (gaps) => gaps.isEmpty
-                  ? _GreenStatusCard(
+                  ? const _GreenStatusCard(
                       message:
                           'No critical gaps detected. All techniques covered!')
                   : Column(
@@ -139,7 +139,7 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // ── Quick Actions ─────────────────────────────────────────
-            SectionHeader(title: 'Quick Actions'),
+            const SectionHeader(title: 'Quick Actions'),
             const SizedBox(height: 12),
             GridView.count(
               crossAxisCount: 3,
@@ -377,7 +377,7 @@ class _RiskHeroCard extends StatelessWidget {
                 error: (_, __) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 8),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text('View full coverage →',
@@ -544,7 +544,7 @@ class _RiskGapTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(gap.technique.id,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: AppTheme.primaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 12)),

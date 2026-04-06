@@ -1,17 +1,12 @@
-import 'dart:convert';
 import 'package:attackshield/shared/models/models.dart';
-import '../../core/constants/constants.dart';
 import '../../core/errors/errors.dart';
+import '../../core/constants/constants.dart';
 import '../services/services.dart';
 
 abstract class BookmarkRepository {
   Future<List<BookmarkItem>> getAllBookmarks();
   Future<bool> isBookmarked(String techniqueId);
-  Future<void> addBookmark(
-    String techniqueId,
-    String techniqueName, {
-    String? notes,
-  });
+  Future<void> addBookmark(BookmarkItem item);
   Future<void> removeBookmark(String techniqueId);
   Future<void> updateBookmarkNotes(String techniqueId, String notes);
   Future<void> clearAllBookmarks();
@@ -27,9 +22,8 @@ class BookmarkRepositoryImpl implements BookmarkRepository {
     try {
       final data = _storageService.read<List>(AppConstants.storageKeyBookmarks);
       if (data == null) return [];
-
       return data
-          .map((item) => BookmarkItem.fromJson(jsonDecode(jsonEncode(item))))
+          .map((e) => BookmarkItem.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } catch (e) {
       throw DataException(message: 'Failed to fetch bookmarks: $e');
@@ -38,36 +32,17 @@ class BookmarkRepositoryImpl implements BookmarkRepository {
 
   @override
   Future<bool> isBookmarked(String techniqueId) async {
-    try {
-      final bookmarks = await getAllBookmarks();
-      return bookmarks.any((b) => b.techniqueId == techniqueId);
-    } catch (e) {
-      return false;
-    }
+    final bookmarks = await getAllBookmarks();
+    return bookmarks.any((b) => b.techniqueId == techniqueId);
   }
 
   @override
-  Future<void> addBookmark(
-    String techniqueId,
-    String techniqueName, {
-    String? notes,
-  }) async {
+  Future<void> addBookmark(BookmarkItem item) async {
     try {
       final bookmarks = await getAllBookmarks();
-
-      if (bookmarks.any((b) => b.techniqueId == techniqueId)) {
-        return; // Already bookmarked
-      }
-
-      final newBookmark = BookmarkItem(
-        id: UniqueKey().toString(),
-        techniqueId: techniqueId,
-        techniqueName: techniqueName,
-        notes: notes,
-        bookmarkedAt: DateTime.now(),
-      );
-
-      bookmarks.add(newBookmark);
+      // Avoid duplicates
+      if (bookmarks.any((b) => b.techniqueId == item.techniqueId)) return;
+      bookmarks.add(item);
       await _storageService.write(
         AppConstants.storageKeyBookmarks,
         bookmarks.map((b) => b.toJson()).toList(),
@@ -80,9 +55,8 @@ class BookmarkRepositoryImpl implements BookmarkRepository {
   @override
   Future<void> removeBookmark(String techniqueId) async {
     try {
-      var bookmarks = await getAllBookmarks();
+      final bookmarks = await getAllBookmarks();
       bookmarks.removeWhere((b) => b.techniqueId == techniqueId);
-
       await _storageService.write(
         AppConstants.storageKeyBookmarks,
         bookmarks.map((b) => b.toJson()).toList(),
@@ -95,9 +69,8 @@ class BookmarkRepositoryImpl implements BookmarkRepository {
   @override
   Future<void> updateBookmarkNotes(String techniqueId, String notes) async {
     try {
-      var bookmarks = await getAllBookmarks();
+      final bookmarks = await getAllBookmarks();
       final index = bookmarks.indexWhere((b) => b.techniqueId == techniqueId);
-
       if (index >= 0) {
         bookmarks[index] = bookmarks[index].copyWith(notes: notes);
         await _storageService.write(
@@ -117,15 +90,5 @@ class BookmarkRepositoryImpl implements BookmarkRepository {
     } catch (e) {
       throw DataException(message: 'Failed to clear bookmarks: $e');
     }
-  }
-}
-
-// Helper to generate unique key
-class UniqueKey {
-  static int _counter = 0;
-
-  @override
-  String toString() {
-    return 'UniqueKey_${++_counter}';
   }
 }

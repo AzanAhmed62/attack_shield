@@ -224,7 +224,7 @@ class _TechniqueListItem extends StatelessWidget {
                     children: [
                       Text(
                         technique.id,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppTheme.primaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -241,7 +241,7 @@ class _TechniqueListItem extends StatelessWidget {
                           ),
                           child: Text(
                             '+${technique.subTechniques.length}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: AppTheme.primaryColor,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,

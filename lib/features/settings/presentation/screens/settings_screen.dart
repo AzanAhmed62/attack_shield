@@ -12,7 +12,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final orgAsync = ref.watch(organizationProfileProvider);
-    final themeMode = ref.watch(themeMode_Provider);
+    final themeMode = ref.watch(appThemeModeProvider);
     final riskScoreAsync = ref.watch(organizationRiskScoreProvider);
     final coverageAsync = ref.watch(riskEngineCoveragePercentageProvider);
     final allTechAsync = ref.watch(allTechniquesProvider);
@@ -23,7 +23,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // ── Organization Profile ────────────────────────────────────
-          _SectionTitle('Organization Profile'),
+          const _SectionTitle('Organization Profile'),
           orgAsync.when(
             data: (org) => org == null
                 ? _NoOrgCard(ref: ref)
@@ -34,7 +34,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── Current Posture Summary ─────────────────────────────────
-          _SectionTitle('Security Posture Summary'),
+          const _SectionTitle('Security Posture Summary'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -123,7 +123,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── App Preferences ─────────────────────────────────────────
-          _SectionTitle('App Preferences'),
+          const _SectionTitle('App Preferences'),
           Card(
             child: Column(
               children: [
@@ -136,9 +136,9 @@ class SettingsScreen extends ConsumerWidget {
                     color: AppTheme.primaryColor,
                   ),
                   value: themeMode == ThemeMode.dark,
-                  activeColor: AppTheme.primaryColor,
+                  activeThumbColor: AppTheme.primaryColor,
                   onChanged: (value) {
-                    ref.read(themeMode_Provider.notifier).toggle();
+                    ref.read(appThemeModeProvider.notifier).toggle();
                   },
                 ),
                 const Divider(height: 1),
@@ -156,7 +156,7 @@ class SettingsScreen extends ConsumerWidget {
                   trailing: Container(
                     width: 24,
                     height: 24,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppTheme.primaryColor,
                       shape: BoxShape.circle,
                     ),
@@ -168,7 +168,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── ATT&CK Framework Info ────────────────────────────────────
-          _SectionTitle('MITRE ATT\&CK Framework'),
+          const _SectionTitle('MITRE ATT&CK Framework'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -180,25 +180,25 @@ class SettingsScreen extends ConsumerWidget {
                       const Icon(Icons.security, color: AppTheme.primaryColor),
                       const SizedBox(width: 8),
                       Text(
-                        'ATT\&CK Version',
+                        'ATT&CK Version',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _InfoRow('Framework', 'MITRE ATT&CK® Enterprise'),
-                  _InfoRow('Version', 'v14 (2023)'),
-                  _InfoRow('Tactics', '14 (Recon → Impact)'),
+                  const _InfoRow('Framework', 'MITRE ATT&CK® Enterprise'),
+                  const _InfoRow('Version', 'v14 (2023)'),
+                  const _InfoRow('Tactics', '14 (Recon → Impact)'),
                   allTechAsync.when(
                     data: (t) => _InfoRow(
                       'Techniques',
                       '${t.length} parent + '
                           '${t.fold(0, (s, e) => s + e.subTechniques.length)} sub-techniques',
                     ),
-                    loading: () => _InfoRow('Techniques', 'Loading…'),
+                    loading: () => const _InfoRow('Techniques', 'Loading…'),
                     error: (_, __) => const SizedBox.shrink(),
                   ),
-                  _InfoRow('Data Source', 'Embedded dataset (offline)'),
+                  const _InfoRow('Data Source', 'Embedded dataset (offline)'),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(10),
@@ -206,17 +206,17 @@ class SettingsScreen extends ConsumerWidget {
                       color: AppTheme.primaryColor.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
+                    child: const Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.open_in_new,
                           size: 14,
                           color: AppTheme.primaryColor,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           AppConstants.mitrAttackUrl,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppTheme.primaryColor,
                             fontSize: 12,
                             decoration: TextDecoration.underline,
@@ -232,7 +232,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── Risk Engine Documentation ─────────────────────────────────
-          _SectionTitle('Risk Engine'),
+          const _SectionTitle('Risk Engine'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -250,14 +250,14 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _FormulaLine('Exposure', 'riskScore × coverageMultiplier'),
-                  _FormulaLine('Covered', '× 0.0  (no exposure)'),
-                  _FormulaLine('Partial', '× 0.5  (50% exposure)'),
-                  _FormulaLine('Unknown', '× 0.7  (assumed gap)'),
-                  _FormulaLine('Not Covered', '× 1.0  (full exposure)'),
+                  const _FormulaLine('Exposure', 'riskScore × coverageMultiplier'),
+                  const _FormulaLine('Covered', '× 0.0  (no exposure)'),
+                  const _FormulaLine('Partial', '× 0.5  (50% exposure)'),
+                  const _FormulaLine('Unknown', '× 0.7  (assumed gap)'),
+                  const _FormulaLine('Not Covered', '× 1.0  (full exposure)'),
                   const Divider(height: 20),
-                  _FormulaLine('Tactic Risk', 'mean(Exposure) per tactic'),
-                  _FormulaLine(
+                  const _FormulaLine('Tactic Risk', 'mean(Exposure) per tactic'),
+                  const _FormulaLine(
                     'Org Risk',
                     'Σ(TacticRisk × weight) / Σ(weight) × 10',
                   ),
@@ -273,7 +273,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── Data Management ──────────────────────────────────────────
-          _SectionTitle('Data Management'),
+          const _SectionTitle('Data Management'),
           Card(
             child: Column(
               children: [
@@ -314,7 +314,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── About ────────────────────────────────────────────────────
-          _SectionTitle('About'),
+          const _SectionTitle('About'),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -573,22 +573,21 @@ class _OrgProfileCard extends StatelessWidget {
                 ),
               ],
             ),
-            if (org.description != null && org.description!.isNotEmpty) ...[
+            if (org.description.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
-                org.description!,
+                org.description,
                 style: Theme.of(context).textTheme.bodySmall,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
-            if (org.preferredSectors != null &&
-                org.preferredSectors!.isNotEmpty) ...[
+            if (org.preferredSectors.isNotEmpty) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
-                children: org.preferredSectors!
+                children: org.preferredSectors
                     .map(
                       (s) => Container(
                         padding: const EdgeInsets.symmetric(
@@ -783,18 +782,6 @@ class _FormulaLine extends StatelessWidget {
 
 // ─── Helper functions for AppContext conversion ────────────────────────────────
 
-String _contextLabel(AppContext context) {
-  return switch (context) {
-    AppContext.personalLearning => 'Personal Learning',
-    AppContext.lab => 'Lab Environment',
-    AppContext.organizational => 'Organization',
-  };
-}
+String _contextLabel(AppContext context) => context.label;
 
-AppContext _contextFromLabel(String label) {
-  return switch (label) {
-    'Personal Learning' => AppContext.personalLearning,
-    'Lab Environment' => AppContext.lab,
-    _ => AppContext.organizational,
-  };
-}
+AppContext _contextFromLabel(String label) => AppContextX.fromLabel(label);

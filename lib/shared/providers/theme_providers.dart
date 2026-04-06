@@ -1,19 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:attackshield/core/constants/constants.dart';
 
 part 'theme_providers.g.dart';
 
-/// Persists and exposes the current ThemeMode.
-/// Call ref.read(themeModeProvider.notifier).toggle() to switch.
+/// Manages ThemeMode with persistence.
+/// Generated provider name: appThemeModeProvider
+/// Usage: ref.watch(appThemeModeProvider) → ThemeMode
+///        ref.read(appThemeModeProvider.notifier).toggle()
 @Riverpod(keepAlive: true)
-class ThemeMode_ extends _$ThemeMode_ {
+class AppThemeMode extends _$AppThemeMode {
   @override
-  ThemeMode build() => ThemeMode.dark; // default: dark
+  ThemeMode build() {
+    // Restore persisted preference (default: dark)
+    final stored = GetStorage().read<String>(AppConstants.storageKeyThemeMode);
+    return stored == 'light' ? ThemeMode.light : ThemeMode.dark;
+  }
 
   void toggle() {
     state = state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    GetStorage().write(
+      AppConstants.storageKeyThemeMode,
+      state == ThemeMode.dark ? 'dark' : 'light',
+    );
   }
 
-  void setDark() => state = ThemeMode.dark;
-  void setLight() => state = ThemeMode.light;
+  void setDark() {
+    state = ThemeMode.dark;
+    GetStorage().write(AppConstants.storageKeyThemeMode, 'dark');
+  }
+
+  void setLight() {
+    state = ThemeMode.light;
+    GetStorage().write(AppConstants.storageKeyThemeMode, 'light');
+  }
 }

@@ -11,9 +11,18 @@ _$TechniqueDetectionImpl _$$TechniqueDetectionImplFromJson(
 ) => _$TechniqueDetectionImpl(
   id: json['id'] as String,
   techniqueId: json['techniqueId'] as String,
-  description: json['description'] as String,
-  source: json['source'] as String?,
-  datasource: json['datasource'] as String?,
+  name: json['name'] as String,
+  description: json['description'] as String? ?? '',
+  dataSourcesRequired:
+      (json['dataSourcesRequired'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  toolsRecommended:
+      (json['toolsRecommended'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$$TechniqueDetectionImplToJson(
@@ -21,7 +30,8 @@ Map<String, dynamic> _$$TechniqueDetectionImplToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'techniqueId': instance.techniqueId,
+  'name': instance.name,
   'description': instance.description,
-  'source': instance.source,
-  'datasource': instance.datasource,
+  'dataSourcesRequired': instance.dataSourcesRequired,
+  'toolsRecommended': instance.toolsRecommended,
 };

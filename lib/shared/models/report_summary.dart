@@ -8,11 +8,11 @@ class ReportSummary with _$ReportSummary {
   const factory ReportSummary({
     required String id,
     required String title,
-    required int totalTechniquesReviewed,
-    required double coveragePercentage,
-    required List<String> topRiskyTechniques,
-    required List<String> unresolvedGaps,
-    required List<String> recommendedActions,
+    @Default(0) int totalTechniquesReviewed,
+    @Default(0.0) double coveragePercentage,
+    @Default([]) List<String> topRiskyTechniques,
+    @Default([]) List<String> unresolvedGaps,
+    @Default([]) List<String> recommendedActions,
     DateTime? generatedAt,
     String? notes,
   }) = _ReportSummary;

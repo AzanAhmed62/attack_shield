@@ -21,10 +21,12 @@ AttackTactic _$AttackTacticFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$AttackTactic {
-  String get id => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
+  String get id => throw _privateConstructorUsedError; // e.g. 'TA0001'
+  String get name =>
+      throw _privateConstructorUsedError; // e.g. 'Initial Access'
   String get description => throw _privateConstructorUsedError;
   List<String> get techniqueIds => throw _privateConstructorUsedError;
+  String? get shortName => throw _privateConstructorUsedError;
 
   /// Serializes this AttackTactic to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -48,6 +50,7 @@ abstract class $AttackTacticCopyWith<$Res> {
     String name,
     String description,
     List<String> techniqueIds,
+    String? shortName,
   });
 }
 
@@ -70,6 +73,7 @@ class _$AttackTacticCopyWithImpl<$Res, $Val extends AttackTactic>
     Object? name = null,
     Object? description = null,
     Object? techniqueIds = null,
+    Object? shortName = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -89,6 +93,10 @@ class _$AttackTacticCopyWithImpl<$Res, $Val extends AttackTactic>
                 ? _value.techniqueIds
                 : techniqueIds // ignore: cast_nullable_to_non_nullable
                       as List<String>,
+            shortName: freezed == shortName
+                ? _value.shortName
+                : shortName // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -109,6 +117,7 @@ abstract class _$$AttackTacticImplCopyWith<$Res>
     String name,
     String description,
     List<String> techniqueIds,
+    String? shortName,
   });
 }
 
@@ -130,6 +139,7 @@ class __$$AttackTacticImplCopyWithImpl<$Res>
     Object? name = null,
     Object? description = null,
     Object? techniqueIds = null,
+    Object? shortName = freezed,
   }) {
     return _then(
       _$AttackTacticImpl(
@@ -149,6 +159,10 @@ class __$$AttackTacticImplCopyWithImpl<$Res>
             ? _value._techniqueIds
             : techniqueIds // ignore: cast_nullable_to_non_nullable
                   as List<String>,
+        shortName: freezed == shortName
+            ? _value.shortName
+            : shortName // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -162,6 +176,7 @@ class _$AttackTacticImpl implements _AttackTactic {
     required this.name,
     required this.description,
     final List<String> techniqueIds = const [],
+    this.shortName,
   }) : _techniqueIds = techniqueIds;
 
   factory _$AttackTacticImpl.fromJson(Map<String, dynamic> json) =>
@@ -169,8 +184,10 @@ class _$AttackTacticImpl implements _AttackTactic {
 
   @override
   final String id;
+  // e.g. 'TA0001'
   @override
   final String name;
+  // e.g. 'Initial Access'
   @override
   final String description;
   final List<String> _techniqueIds;
@@ -183,8 +200,11 @@ class _$AttackTacticImpl implements _AttackTactic {
   }
 
   @override
+  final String? shortName;
+
+  @override
   String toString() {
-    return 'AttackTactic(id: $id, name: $name, description: $description, techniqueIds: $techniqueIds)';
+    return 'AttackTactic(id: $id, name: $name, description: $description, techniqueIds: $techniqueIds, shortName: $shortName)';
   }
 
   @override
@@ -199,7 +219,9 @@ class _$AttackTacticImpl implements _AttackTactic {
             const DeepCollectionEquality().equals(
               other._techniqueIds,
               _techniqueIds,
-            ));
+            ) &&
+            (identical(other.shortName, shortName) ||
+                other.shortName == shortName));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -210,6 +232,7 @@ class _$AttackTacticImpl implements _AttackTactic {
     name,
     description,
     const DeepCollectionEquality().hash(_techniqueIds),
+    shortName,
   );
 
   /// Create a copy of AttackTactic
@@ -232,19 +255,22 @@ abstract class _AttackTactic implements AttackTactic {
     required final String name,
     required final String description,
     final List<String> techniqueIds,
+    final String? shortName,
   }) = _$AttackTacticImpl;
 
   factory _AttackTactic.fromJson(Map<String, dynamic> json) =
       _$AttackTacticImpl.fromJson;
 
   @override
-  String get id;
+  String get id; // e.g. 'TA0001'
   @override
-  String get name;
+  String get name; // e.g. 'Initial Access'
   @override
   String get description;
   @override
   List<String> get techniqueIds;
+  @override
+  String? get shortName;
 
   /// Create a copy of AttackTactic
   /// with the given fields replaced by the non-null parameter values.

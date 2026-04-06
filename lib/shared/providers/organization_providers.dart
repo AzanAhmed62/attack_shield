@@ -1,45 +1,30 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:attackshield/shared/models/models.dart';
 import 'repository_providers.dart';
 
 part 'organization_providers.g.dart';
 
-@Riverpod()
-Future<OrganizationProfile?> organizationProfile(
-  OrganizationProfileRef ref,
-) async {
+/// Current organization profile. Returns null if not set (triggers onboarding).
+@Riverpod(keepAlive: false)
+Future<OrganizationProfile?> organizationProfile(Ref ref) async {
   final repository = ref.watch(organizationRepositoryProvider);
-  return repository.getProfile();
+  return repository.getOrganizationProfile();
 }
 
-@Riverpod()
-Future<String> organizationName(OrganizationNameRef ref) async {
-  final profile = await ref.watch(organizationProfileProvider.future);
-  return profile?.name ?? 'Your Organization';
-}
-
-@Riverpod()
-Future<String> organizationContext(OrganizationContextRef ref) async {
-  final profile = await ref.watch(organizationProfileProvider.future);
-  return profile?.context.toString().split('.').last ?? 'personalLearning';
-}
-
-@Riverpod()
-Future<void> createOrganizationProfile(
-  CreateOrganizationProfileRef ref,
-  OrganizationProfile profile,
-) async {
+/// Save or update the organization profile.
+@Riverpod(keepAlive: false)
+Future<void> updateOrganizationProfile(
+    Ref ref, OrganizationProfile profile) async {
   final repository = ref.watch(organizationRepositoryProvider);
-  await repository.createProfile(profile);
+  await repository.saveOrganizationProfile(profile);
   ref.invalidate(organizationProfileProvider);
 }
 
-@Riverpod()
-Future<void> updateOrganizationProfile(
-  UpdateOrganizationProfileRef ref,
-  OrganizationProfile profile,
-) async {
+/// Delete the organization profile (forces onboarding on next cold start).
+@Riverpod(keepAlive: false)
+Future<void> deleteOrganizationProfile(Ref ref) async {
   final repository = ref.watch(organizationRepositoryProvider);
-  await repository.updateProfile(profile);
+  await repository.deleteOrganizationProfile();
   ref.invalidate(organizationProfileProvider);
 }

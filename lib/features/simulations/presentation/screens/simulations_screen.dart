@@ -31,7 +31,7 @@ class SimulationsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _SuggestedScenariosCard(ref: ref),
             const SizedBox(height: 24),
-            SectionHeader(title: 'Test Scenarios'),
+            const SectionHeader(title: 'Test Scenarios'),
             const SizedBox(height: 12),
             scenariosAsync.when(
               data: (scenarios) => scenarios.isEmpty

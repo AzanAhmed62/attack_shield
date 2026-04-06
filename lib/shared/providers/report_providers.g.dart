@@ -6,9 +6,11 @@ part of 'report_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$allReportsHash() => r'e6251f08abc4cf0ece709339584cedce1f59f2d7';
+String _$allReportsHash() => r'a6534ece0fda814f03472fc6bde89b9a0266623a';
 
-/// See also [allReports].
+/// All saved reports, sorted newest first.
+///
+/// Copied from [allReports].
 @ProviderFor(allReports)
 final allReportsProvider =
     AutoDisposeFutureProvider<List<ReportSummary>>.internal(
@@ -24,9 +26,11 @@ final allReportsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AllReportsRef = AutoDisposeFutureProviderRef<List<ReportSummary>>;
-String _$latestReportHash() => r'f230416cf4e5519303f931002f95cf311e26a379';
+String _$latestReportHash() => r'eead5aeb4503db96e9ce7a107cf3d4dfd378c4be';
 
-/// See also [latestReport].
+/// The most recently generated report, or null if none exist.
+///
+/// Copied from [latestReport].
 @ProviderFor(latestReport)
 final latestReportProvider = AutoDisposeFutureProvider<ReportSummary?>.internal(
   latestReport,
@@ -41,41 +45,7 @@ final latestReportProvider = AutoDisposeFutureProvider<ReportSummary?>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LatestReportRef = AutoDisposeFutureProviderRef<ReportSummary?>;
-String _$reportCountHash() => r'bfd8f2a0666e7f161cd546ec8595647b3e214fd9';
-
-/// See also [reportCount].
-@ProviderFor(reportCount)
-final reportCountProvider = AutoDisposeFutureProvider<int>.internal(
-  reportCount,
-  name: r'reportCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$reportCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ReportCountRef = AutoDisposeFutureProviderRef<int>;
-String _$averageCoverageHash() => r'bef10b1efb0374d70662e94802aa12e967a6d0d6';
-
-/// See also [averageCoverage].
-@ProviderFor(averageCoverage)
-final averageCoverageProvider = AutoDisposeFutureProvider<double>.internal(
-  averageCoverage,
-  name: r'averageCoverageProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$averageCoverageHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef AverageCoverageRef = AutoDisposeFutureProviderRef<double>;
-String _$generateReportHash() => r'a7d3f8727d2734a39816653abd5493b6afb6ca04';
+String _$generateReportHash() => r'd2bb8b1ff55da3a8ee08ff346a36f452a9e5c856';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -98,16 +68,24 @@ class _SystemHash {
   }
 }
 
-/// See also [generateReport].
+/// Generate (save) a new report and refresh the report list.
+///
+/// Copied from [generateReport].
 @ProviderFor(generateReport)
 const generateReportProvider = GenerateReportFamily();
 
-/// See also [generateReport].
+/// Generate (save) a new report and refresh the report list.
+///
+/// Copied from [generateReport].
 class GenerateReportFamily extends Family<AsyncValue<void>> {
-  /// See also [generateReport].
+  /// Generate (save) a new report and refresh the report list.
+  ///
+  /// Copied from [generateReport].
   const GenerateReportFamily();
 
-  /// See also [generateReport].
+  /// Generate (save) a new report and refresh the report list.
+  ///
+  /// Copied from [generateReport].
   GenerateReportProvider call(ReportSummary report) {
     return GenerateReportProvider(report);
   }
@@ -134,9 +112,13 @@ class GenerateReportFamily extends Family<AsyncValue<void>> {
   String? get name => r'generateReportProvider';
 }
 
-/// See also [generateReport].
+/// Generate (save) a new report and refresh the report list.
+///
+/// Copied from [generateReport].
 class GenerateReportProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [generateReport].
+  /// Generate (save) a new report and refresh the report list.
+  ///
+  /// Copied from [generateReport].
   GenerateReportProvider(ReportSummary report)
     : this._internal(
         (ref) => generateReport(ref as GenerateReportRef, report),
@@ -216,18 +198,26 @@ class _GenerateReportProviderElement
   ReportSummary get report => (origin as GenerateReportProvider).report;
 }
 
-String _$deleteReportHash() => r'039e509eb7fae7edc6f78981d450faf7a487c328';
+String _$deleteReportHash() => r'ee39eb629fb229bf097c875bc2bed53b10123e50';
 
-/// See also [deleteReport].
+/// Delete a specific report by ID.
+///
+/// Copied from [deleteReport].
 @ProviderFor(deleteReport)
 const deleteReportProvider = DeleteReportFamily();
 
-/// See also [deleteReport].
+/// Delete a specific report by ID.
+///
+/// Copied from [deleteReport].
 class DeleteReportFamily extends Family<AsyncValue<void>> {
-  /// See also [deleteReport].
+  /// Delete a specific report by ID.
+  ///
+  /// Copied from [deleteReport].
   const DeleteReportFamily();
 
-  /// See also [deleteReport].
+  /// Delete a specific report by ID.
+  ///
+  /// Copied from [deleteReport].
   DeleteReportProvider call(String id) {
     return DeleteReportProvider(id);
   }
@@ -254,9 +244,13 @@ class DeleteReportFamily extends Family<AsyncValue<void>> {
   String? get name => r'deleteReportProvider';
 }
 
-/// See also [deleteReport].
+/// Delete a specific report by ID.
+///
+/// Copied from [deleteReport].
 class DeleteReportProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [deleteReport].
+  /// Delete a specific report by ID.
+  ///
+  /// Copied from [deleteReport].
   DeleteReportProvider(String id)
     : this._internal(
         (ref) => deleteReport(ref as DeleteReportRef, id),
@@ -336,5 +330,24 @@ class _DeleteReportProviderElement
   String get id => (origin as DeleteReportProvider).id;
 }
 
+String _$clearAllReportsHash() => r'238de81d10706cf429492c697ee2f914b94b079a';
+
+/// Clear all reports.
+///
+/// Copied from [clearAllReports].
+@ProviderFor(clearAllReports)
+final clearAllReportsProvider = AutoDisposeFutureProvider<void>.internal(
+  clearAllReports,
+  name: r'clearAllReportsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$clearAllReportsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ClearAllReportsRef = AutoDisposeFutureProviderRef<void>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

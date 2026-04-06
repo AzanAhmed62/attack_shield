@@ -31,7 +31,7 @@ class ReportsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Latest Saved Report ─────────────────────────────────────
-            SectionHeader(title: 'Latest Report'),
+            const SectionHeader(title: 'Latest Report'),
             const SizedBox(height: 12),
             latestAsync.when(
               data: (latest) => latest == null
@@ -47,7 +47,7 @@ class ReportsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Report History ──────────────────────────────────────────
-            SectionHeader(title: 'Report History'),
+            const SectionHeader(title: 'Report History'),
             const SizedBox(height: 12),
             reportsAsync.when(
               data: (reports) => reports.isEmpty
@@ -748,9 +748,9 @@ class _ReportDetailSheet extends StatelessWidget {
       expand: false,
       builder: (_, controller) => Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppTheme.surfaceColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: ListView(
           controller: controller,
@@ -787,7 +787,7 @@ class _ReportDetailSheet extends StatelessWidget {
             const SizedBox(height: 20),
 
             // ── Coverage ─────────────────────────────────────────────────
-            _SheetSection(title: 'Coverage Overview'),
+            const _SheetSection(title: 'Coverage Overview'),
             Row(
               children: [
                 Expanded(
@@ -810,7 +810,7 @@ class _ReportDetailSheet extends StatelessWidget {
             const SizedBox(height: 20),
 
             // ── Top Risky ────────────────────────────────────────────────
-            _SheetSection(title: 'Top Risky Techniques'),
+            const _SheetSection(title: 'Top Risky Techniques'),
             ...report.topRiskyTechniques.map(
               (t) => ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -821,7 +821,7 @@ class _ReportDetailSheet extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Unresolved Gaps ──────────────────────────────────────────
-            _SheetSection(title: 'Unresolved Gaps'),
+            const _SheetSection(title: 'Unresolved Gaps'),
             ...report.unresolvedGaps.map(
               (g) => ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -832,7 +832,7 @@ class _ReportDetailSheet extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Recommendations ──────────────────────────────────────────
-            _SheetSection(title: 'Recommended Actions'),
+            const _SheetSection(title: 'Recommended Actions'),
             ...report.recommendedActions.asMap().entries.map(
               (e) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),

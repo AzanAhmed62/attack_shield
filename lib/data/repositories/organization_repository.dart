@@ -1,47 +1,48 @@
 import 'package:attackshield/shared/models/models.dart';
 import '../../core/errors/errors.dart';
+import '../../core/constants/constants.dart';
 import '../services/services.dart';
 
 abstract class OrganizationRepository {
-  Future<OrganizationProfile?> getProfile();
-  Future<void> createProfile(OrganizationProfile profile);
-  Future<void> updateProfile(OrganizationProfile profile);
+  Future<OrganizationProfile?> getOrganizationProfile();
+  Future<void> saveOrganizationProfile(OrganizationProfile profile);
+  Future<void> deleteOrganizationProfile();
 }
 
 class OrganizationRepositoryImpl implements OrganizationRepository {
   final LocalStorageService _storageService;
-  static const String _storageKey = 'organization_profile';
 
   OrganizationRepositoryImpl(this._storageService);
 
   @override
-  Future<OrganizationProfile?> getProfile() async {
+  Future<OrganizationProfile?> getOrganizationProfile() async {
     try {
-      final profileJson = _storageService.read<Map<String, dynamic>>(
-        _storageKey,
+      final data = _storageService.read<Map>(AppConstants.storageKeyOrgProfile);
+      if (data == null) return null;
+      return OrganizationProfile.fromJson(Map<String, dynamic>.from(data));
+    } catch (e) {
+      throw DataException(message: 'Failed to fetch organization profile: $e');
+    }
+  }
+
+  @override
+  Future<void> saveOrganizationProfile(OrganizationProfile profile) async {
+    try {
+      await _storageService.write(
+        AppConstants.storageKeyOrgProfile,
+        profile.toJson(),
       );
-      if (profileJson == null) return null;
-      return OrganizationProfile.fromJson(profileJson);
     } catch (e) {
-      throw DataException(message: 'Failed to fetch profile: $e');
+      throw DataException(message: 'Failed to save organization profile: $e');
     }
   }
 
   @override
-  Future<void> createProfile(OrganizationProfile profile) async {
+  Future<void> deleteOrganizationProfile() async {
     try {
-      await _storageService.write(_storageKey, profile.toJson());
+      await _storageService.remove(AppConstants.storageKeyOrgProfile);
     } catch (e) {
-      throw DataException(message: 'Failed to create profile: $e');
-    }
-  }
-
-  @override
-  Future<void> updateProfile(OrganizationProfile profile) async {
-    try {
-      await _storageService.write(_storageKey, profile.toJson());
-    } catch (e) {
-      throw DataException(message: 'Failed to update profile: $e');
+      throw DataException(message: 'Failed to delete organization profile: $e');
     }
   }
 }

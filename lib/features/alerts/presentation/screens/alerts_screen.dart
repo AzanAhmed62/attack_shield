@@ -414,9 +414,9 @@ class _AlertDetailSheet extends StatelessWidget {
       expand: false,
       builder: (_, controller) => Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppTheme.surfaceColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: ListView(
           controller: controller,

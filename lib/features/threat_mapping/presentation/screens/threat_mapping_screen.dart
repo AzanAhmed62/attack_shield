@@ -489,7 +489,7 @@ class _RiskGapCard extends StatelessWidget {
                     children: [
                       Text(
                         gap.technique.id,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppTheme.primaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -550,7 +550,7 @@ class _RiskGapCard extends StatelessWidget {
                             ),
                             child: Text(
                               tac,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppTheme.primaryColor,
                                 fontSize: 10,
                               ),

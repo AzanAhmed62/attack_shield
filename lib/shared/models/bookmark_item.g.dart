@@ -12,9 +12,7 @@ _$BookmarkItemImpl _$$BookmarkItemImplFromJson(Map<String, dynamic> json) =>
       techniqueId: json['techniqueId'] as String,
       techniqueName: json['techniqueName'] as String,
       notes: json['notes'] as String?,
-      bookmarkedAt: json['bookmarkedAt'] == null
-          ? null
-          : DateTime.parse(json['bookmarkedAt'] as String),
+      bookmarkedAt: DateTime.parse(json['bookmarkedAt'] as String),
     );
 
 Map<String, dynamic> _$$BookmarkItemImplToJson(_$BookmarkItemImpl instance) =>
@@ -23,5 +21,5 @@ Map<String, dynamic> _$$BookmarkItemImplToJson(_$BookmarkItemImpl instance) =>
       'techniqueId': instance.techniqueId,
       'techniqueName': instance.techniqueName,
       'notes': instance.notes,
-      'bookmarkedAt': instance.bookmarkedAt?.toIso8601String(),
+      'bookmarkedAt': instance.bookmarkedAt.toIso8601String(),
     };

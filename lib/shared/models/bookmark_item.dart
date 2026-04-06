@@ -10,7 +10,7 @@ class BookmarkItem with _$BookmarkItem {
     required String techniqueId,
     required String techniqueName,
     String? notes,
-    DateTime? bookmarkedAt,
+    required DateTime bookmarkedAt,
   }) = _BookmarkItem;
 
   factory BookmarkItem.fromJson(Map<String, dynamic> json) =>

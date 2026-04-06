@@ -1,90 +1,58 @@
 import 'package:get_storage/get_storage.dart';
-import '../../core/errors/errors.dart';
 
-/// LocalStorageService provides a simple interface for storing and retrieving data locally
+/// Singleton wrapper around GetStorage.
+/// All repositories use this service — never call GetStorage directly.
 class LocalStorageService {
-  static final LocalStorageService _instance = LocalStorageService._internal();
-  late GetStorage _storage;
-
+  static final LocalStorageService _instance =
+      LocalStorageService._internal();
+  factory LocalStorageService() => _instance;
   LocalStorageService._internal();
 
-  factory LocalStorageService() {
-    return _instance;
-  }
+  late final GetStorage _storage;
+  bool _initialized = false;
 
-  /// Initialize the storage service
   Future<void> initialize() async {
-    try {
-      await GetStorage.init();
-      _storage = GetStorage();
-    } catch (e) {
-      throw CacheException(message: 'Failed to initialize local storage: $e');
-    }
+    if (_initialized) return;
+    _storage = GetStorage();
+    _initialized = true;
   }
 
-  /// Write a value to storage
-  Future<void> write<T>(String key, T value) async {
-    try {
-      await _storage.write(key, value);
-    } catch (e) {
-      throw CacheException(
-        message: 'Failed to write to storage: $e',
-        code: 'WRITE_ERROR',
-      );
-    }
-  }
-
-  /// Read a value from storage
+  /// Read a value by key. Returns null if missing.
   T? read<T>(String key) {
+    _assertInitialized();
     try {
       return _storage.read<T>(key);
-    } catch (e) {
-      throw CacheException(
-        message: 'Failed to read from storage: $e',
-        code: 'READ_ERROR',
-      );
+    } catch (_) {
+      return null;
     }
   }
 
-  /// Check if a key exists
-  bool hasKey(String key) {
-    try {
-      return _storage.hasData(key);
-    } catch (e) {
-      return false;
-    }
+  /// Write a value by key.
+  Future<void> write(String key, dynamic value) async {
+    _assertInitialized();
+    await _storage.write(key, value);
   }
 
-  /// Remove a key from storage
+  /// Remove a key.
   Future<void> remove(String key) async {
-    try {
-      await _storage.remove(key);
-    } catch (e) {
-      throw CacheException(
-        message: 'Failed to remove from storage: $e',
-        code: 'REMOVE_ERROR',
-      );
-    }
+    _assertInitialized();
+    await _storage.remove(key);
   }
 
-  /// Clear all storage
-  Future<void> clear() async {
-    try {
-      await _storage.erase();
-    } catch (e) {
-      throw CacheException(
-        message: 'Failed to clear storage: $e',
-        code: 'CLEAR_ERROR',
-      );
-    }
+  /// Check if a key exists.
+  bool hasKey(String key) {
+    _assertInitialized();
+    return _storage.hasData(key);
   }
 
-  /// Get all keys in storage
-  List<String> getAllKeys() {
-    try {
-      return _storage.getKeys().toList();
-    } catch (e) {
-      return [];
-    }
+  /// Clear all stored data.
+  Future<void> clearAll() async {
+    _assertInitialized();
+    await _storage.erase();
+  }
+
+  void _assertInitialized() {
+    assert(_initialized,
+        'LocalStorageService must be initialized before use. Call initialize() in main().');
   }
 }

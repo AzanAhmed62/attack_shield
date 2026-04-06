@@ -6,7 +6,7 @@ part of 'asset_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$allAssetsHash() => r'abff0da2f4afdede09c0baa8ae033aba2adfc018';
+String _$allAssetsHash() => r'0b0ff1947c5c246dabceb3caffe59ceefbea1797';
 
 /// See also [allAssets].
 @ProviderFor(allAssets)
@@ -24,112 +24,7 @@ final allAssetsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AllAssetsRef = AutoDisposeFutureProviderRef<List<SecurityAsset>>;
-String _$selectedAssetCriticalityHash() =>
-    r'664b602cfe88ecc23f44ced8cbb12a937f72aed0';
-
-/// See also [selectedAssetCriticality].
-@ProviderFor(selectedAssetCriticality)
-final selectedAssetCriticalityProvider = AutoDisposeProvider<String>.internal(
-  selectedAssetCriticality,
-  name: r'selectedAssetCriticalityProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$selectedAssetCriticalityHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SelectedAssetCriticalityRef = AutoDisposeProviderRef<String>;
-String _$selectedAssetPlatformHash() =>
-    r'5ff62e488781efc787bfc13d377336096d186064';
-
-/// See also [selectedAssetPlatform].
-@ProviderFor(selectedAssetPlatform)
-final selectedAssetPlatformProvider = AutoDisposeProvider<String>.internal(
-  selectedAssetPlatform,
-  name: r'selectedAssetPlatformProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$selectedAssetPlatformHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SelectedAssetPlatformRef = AutoDisposeProviderRef<String>;
-String _$filteredAssetsHash() => r'9a273478ae3486291afacef5caafa242c4237e1c';
-
-/// See also [filteredAssets].
-@ProviderFor(filteredAssets)
-final filteredAssetsProvider =
-    AutoDisposeFutureProvider<List<SecurityAsset>>.internal(
-      filteredAssets,
-      name: r'filteredAssetsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$filteredAssetsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef FilteredAssetsRef = AutoDisposeFutureProviderRef<List<SecurityAsset>>;
-String _$totalAssetsHash() => r'4f750126d53e0c53b7546a379733d7451c4bfcba';
-
-/// See also [totalAssets].
-@ProviderFor(totalAssets)
-final totalAssetsProvider = AutoDisposeFutureProvider<int>.internal(
-  totalAssets,
-  name: r'totalAssetsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$totalAssetsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef TotalAssetsRef = AutoDisposeFutureProviderRef<int>;
-String _$criticalAssetsHash() => r'a472f5a4de49a65cb00afc73449933ecc2b85abc';
-
-/// See also [criticalAssets].
-@ProviderFor(criticalAssets)
-final criticalAssetsProvider = AutoDisposeFutureProvider<int>.internal(
-  criticalAssets,
-  name: r'criticalAssetsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$criticalAssetsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef CriticalAssetsRef = AutoDisposeFutureProviderRef<int>;
-String _$highAssetsHash() => r'b6f45181cb0213b2a04668838ac04a28584f2dfa';
-
-/// See also [highAssets].
-@ProviderFor(highAssets)
-final highAssetsProvider = AutoDisposeFutureProvider<int>.internal(
-  highAssets,
-  name: r'highAssetsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$highAssetsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef HighAssetsRef = AutoDisposeFutureProviderRef<int>;
-String _$createAssetHash() => r'990f0995c1b8b243043bf4fd09e778aef9a58e36';
+String _$assetByIdHash() => r'9c3849afb9ec8c4ea3eca9d80f649faefec2b65b';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -151,6 +46,163 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+/// See also [assetById].
+@ProviderFor(assetById)
+const assetByIdProvider = AssetByIdFamily();
+
+/// See also [assetById].
+class AssetByIdFamily extends Family<AsyncValue<SecurityAsset?>> {
+  /// See also [assetById].
+  const AssetByIdFamily();
+
+  /// See also [assetById].
+  AssetByIdProvider call(String id) {
+    return AssetByIdProvider(id);
+  }
+
+  @override
+  AssetByIdProvider getProviderOverride(covariant AssetByIdProvider provider) {
+    return call(provider.id);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'assetByIdProvider';
+}
+
+/// See also [assetById].
+class AssetByIdProvider extends AutoDisposeFutureProvider<SecurityAsset?> {
+  /// See also [assetById].
+  AssetByIdProvider(String id)
+    : this._internal(
+        (ref) => assetById(ref as AssetByIdRef, id),
+        from: assetByIdProvider,
+        name: r'assetByIdProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$assetByIdHash,
+        dependencies: AssetByIdFamily._dependencies,
+        allTransitiveDependencies: AssetByIdFamily._allTransitiveDependencies,
+        id: id,
+      );
+
+  AssetByIdProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<SecurityAsset?> Function(AssetByIdRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AssetByIdProvider._internal(
+        (ref) => create(ref as AssetByIdRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<SecurityAsset?> createElement() {
+    return _AssetByIdProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AssetByIdProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin AssetByIdRef on AutoDisposeFutureProviderRef<SecurityAsset?> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _AssetByIdProviderElement
+    extends AutoDisposeFutureProviderElement<SecurityAsset?>
+    with AssetByIdRef {
+  _AssetByIdProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AssetByIdProvider).id;
+}
+
+String _$assetCountByTypeHash() => r'cb4859eb004f3eaf7cb8e38150b0864760dbc93b';
+
+/// Assets grouped by type — used for the coverage matrix asset distribution view.
+///
+/// Copied from [assetCountByType].
+@ProviderFor(assetCountByType)
+final assetCountByTypeProvider =
+    AutoDisposeFutureProvider<Map<String, int>>.internal(
+      assetCountByType,
+      name: r'assetCountByTypeProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$assetCountByTypeHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AssetCountByTypeRef = AutoDisposeFutureProviderRef<Map<String, int>>;
+String _$criticalAssetCountHash() =>
+    r'ebd7b4f35ddf72e3e644491b4363156873dcc7d6';
+
+/// Count of critical assets only.
+///
+/// Copied from [criticalAssetCount].
+@ProviderFor(criticalAssetCount)
+final criticalAssetCountProvider = AutoDisposeFutureProvider<int>.internal(
+  criticalAssetCount,
+  name: r'criticalAssetCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$criticalAssetCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CriticalAssetCountRef = AutoDisposeFutureProviderRef<int>;
+String _$createAssetHash() => r'0c1284c2826f39a1eb80ca84c7ecffd89dff617d';
 
 /// See also [createAsset].
 @ProviderFor(createAsset)
@@ -268,7 +320,7 @@ class _CreateAssetProviderElement extends AutoDisposeFutureProviderElement<void>
   SecurityAsset get asset => (origin as CreateAssetProvider).asset;
 }
 
-String _$updateAssetHash() => r'debeb7b60ce5c7496926137c6a2ca83675bcadc7';
+String _$updateAssetHash() => r'0c381b09f8270a54300efd38121de50714b97570';
 
 /// See also [updateAsset].
 @ProviderFor(updateAsset)
@@ -386,7 +438,7 @@ class _UpdateAssetProviderElement extends AutoDisposeFutureProviderElement<void>
   SecurityAsset get asset => (origin as UpdateAssetProvider).asset;
 }
 
-String _$deleteAssetHash() => r'5c8175adff15ec7cbfc6e3498183b94916b280d1';
+String _$deleteAssetHash() => r'3df3ea9c9541e2125a8b40e59657d7e6ed5fda2d';
 
 /// See also [deleteAsset].
 @ProviderFor(deleteAsset)

@@ -1,60 +1,62 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:attackshield/data/repositories/repositories.dart';
 import 'package:attackshield/data/services/services.dart';
 
 part 'repository_providers.g.dart';
 
-// Repository Providers
+// ── Storage service (singleton) ───────────────────────────────────────────────
+
 @Riverpod(keepAlive: true)
-LocalStorageService localStorageService(LocalStorageServiceRef ref) {
+LocalStorageService localStorageService(Ref ref) {
   return LocalStorageService();
 }
 
+// ── Repository providers (singletons) ────────────────────────────────────────
+
 @Riverpod(keepAlive: true)
-AttackTechniqueRepository attackTechniqueRepository(
-  AttackTechniqueRepositoryRef ref,
-) {
+AttackTechniqueRepository attackTechniqueRepository(Ref ref) {
   return AttackTechniqueRepositoryImpl();
 }
 
 @Riverpod(keepAlive: true)
-CoverageRepository coverageRepository(CoverageRepositoryRef ref) {
-  final storageService = ref.watch(localStorageServiceProvider);
-  return CoverageRepositoryImpl(storageService);
+CoverageRepository coverageRepository(Ref ref) {
+  final storage = ref.watch(localStorageServiceProvider);
+  return CoverageRepositoryImpl(storage);
 }
 
 @Riverpod(keepAlive: true)
-BookmarkRepository bookmarkRepository(BookmarkRepositoryRef ref) {
-  final storageService = ref.watch(localStorageServiceProvider);
-  return BookmarkRepositoryImpl(storageService);
+BookmarkRepository bookmarkRepository(Ref ref) {
+  final storage = ref.watch(localStorageServiceProvider);
+  return BookmarkRepositoryImpl(storage);
 }
 
 @Riverpod(keepAlive: true)
-AlertRepository alertRepository(AlertRepositoryRef ref) {
-  final storageService = ref.watch(localStorageServiceProvider);
-  return AlertRepositoryImpl(storageService);
+AlertRepository alertRepository(Ref ref) {
+  final storage = ref.watch(localStorageServiceProvider);
+  return AlertRepositoryImpl(storage);
 }
 
 @Riverpod(keepAlive: true)
-AssetRepository assetRepository(AssetRepositoryRef ref) {
-  final storageService = ref.watch(localStorageServiceProvider);
-  return AssetRepositoryImpl(storageService);
+AssetRepository assetRepository(Ref ref) {
+  final storage = ref.watch(localStorageServiceProvider);
+  return AssetRepositoryImpl(storage);
 }
 
 @Riverpod(keepAlive: true)
-SimulationRepository simulationRepository(SimulationRepositoryRef ref) {
-  final storageService = ref.watch(localStorageServiceProvider);
-  return SimulationRepositoryImpl(storageService);
+OrganizationRepository organizationRepository(Ref ref) {
+  final storage = ref.watch(localStorageServiceProvider);
+  return OrganizationRepositoryImpl(storage);
 }
 
 @Riverpod(keepAlive: true)
-OrganizationRepository organizationRepository(OrganizationRepositoryRef ref) {
-  final storageService = ref.watch(localStorageServiceProvider);
-  return OrganizationRepositoryImpl(storageService);
+ReportRepository reportRepository(Ref ref) {
+  final storage = ref.watch(localStorageServiceProvider);
+  return ReportRepositoryImpl(storage);
 }
 
 @Riverpod(keepAlive: true)
-ReportRepository reportRepository(ReportRepositoryRef ref) {
-  final storageService = ref.watch(localStorageServiceProvider);
-  return ReportRepositoryImpl(storageService);
+SimulationRepository simulationRepository(Ref ref) {
+  final storage = ref.watch(localStorageServiceProvider);
+  return SimulationRepositoryImpl(storage);
 }

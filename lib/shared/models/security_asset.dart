@@ -3,18 +3,21 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'security_asset.freezed.dart';
 part 'security_asset.g.dart';
 
-/// Represents a security asset or system in the organization
+/// Criticality levels for security assets
+enum AssetCriticality { low, medium, high, critical }
+
 @freezed
 class SecurityAsset with _$SecurityAsset {
   const factory SecurityAsset({
     required String id,
     required String name,
-    required String type, // e.g., 'Server', 'Workstation', 'Network', 'Application'
-    String? description,
-    String? location,
-    String? platform,
-    @Default([]) List<String> relatedTechniques,
-    DateTime? createdAt,
+    @Default('') String description,
+    @Default('') String type,            // 'Network' | 'Server' | 'Workstation' | 'Application' | 'Cloud'
+    @Default(AssetCriticality.medium) AssetCriticality criticality,
+    @Default([]) List<String> platforms, // OS/platforms this asset runs
+    @Default([]) List<String> tags,
+    required DateTime discoveredAt,
+    DateTime? lastScanned,
   }) = _SecurityAsset;
 
   factory SecurityAsset.fromJson(Map<String, dynamic> json) =>

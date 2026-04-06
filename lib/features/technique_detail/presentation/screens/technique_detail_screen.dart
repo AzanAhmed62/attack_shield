@@ -273,7 +273,7 @@ class _HeaderCard extends StatelessWidget {
                               Theme.of(context).textTheme.headlineMedium),
                       const SizedBox(height: 4),
                       Text(technique.id,
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.bold)),
                     ],
@@ -569,7 +569,7 @@ class _SubTechCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(sub.id,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 12)),

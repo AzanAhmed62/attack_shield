@@ -6,23 +6,25 @@ part of 'theme_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$themeMode_Hash() => r'3397b5076625f2cb4f7000f5f6a23521f07c642e';
+String _$appThemeModeHash() => r'd3b12242f67b01e6252706b5890c4fdb5ca38d1e';
 
-/// Persists and exposes the current ThemeMode.
-/// Call ref.read(themeModeProvider.notifier).toggle() to switch.
+/// Manages ThemeMode with persistence.
+/// Generated provider name: appThemeModeProvider
+/// Usage: ref.watch(appThemeModeProvider) → ThemeMode
+///        ref.read(appThemeModeProvider.notifier).toggle()
 ///
-/// Copied from [ThemeMode_].
-@ProviderFor(ThemeMode_)
-final themeMode_Provider = NotifierProvider<ThemeMode_, ThemeMode>.internal(
-  ThemeMode_.new,
-  name: r'themeMode_Provider',
+/// Copied from [AppThemeMode].
+@ProviderFor(AppThemeMode)
+final appThemeModeProvider = NotifierProvider<AppThemeMode, ThemeMode>.internal(
+  AppThemeMode.new,
+  name: r'appThemeModeProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$themeMode_Hash,
+      : _$appThemeModeHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$ThemeMode_ = Notifier<ThemeMode>;
+typedef _$AppThemeMode = Notifier<ThemeMode>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -24,11 +24,11 @@ mixin _$OrganizationProfile {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   AppContext get context => throw _privateConstructorUsedError;
-  List<String>? get preferredSectors => throw _privateConstructorUsedError;
-  List<String>? get preferredPlatforms => throw _privateConstructorUsedError;
-  String? get description => throw _privateConstructorUsedError;
-  DateTime? get createdAt => throw _privateConstructorUsedError;
-  DateTime? get lastModified => throw _privateConstructorUsedError;
+  String get description => throw _privateConstructorUsedError;
+  List<String> get preferredSectors => throw _privateConstructorUsedError;
+  List<String> get preferredPlatforms => throw _privateConstructorUsedError;
+  DateTime get createdAt => throw _privateConstructorUsedError;
+  DateTime get lastModified => throw _privateConstructorUsedError;
 
   /// Serializes this OrganizationProfile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -51,11 +51,11 @@ abstract class $OrganizationProfileCopyWith<$Res> {
     String id,
     String name,
     AppContext context,
-    List<String>? preferredSectors,
-    List<String>? preferredPlatforms,
-    String? description,
-    DateTime? createdAt,
-    DateTime? lastModified,
+    String description,
+    List<String> preferredSectors,
+    List<String> preferredPlatforms,
+    DateTime createdAt,
+    DateTime lastModified,
   });
 }
 
@@ -77,11 +77,11 @@ class _$OrganizationProfileCopyWithImpl<$Res, $Val extends OrganizationProfile>
     Object? id = null,
     Object? name = null,
     Object? context = null,
-    Object? preferredSectors = freezed,
-    Object? preferredPlatforms = freezed,
-    Object? description = freezed,
-    Object? createdAt = freezed,
-    Object? lastModified = freezed,
+    Object? description = null,
+    Object? preferredSectors = null,
+    Object? preferredPlatforms = null,
+    Object? createdAt = null,
+    Object? lastModified = null,
   }) {
     return _then(
       _value.copyWith(
@@ -97,26 +97,26 @@ class _$OrganizationProfileCopyWithImpl<$Res, $Val extends OrganizationProfile>
                 ? _value.context
                 : context // ignore: cast_nullable_to_non_nullable
                       as AppContext,
-            preferredSectors: freezed == preferredSectors
-                ? _value.preferredSectors
-                : preferredSectors // ignore: cast_nullable_to_non_nullable
-                      as List<String>?,
-            preferredPlatforms: freezed == preferredPlatforms
-                ? _value.preferredPlatforms
-                : preferredPlatforms // ignore: cast_nullable_to_non_nullable
-                      as List<String>?,
-            description: freezed == description
+            description: null == description
                 ? _value.description
                 : description // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            createdAt: freezed == createdAt
+                      as String,
+            preferredSectors: null == preferredSectors
+                ? _value.preferredSectors
+                : preferredSectors // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            preferredPlatforms: null == preferredPlatforms
+                ? _value.preferredPlatforms
+                : preferredPlatforms // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            createdAt: null == createdAt
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            lastModified: freezed == lastModified
+                      as DateTime,
+            lastModified: null == lastModified
                 ? _value.lastModified
                 : lastModified // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
+                      as DateTime,
           )
           as $Val,
     );
@@ -136,11 +136,11 @@ abstract class _$$OrganizationProfileImplCopyWith<$Res>
     String id,
     String name,
     AppContext context,
-    List<String>? preferredSectors,
-    List<String>? preferredPlatforms,
-    String? description,
-    DateTime? createdAt,
-    DateTime? lastModified,
+    String description,
+    List<String> preferredSectors,
+    List<String> preferredPlatforms,
+    DateTime createdAt,
+    DateTime lastModified,
   });
 }
 
@@ -161,11 +161,11 @@ class __$$OrganizationProfileImplCopyWithImpl<$Res>
     Object? id = null,
     Object? name = null,
     Object? context = null,
-    Object? preferredSectors = freezed,
-    Object? preferredPlatforms = freezed,
-    Object? description = freezed,
-    Object? createdAt = freezed,
-    Object? lastModified = freezed,
+    Object? description = null,
+    Object? preferredSectors = null,
+    Object? preferredPlatforms = null,
+    Object? createdAt = null,
+    Object? lastModified = null,
   }) {
     return _then(
       _$OrganizationProfileImpl(
@@ -181,26 +181,26 @@ class __$$OrganizationProfileImplCopyWithImpl<$Res>
             ? _value.context
             : context // ignore: cast_nullable_to_non_nullable
                   as AppContext,
-        preferredSectors: freezed == preferredSectors
-            ? _value._preferredSectors
-            : preferredSectors // ignore: cast_nullable_to_non_nullable
-                  as List<String>?,
-        preferredPlatforms: freezed == preferredPlatforms
-            ? _value._preferredPlatforms
-            : preferredPlatforms // ignore: cast_nullable_to_non_nullable
-                  as List<String>?,
-        description: freezed == description
+        description: null == description
             ? _value.description
             : description // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        createdAt: freezed == createdAt
+                  as String,
+        preferredSectors: null == preferredSectors
+            ? _value._preferredSectors
+            : preferredSectors // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        preferredPlatforms: null == preferredPlatforms
+            ? _value._preferredPlatforms
+            : preferredPlatforms // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        createdAt: null == createdAt
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        lastModified: freezed == lastModified
+                  as DateTime,
+        lastModified: null == lastModified
             ? _value.lastModified
             : lastModified // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
+                  as DateTime,
       ),
     );
   }
@@ -212,12 +212,12 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
   const _$OrganizationProfileImpl({
     required this.id,
     required this.name,
-    required this.context,
-    final List<String>? preferredSectors,
-    final List<String>? preferredPlatforms,
-    this.description,
-    this.createdAt,
-    this.lastModified,
+    this.context = AppContext.personalLearning,
+    this.description = '',
+    final List<String> preferredSectors = const [],
+    final List<String> preferredPlatforms = const [],
+    required this.createdAt,
+    required this.lastModified,
   }) : _preferredSectors = preferredSectors,
        _preferredPlatforms = preferredPlatforms;
 
@@ -229,39 +229,39 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
   @override
   final String name;
   @override
+  @JsonKey()
   final AppContext context;
-  final List<String>? _preferredSectors;
   @override
-  List<String>? get preferredSectors {
-    final value = _preferredSectors;
-    if (value == null) return null;
+  @JsonKey()
+  final String description;
+  final List<String> _preferredSectors;
+  @override
+  @JsonKey()
+  List<String> get preferredSectors {
     if (_preferredSectors is EqualUnmodifiableListView)
       return _preferredSectors;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
+    return EqualUnmodifiableListView(_preferredSectors);
   }
 
-  final List<String>? _preferredPlatforms;
+  final List<String> _preferredPlatforms;
   @override
-  List<String>? get preferredPlatforms {
-    final value = _preferredPlatforms;
-    if (value == null) return null;
+  @JsonKey()
+  List<String> get preferredPlatforms {
     if (_preferredPlatforms is EqualUnmodifiableListView)
       return _preferredPlatforms;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
+    return EqualUnmodifiableListView(_preferredPlatforms);
   }
 
   @override
-  final String? description;
+  final DateTime createdAt;
   @override
-  final DateTime? createdAt;
-  @override
-  final DateTime? lastModified;
+  final DateTime lastModified;
 
   @override
   String toString() {
-    return 'OrganizationProfile(id: $id, name: $name, context: $context, preferredSectors: $preferredSectors, preferredPlatforms: $preferredPlatforms, description: $description, createdAt: $createdAt, lastModified: $lastModified)';
+    return 'OrganizationProfile(id: $id, name: $name, context: $context, description: $description, preferredSectors: $preferredSectors, preferredPlatforms: $preferredPlatforms, createdAt: $createdAt, lastModified: $lastModified)';
   }
 
   @override
@@ -272,6 +272,8 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.context, context) || other.context == context) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
             const DeepCollectionEquality().equals(
               other._preferredSectors,
               _preferredSectors,
@@ -280,8 +282,6 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
               other._preferredPlatforms,
               _preferredPlatforms,
             ) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.lastModified, lastModified) ||
@@ -295,9 +295,9 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
     id,
     name,
     context,
+    description,
     const DeepCollectionEquality().hash(_preferredSectors),
     const DeepCollectionEquality().hash(_preferredPlatforms),
-    description,
     createdAt,
     lastModified,
   );
@@ -323,12 +323,12 @@ abstract class _OrganizationProfile implements OrganizationProfile {
   const factory _OrganizationProfile({
     required final String id,
     required final String name,
-    required final AppContext context,
-    final List<String>? preferredSectors,
-    final List<String>? preferredPlatforms,
-    final String? description,
-    final DateTime? createdAt,
-    final DateTime? lastModified,
+    final AppContext context,
+    final String description,
+    final List<String> preferredSectors,
+    final List<String> preferredPlatforms,
+    required final DateTime createdAt,
+    required final DateTime lastModified,
   }) = _$OrganizationProfileImpl;
 
   factory _OrganizationProfile.fromJson(Map<String, dynamic> json) =
@@ -341,15 +341,15 @@ abstract class _OrganizationProfile implements OrganizationProfile {
   @override
   AppContext get context;
   @override
-  List<String>? get preferredSectors;
+  String get description;
   @override
-  List<String>? get preferredPlatforms;
+  List<String> get preferredSectors;
   @override
-  String? get description;
+  List<String> get preferredPlatforms;
   @override
-  DateTime? get createdAt;
+  DateTime get createdAt;
   @override
-  DateTime? get lastModified;
+  DateTime get lastModified;
 
   /// Create a copy of OrganizationProfile
   /// with the given fields replaced by the non-null parameter values.

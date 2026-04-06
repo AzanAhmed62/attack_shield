@@ -144,8 +144,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   _AttackExplainerPage(),
                   _UseCasePage(
                     selectedUseCase: _selectedUseCase,
-                    onSelected: (uc) =>
-                        setState(() => _selectedUseCase = uc),
+                    onSelected: (uc) => setState(() => _selectedUseCase = uc),
                   ),
                 ],
               ),
@@ -193,7 +192,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                       ),
                       child: const Text(
                         'Get Started →',
@@ -247,14 +248,14 @@ class _WelcomePage extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Defensive Cybersecurity Intelligence',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.grey,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
           // Feature pills
-          Wrap(
+          const Wrap(
             spacing: 10,
             runSpacing: 10,
             alignment: WrapAlignment.center,
@@ -291,11 +292,14 @@ class _FeaturePill extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: AppTheme.primaryColor),
           const SizedBox(width: 6),
-          Text(label,
-              style: const TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.primaryColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -321,8 +325,11 @@ class _AttackExplainerPage extends StatelessWidget {
                   color: AppTheme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.info_outline,
-                    color: AppTheme.primaryColor, size: 32),
+                child: const Icon(
+                  Icons.info_outline,
+                  color: AppTheme.primaryColor,
+                  size: 32,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -340,28 +347,28 @@ class _AttackExplainerPage extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
-          _ExplainerCard(
+          const _ExplainerCard(
             icon: Icons.map,
             color: AppTheme.primaryColor,
             title: '14 Tactics',
             body:
                 'From Reconnaissance and Initial Access through to Impact — the full attacker kill-chain.',
           ),
-          _ExplainerCard(
+          const _ExplainerCard(
             icon: Icons.category,
             color: AppTheme.warningColor,
             title: '110+ Techniques',
             body:
                 'Specific attack methods with detection ideas, mitigations, and affected platforms.',
           ),
-          _ExplainerCard(
+          const _ExplainerCard(
             icon: Icons.account_tree,
             color: AppTheme.successColor,
             title: 'Sub-Techniques',
             body:
                 'Detailed variants of parent techniques — e.g. T1566.001 Spearphishing Attachment.',
           ),
-          _ExplainerCard(
+          const _ExplainerCard(
             icon: Icons.shield,
             color: AppTheme.accentColor,
             title: 'Defensive Focus',
@@ -406,17 +413,21 @@ class _ExplainerCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(body,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontSize: 13)),
+                Text(
+                  body,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -432,10 +443,7 @@ class _UseCasePage extends StatelessWidget {
   final String? selectedUseCase;
   final Function(String) onSelected;
 
-  const _UseCasePage({
-    required this.selectedUseCase,
-    required this.onSelected,
-  });
+  const _UseCasePage({required this.selectedUseCase, required this.onSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -510,8 +518,9 @@ class _UseCaseOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        selected ? AppTheme.primaryColor : Colors.grey.withValues(alpha: 0.5);
+    final color = selected
+        ? AppTheme.primaryColor
+        : Colors.grey.withValues(alpha: 0.5);
 
     return GestureDetector(
       onTap: onTap,
@@ -556,10 +565,9 @@ class _UseCaseOption extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontSize: 12),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(fontSize: 12),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

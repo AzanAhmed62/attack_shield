@@ -7,9 +7,11 @@ part of 'organization_providers.dart';
 // **************************************************************************
 
 String _$organizationProfileHash() =>
-    r'340546b7433bb4fd27aa69247814aabb5098be61';
+    r'71968d58097a2f2e8671973265d8c1c947b5adba';
 
-/// See also [organizationProfile].
+/// Current organization profile. Returns null if not set (triggers onboarding).
+///
+/// Copied from [organizationProfile].
 @ProviderFor(organizationProfile)
 final organizationProfileProvider =
     AutoDisposeFutureProvider<OrganizationProfile?>.internal(
@@ -26,43 +28,8 @@ final organizationProfileProvider =
 // ignore: unused_element
 typedef OrganizationProfileRef =
     AutoDisposeFutureProviderRef<OrganizationProfile?>;
-String _$organizationNameHash() => r'd5269a43d74014926bf03a781ba057f0c67be904';
-
-/// See also [organizationName].
-@ProviderFor(organizationName)
-final organizationNameProvider = AutoDisposeFutureProvider<String>.internal(
-  organizationName,
-  name: r'organizationNameProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$organizationNameHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef OrganizationNameRef = AutoDisposeFutureProviderRef<String>;
-String _$organizationContextHash() =>
-    r'319999d7c494f4079a3847dee0dd9b7ae0d7fcd3';
-
-/// See also [organizationContext].
-@ProviderFor(organizationContext)
-final organizationContextProvider = AutoDisposeFutureProvider<String>.internal(
-  organizationContext,
-  name: r'organizationContextProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$organizationContextHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef OrganizationContextRef = AutoDisposeFutureProviderRef<String>;
-String _$createOrganizationProfileHash() =>
-    r'd385b5b2fcf7299f4982f493f048f542eaf07927';
+String _$updateOrganizationProfileHash() =>
+    r'8af61d64f4687fa1048cd9bad5af35254762319d';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -85,143 +52,24 @@ class _SystemHash {
   }
 }
 
-/// See also [createOrganizationProfile].
-@ProviderFor(createOrganizationProfile)
-const createOrganizationProfileProvider = CreateOrganizationProfileFamily();
-
-/// See also [createOrganizationProfile].
-class CreateOrganizationProfileFamily extends Family<AsyncValue<void>> {
-  /// See also [createOrganizationProfile].
-  const CreateOrganizationProfileFamily();
-
-  /// See also [createOrganizationProfile].
-  CreateOrganizationProfileProvider call(OrganizationProfile profile) {
-    return CreateOrganizationProfileProvider(profile);
-  }
-
-  @override
-  CreateOrganizationProfileProvider getProviderOverride(
-    covariant CreateOrganizationProfileProvider provider,
-  ) {
-    return call(provider.profile);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'createOrganizationProfileProvider';
-}
-
-/// See also [createOrganizationProfile].
-class CreateOrganizationProfileProvider
-    extends AutoDisposeFutureProvider<void> {
-  /// See also [createOrganizationProfile].
-  CreateOrganizationProfileProvider(OrganizationProfile profile)
-    : this._internal(
-        (ref) => createOrganizationProfile(
-          ref as CreateOrganizationProfileRef,
-          profile,
-        ),
-        from: createOrganizationProfileProvider,
-        name: r'createOrganizationProfileProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$createOrganizationProfileHash,
-        dependencies: CreateOrganizationProfileFamily._dependencies,
-        allTransitiveDependencies:
-            CreateOrganizationProfileFamily._allTransitiveDependencies,
-        profile: profile,
-      );
-
-  CreateOrganizationProfileProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.profile,
-  }) : super.internal();
-
-  final OrganizationProfile profile;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(CreateOrganizationProfileRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CreateOrganizationProfileProvider._internal(
-        (ref) => create(ref as CreateOrganizationProfileRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        profile: profile,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _CreateOrganizationProfileProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is CreateOrganizationProfileProvider &&
-        other.profile == profile;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, profile.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin CreateOrganizationProfileRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `profile` of this provider.
-  OrganizationProfile get profile;
-}
-
-class _CreateOrganizationProfileProviderElement
-    extends AutoDisposeFutureProviderElement<void>
-    with CreateOrganizationProfileRef {
-  _CreateOrganizationProfileProviderElement(super.provider);
-
-  @override
-  OrganizationProfile get profile =>
-      (origin as CreateOrganizationProfileProvider).profile;
-}
-
-String _$updateOrganizationProfileHash() =>
-    r'028af5f1b17273a6245d9baa4c2153e2fbc2a75b';
-
-/// See also [updateOrganizationProfile].
+/// Save or update the organization profile.
+///
+/// Copied from [updateOrganizationProfile].
 @ProviderFor(updateOrganizationProfile)
 const updateOrganizationProfileProvider = UpdateOrganizationProfileFamily();
 
-/// See also [updateOrganizationProfile].
+/// Save or update the organization profile.
+///
+/// Copied from [updateOrganizationProfile].
 class UpdateOrganizationProfileFamily extends Family<AsyncValue<void>> {
-  /// See also [updateOrganizationProfile].
+  /// Save or update the organization profile.
+  ///
+  /// Copied from [updateOrganizationProfile].
   const UpdateOrganizationProfileFamily();
 
-  /// See also [updateOrganizationProfile].
+  /// Save or update the organization profile.
+  ///
+  /// Copied from [updateOrganizationProfile].
   UpdateOrganizationProfileProvider call(OrganizationProfile profile) {
     return UpdateOrganizationProfileProvider(profile);
   }
@@ -248,10 +96,14 @@ class UpdateOrganizationProfileFamily extends Family<AsyncValue<void>> {
   String? get name => r'updateOrganizationProfileProvider';
 }
 
-/// See also [updateOrganizationProfile].
+/// Save or update the organization profile.
+///
+/// Copied from [updateOrganizationProfile].
 class UpdateOrganizationProfileProvider
     extends AutoDisposeFutureProvider<void> {
-  /// See also [updateOrganizationProfile].
+  /// Save or update the organization profile.
+  ///
+  /// Copied from [updateOrganizationProfile].
   UpdateOrganizationProfileProvider(OrganizationProfile profile)
     : this._internal(
         (ref) => updateOrganizationProfile(
@@ -336,5 +188,26 @@ class _UpdateOrganizationProfileProviderElement
       (origin as UpdateOrganizationProfileProvider).profile;
 }
 
+String _$deleteOrganizationProfileHash() =>
+    r'4c691dc5543479fc197a63a0f3538097d1fbe9a3';
+
+/// Delete the organization profile (forces onboarding on next cold start).
+///
+/// Copied from [deleteOrganizationProfile].
+@ProviderFor(deleteOrganizationProfile)
+final deleteOrganizationProfileProvider =
+    AutoDisposeFutureProvider<void>.internal(
+      deleteOrganizationProfile,
+      name: r'deleteOrganizationProfileProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$deleteOrganizationProfileHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef DeleteOrganizationProfileRef = AutoDisposeFutureProviderRef<void>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

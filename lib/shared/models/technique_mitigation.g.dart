@@ -11,9 +11,14 @@ _$TechniqueMitigationImpl _$$TechniqueMitigationImplFromJson(
 ) => _$TechniqueMitigationImpl(
   id: json['id'] as String,
   techniqueId: json['techniqueId'] as String,
-  mitigationId: json['mitigationId'] as String,
-  description: json['description'] as String,
-  type: json['type'] as String?,
+  name: json['name'] as String,
+  description: json['description'] as String? ?? '',
+  mitreId: json['mitreId'] as String?,
+  controlFrameworks:
+      (json['controlFrameworks'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$$TechniqueMitigationImplToJson(
@@ -21,7 +26,8 @@ Map<String, dynamic> _$$TechniqueMitigationImplToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'techniqueId': instance.techniqueId,
-  'mitigationId': instance.mitigationId,
+  'name': instance.name,
   'description': instance.description,
-  'type': instance.type,
+  'mitreId': instance.mitreId,
+  'controlFrameworks': instance.controlFrameworks,
 };

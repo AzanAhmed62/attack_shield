@@ -1,21 +1,20 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:attackshield/core/constants/app_context.dart';
 
 part 'organization_profile.freezed.dart';
 part 'organization_profile.g.dart';
-
-enum AppContext { personalLearning, lab, organizational }
 
 @freezed
 class OrganizationProfile with _$OrganizationProfile {
   const factory OrganizationProfile({
     required String id,
     required String name,
-    required AppContext context,
-    List<String>? preferredSectors,
-    List<String>? preferredPlatforms,
-    String? description,
-    DateTime? createdAt,
-    DateTime? lastModified,
+    @Default(AppContext.personalLearning) AppContext context,
+    @Default('') String description,
+    @Default([]) List<String> preferredSectors,
+    @Default([]) List<String> preferredPlatforms,
+    required DateTime createdAt,
+    required DateTime lastModified,
   }) = _OrganizationProfile;
 
   factory OrganizationProfile.fromJson(Map<String, dynamic> json) =>

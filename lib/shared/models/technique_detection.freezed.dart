@@ -23,9 +23,10 @@ TechniqueDetection _$TechniqueDetectionFromJson(Map<String, dynamic> json) {
 mixin _$TechniqueDetection {
   String get id => throw _privateConstructorUsedError;
   String get techniqueId => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  String? get source => throw _privateConstructorUsedError;
-  String? get datasource => throw _privateConstructorUsedError;
+  List<String> get dataSourcesRequired => throw _privateConstructorUsedError;
+  List<String> get toolsRecommended => throw _privateConstructorUsedError;
 
   /// Serializes this TechniqueDetection to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -47,9 +48,10 @@ abstract class $TechniqueDetectionCopyWith<$Res> {
   $Res call({
     String id,
     String techniqueId,
+    String name,
     String description,
-    String? source,
-    String? datasource,
+    List<String> dataSourcesRequired,
+    List<String> toolsRecommended,
   });
 }
 
@@ -70,9 +72,10 @@ class _$TechniqueDetectionCopyWithImpl<$Res, $Val extends TechniqueDetection>
   $Res call({
     Object? id = null,
     Object? techniqueId = null,
+    Object? name = null,
     Object? description = null,
-    Object? source = freezed,
-    Object? datasource = freezed,
+    Object? dataSourcesRequired = null,
+    Object? toolsRecommended = null,
   }) {
     return _then(
       _value.copyWith(
@@ -84,18 +87,22 @@ class _$TechniqueDetectionCopyWithImpl<$Res, $Val extends TechniqueDetection>
                 ? _value.techniqueId
                 : techniqueId // ignore: cast_nullable_to_non_nullable
                       as String,
+            name: null == name
+                ? _value.name
+                : name // ignore: cast_nullable_to_non_nullable
+                      as String,
             description: null == description
                 ? _value.description
                 : description // ignore: cast_nullable_to_non_nullable
                       as String,
-            source: freezed == source
-                ? _value.source
-                : source // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            datasource: freezed == datasource
-                ? _value.datasource
-                : datasource // ignore: cast_nullable_to_non_nullable
-                      as String?,
+            dataSourcesRequired: null == dataSourcesRequired
+                ? _value.dataSourcesRequired
+                : dataSourcesRequired // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            toolsRecommended: null == toolsRecommended
+                ? _value.toolsRecommended
+                : toolsRecommended // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
           )
           as $Val,
     );
@@ -114,9 +121,10 @@ abstract class _$$TechniqueDetectionImplCopyWith<$Res>
   $Res call({
     String id,
     String techniqueId,
+    String name,
     String description,
-    String? source,
-    String? datasource,
+    List<String> dataSourcesRequired,
+    List<String> toolsRecommended,
   });
 }
 
@@ -136,9 +144,10 @@ class __$$TechniqueDetectionImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? techniqueId = null,
+    Object? name = null,
     Object? description = null,
-    Object? source = freezed,
-    Object? datasource = freezed,
+    Object? dataSourcesRequired = null,
+    Object? toolsRecommended = null,
   }) {
     return _then(
       _$TechniqueDetectionImpl(
@@ -150,18 +159,22 @@ class __$$TechniqueDetectionImplCopyWithImpl<$Res>
             ? _value.techniqueId
             : techniqueId // ignore: cast_nullable_to_non_nullable
                   as String,
+        name: null == name
+            ? _value.name
+            : name // ignore: cast_nullable_to_non_nullable
+                  as String,
         description: null == description
             ? _value.description
             : description // ignore: cast_nullable_to_non_nullable
                   as String,
-        source: freezed == source
-            ? _value.source
-            : source // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        datasource: freezed == datasource
-            ? _value.datasource
-            : datasource // ignore: cast_nullable_to_non_nullable
-                  as String?,
+        dataSourcesRequired: null == dataSourcesRequired
+            ? _value._dataSourcesRequired
+            : dataSourcesRequired // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        toolsRecommended: null == toolsRecommended
+            ? _value._toolsRecommended
+            : toolsRecommended // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
       ),
     );
   }
@@ -173,10 +186,12 @@ class _$TechniqueDetectionImpl implements _TechniqueDetection {
   const _$TechniqueDetectionImpl({
     required this.id,
     required this.techniqueId,
-    required this.description,
-    this.source,
-    this.datasource,
-  });
+    required this.name,
+    this.description = '',
+    final List<String> dataSourcesRequired = const [],
+    final List<String> toolsRecommended = const [],
+  }) : _dataSourcesRequired = dataSourcesRequired,
+       _toolsRecommended = toolsRecommended;
 
   factory _$TechniqueDetectionImpl.fromJson(Map<String, dynamic> json) =>
       _$$TechniqueDetectionImplFromJson(json);
@@ -186,15 +201,33 @@ class _$TechniqueDetectionImpl implements _TechniqueDetection {
   @override
   final String techniqueId;
   @override
+  final String name;
+  @override
+  @JsonKey()
   final String description;
+  final List<String> _dataSourcesRequired;
   @override
-  final String? source;
+  @JsonKey()
+  List<String> get dataSourcesRequired {
+    if (_dataSourcesRequired is EqualUnmodifiableListView)
+      return _dataSourcesRequired;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_dataSourcesRequired);
+  }
+
+  final List<String> _toolsRecommended;
   @override
-  final String? datasource;
+  @JsonKey()
+  List<String> get toolsRecommended {
+    if (_toolsRecommended is EqualUnmodifiableListView)
+      return _toolsRecommended;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_toolsRecommended);
+  }
 
   @override
   String toString() {
-    return 'TechniqueDetection(id: $id, techniqueId: $techniqueId, description: $description, source: $source, datasource: $datasource)';
+    return 'TechniqueDetection(id: $id, techniqueId: $techniqueId, name: $name, description: $description, dataSourcesRequired: $dataSourcesRequired, toolsRecommended: $toolsRecommended)';
   }
 
   @override
@@ -205,11 +238,17 @@ class _$TechniqueDetectionImpl implements _TechniqueDetection {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.techniqueId, techniqueId) ||
                 other.techniqueId == techniqueId) &&
+            (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
-            (identical(other.source, source) || other.source == source) &&
-            (identical(other.datasource, datasource) ||
-                other.datasource == datasource));
+            const DeepCollectionEquality().equals(
+              other._dataSourcesRequired,
+              _dataSourcesRequired,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._toolsRecommended,
+              _toolsRecommended,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -218,9 +257,10 @@ class _$TechniqueDetectionImpl implements _TechniqueDetection {
     runtimeType,
     id,
     techniqueId,
+    name,
     description,
-    source,
-    datasource,
+    const DeepCollectionEquality().hash(_dataSourcesRequired),
+    const DeepCollectionEquality().hash(_toolsRecommended),
   );
 
   /// Create a copy of TechniqueDetection
@@ -244,9 +284,10 @@ abstract class _TechniqueDetection implements TechniqueDetection {
   const factory _TechniqueDetection({
     required final String id,
     required final String techniqueId,
-    required final String description,
-    final String? source,
-    final String? datasource,
+    required final String name,
+    final String description,
+    final List<String> dataSourcesRequired,
+    final List<String> toolsRecommended,
   }) = _$TechniqueDetectionImpl;
 
   factory _TechniqueDetection.fromJson(Map<String, dynamic> json) =
@@ -257,11 +298,13 @@ abstract class _TechniqueDetection implements TechniqueDetection {
   @override
   String get techniqueId;
   @override
+  String get name;
+  @override
   String get description;
   @override
-  String? get source;
+  List<String> get dataSourcesRequired;
   @override
-  String? get datasource;
+  List<String> get toolsRecommended;
 
   /// Create a copy of TechniqueDetection
   /// with the given fields replaced by the non-null parameter values.

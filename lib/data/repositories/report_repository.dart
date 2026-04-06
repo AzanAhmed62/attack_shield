@@ -4,61 +4,55 @@ import '../services/services.dart';
 
 abstract class ReportRepository {
   Future<List<ReportSummary>> getAllReports();
-  Future<ReportSummary?> getReportById(String id);
-  Future<void> createReport(ReportSummary report);
-  Future<void> deleteReport(String id);
   Future<ReportSummary?> getLatestReport();
+  Future<void> saveReport(ReportSummary report);
+  Future<void> deleteReport(String id);
+  Future<void> clearAllReports();
 }
 
 class ReportRepositoryImpl implements ReportRepository {
   final LocalStorageService _storageService;
-  static const String _storageKey = 'reports';
+  static const String _key = 'reports';
 
   ReportRepositoryImpl(this._storageService);
 
   @override
   Future<List<ReportSummary>> getAllReports() async {
     try {
-      final reportsJson = _storageService.read<List>(_storageKey) ?? [];
-      return reportsJson
-          .map((e) => ReportSummary.fromJson(e as Map<String, dynamic>))
+      final data = _storageService.read<List>(_key);
+      if (data == null) return [];
+      final reports = data
+          .map((e) => ReportSummary.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
+      // Sort newest first
+      reports.sort((a, b) {
+        final aDate = a.generatedAt ?? DateTime(2000);
+        final bDate = b.generatedAt ?? DateTime(2000);
+        return bDate.compareTo(aDate);
+      });
+      return reports;
     } catch (e) {
       throw DataException(message: 'Failed to fetch reports: $e');
     }
   }
 
   @override
-  Future<ReportSummary?> getReportById(String id) async {
-    try {
-      final reports = await getAllReports();
-      try {
-        return reports.firstWhere((r) => r.id == id);
-      } catch (e) {
-        return null;
-      }
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch report: $e');
-    }
+  Future<ReportSummary?> getLatestReport() async {
+    final reports = await getAllReports();
+    return reports.isEmpty ? null : reports.first;
   }
 
   @override
-  Future<void> createReport(ReportSummary report) async {
+  Future<void> saveReport(ReportSummary report) async {
     try {
       final reports = await getAllReports();
-      reports.add(report);
-      final sorted = reports
-        ..sort(
-          (a, b) => (b.generatedAt ?? DateTime.now()).compareTo(
-            a.generatedAt ?? DateTime.now(),
-          ),
-        );
+      reports.insert(0, report); // newest first
       await _storageService.write(
-        _storageKey,
-        sorted.map((r) => r.toJson()).toList(),
+        _key,
+        reports.map((r) => r.toJson()).toList(),
       );
     } catch (e) {
-      throw DataException(message: 'Failed to create report: $e');
+      throw DataException(message: 'Failed to save report: $e');
     }
   }
 
@@ -68,7 +62,7 @@ class ReportRepositoryImpl implements ReportRepository {
       final reports = await getAllReports();
       reports.removeWhere((r) => r.id == id);
       await _storageService.write(
-        _storageKey,
+        _key,
         reports.map((r) => r.toJson()).toList(),
       );
     } catch (e) {
@@ -77,18 +71,11 @@ class ReportRepositoryImpl implements ReportRepository {
   }
 
   @override
-  Future<ReportSummary?> getLatestReport() async {
+  Future<void> clearAllReports() async {
     try {
-      final reports = await getAllReports();
-      if (reports.isEmpty) return null;
-      reports.sort(
-        (a, b) => (b.generatedAt ?? DateTime.now()).compareTo(
-          a.generatedAt ?? DateTime.now(),
-        ),
-      );
-      return reports.first;
+      await _storageService.remove(_key);
     } catch (e) {
-      throw DataException(message: 'Failed to fetch latest report: $e');
+      throw DataException(message: 'Failed to clear reports: $e');
     }
   }
 }

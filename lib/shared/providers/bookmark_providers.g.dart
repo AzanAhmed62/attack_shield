@@ -6,7 +6,7 @@ part of 'bookmark_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$allBookmarksHash() => r'4de73274b2f18af1b9637ccee925362b8fae12ff';
+String _$allBookmarksHash() => r'bf3a31588b8731e68b66716a9eb3c9b6117f9b3e';
 
 /// See also [allBookmarks].
 @ProviderFor(allBookmarks)
@@ -25,7 +25,7 @@ final allBookmarksProvider =
 // ignore: unused_element
 typedef AllBookmarksRef = AutoDisposeFutureProviderRef<List<BookmarkItem>>;
 String _$isTechniqueBookmarkedHash() =>
-    r'3457da5baa0512208610d3b4057890a9cb3a39b3';
+    r'e0f68e8a67996ae33f724c1c1030b4a1416d10bd';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -48,16 +48,24 @@ class _SystemHash {
   }
 }
 
-/// See also [isTechniqueBookmarked].
+/// Returns true if a technique is bookmarked.
+///
+/// Copied from [isTechniqueBookmarked].
 @ProviderFor(isTechniqueBookmarked)
 const isTechniqueBookmarkedProvider = IsTechniqueBookmarkedFamily();
 
-/// See also [isTechniqueBookmarked].
+/// Returns true if a technique is bookmarked.
+///
+/// Copied from [isTechniqueBookmarked].
 class IsTechniqueBookmarkedFamily extends Family<AsyncValue<bool>> {
-  /// See also [isTechniqueBookmarked].
+  /// Returns true if a technique is bookmarked.
+  ///
+  /// Copied from [isTechniqueBookmarked].
   const IsTechniqueBookmarkedFamily();
 
-  /// See also [isTechniqueBookmarked].
+  /// Returns true if a technique is bookmarked.
+  ///
+  /// Copied from [isTechniqueBookmarked].
   IsTechniqueBookmarkedProvider call(String techniqueId) {
     return IsTechniqueBookmarkedProvider(techniqueId);
   }
@@ -84,9 +92,13 @@ class IsTechniqueBookmarkedFamily extends Family<AsyncValue<bool>> {
   String? get name => r'isTechniqueBookmarkedProvider';
 }
 
-/// See also [isTechniqueBookmarked].
+/// Returns true if a technique is bookmarked.
+///
+/// Copied from [isTechniqueBookmarked].
 class IsTechniqueBookmarkedProvider extends AutoDisposeFutureProvider<bool> {
-  /// See also [isTechniqueBookmarked].
+  /// Returns true if a technique is bookmarked.
+  ///
+  /// Copied from [isTechniqueBookmarked].
   IsTechniqueBookmarkedProvider(String techniqueId)
     : this._internal(
         (ref) =>
@@ -169,7 +181,7 @@ class _IsTechniqueBookmarkedProviderElement
       (origin as IsTechniqueBookmarkedProvider).techniqueId;
 }
 
-String _$addBookmarkHash() => r'8bbc2a6448d363ac4a2d30c3598f826a4524252c';
+String _$addBookmarkHash() => r'85427438ff15b0876185bd2c09a35cd207d7f0ac';
 
 /// See also [addBookmark].
 @ProviderFor(addBookmark)
@@ -181,23 +193,15 @@ class AddBookmarkFamily extends Family<AsyncValue<void>> {
   const AddBookmarkFamily();
 
   /// See also [addBookmark].
-  AddBookmarkProvider call(
-    String techniqueId,
-    String techniqueName, {
-    String? notes,
-  }) {
-    return AddBookmarkProvider(techniqueId, techniqueName, notes: notes);
+  AddBookmarkProvider call(String techniqueId, String techniqueName) {
+    return AddBookmarkProvider(techniqueId, techniqueName);
   }
 
   @override
   AddBookmarkProvider getProviderOverride(
     covariant AddBookmarkProvider provider,
   ) {
-    return call(
-      provider.techniqueId,
-      provider.techniqueName,
-      notes: provider.notes,
-    );
+    return call(provider.techniqueId, provider.techniqueName);
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -218,14 +222,9 @@ class AddBookmarkFamily extends Family<AsyncValue<void>> {
 /// See also [addBookmark].
 class AddBookmarkProvider extends AutoDisposeFutureProvider<void> {
   /// See also [addBookmark].
-  AddBookmarkProvider(String techniqueId, String techniqueName, {String? notes})
+  AddBookmarkProvider(String techniqueId, String techniqueName)
     : this._internal(
-        (ref) => addBookmark(
-          ref as AddBookmarkRef,
-          techniqueId,
-          techniqueName,
-          notes: notes,
-        ),
+        (ref) => addBookmark(ref as AddBookmarkRef, techniqueId, techniqueName),
         from: addBookmarkProvider,
         name: r'addBookmarkProvider',
         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -235,7 +234,6 @@ class AddBookmarkProvider extends AutoDisposeFutureProvider<void> {
         allTransitiveDependencies: AddBookmarkFamily._allTransitiveDependencies,
         techniqueId: techniqueId,
         techniqueName: techniqueName,
-        notes: notes,
       );
 
   AddBookmarkProvider._internal(
@@ -247,12 +245,10 @@ class AddBookmarkProvider extends AutoDisposeFutureProvider<void> {
     required super.from,
     required this.techniqueId,
     required this.techniqueName,
-    required this.notes,
   }) : super.internal();
 
   final String techniqueId;
   final String techniqueName;
-  final String? notes;
 
   @override
   Override overrideWith(
@@ -269,7 +265,6 @@ class AddBookmarkProvider extends AutoDisposeFutureProvider<void> {
         debugGetCreateSourceHash: null,
         techniqueId: techniqueId,
         techniqueName: techniqueName,
-        notes: notes,
       ),
     );
   }
@@ -283,8 +278,7 @@ class AddBookmarkProvider extends AutoDisposeFutureProvider<void> {
   bool operator ==(Object other) {
     return other is AddBookmarkProvider &&
         other.techniqueId == techniqueId &&
-        other.techniqueName == techniqueName &&
-        other.notes == notes;
+        other.techniqueName == techniqueName;
   }
 
   @override
@@ -292,7 +286,6 @@ class AddBookmarkProvider extends AutoDisposeFutureProvider<void> {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, techniqueId.hashCode);
     hash = _SystemHash.combine(hash, techniqueName.hashCode);
-    hash = _SystemHash.combine(hash, notes.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -306,9 +299,6 @@ mixin AddBookmarkRef on AutoDisposeFutureProviderRef<void> {
 
   /// The parameter `techniqueName` of this provider.
   String get techniqueName;
-
-  /// The parameter `notes` of this provider.
-  String? get notes;
 }
 
 class _AddBookmarkProviderElement extends AutoDisposeFutureProviderElement<void>
@@ -319,11 +309,9 @@ class _AddBookmarkProviderElement extends AutoDisposeFutureProviderElement<void>
   String get techniqueId => (origin as AddBookmarkProvider).techniqueId;
   @override
   String get techniqueName => (origin as AddBookmarkProvider).techniqueName;
-  @override
-  String? get notes => (origin as AddBookmarkProvider).notes;
 }
 
-String _$removeBookmarkHash() => r'028f2aab4c60c506ffc9fddc1b36c143f0d08289';
+String _$removeBookmarkHash() => r'c14b6f0594aa74246f852c0ae2d81e3d1ec9d85c';
 
 /// See also [removeBookmark].
 @ProviderFor(removeBookmark)
@@ -444,7 +432,7 @@ class _RemoveBookmarkProviderElement
 }
 
 String _$updateBookmarkNotesHash() =>
-    r'47364239797f4b405aa6dfc616e8a7fffd792c82';
+    r'10e37eb4b90f1e66fd65c45e8e62b3d63b2ab3b7';
 
 /// See also [updateBookmarkNotes].
 @ProviderFor(updateBookmarkNotes)
@@ -580,7 +568,7 @@ class _UpdateBookmarkNotesProviderElement
   String get notes => (origin as UpdateBookmarkNotesProvider).notes;
 }
 
-String _$clearAllBookmarksHash() => r'1c60245816a73605ef521a811b9d7cfcf257c6ff';
+String _$clearAllBookmarksHash() => r'cb05212ffa9c4c90f63624f4f4dd4ed092c22dde';
 
 /// See also [clearAllBookmarks].
 @ProviderFor(clearAllBookmarks)
