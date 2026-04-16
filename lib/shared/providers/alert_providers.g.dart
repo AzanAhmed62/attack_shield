@@ -469,6 +469,23 @@ class _DeleteAlertProviderElement extends AutoDisposeFutureProviderElement<void>
   String get id => (origin as DeleteAlertProvider).id;
 }
 
+String _$clearAllAlertsHash() => r'9befc6e2cf62cb3e214c27cd11c2c96ddad439c8';
+
+/// See also [clearAllAlerts].
+@ProviderFor(clearAllAlerts)
+final clearAllAlertsProvider = AutoDisposeFutureProvider<void>.internal(
+  clearAllAlerts,
+  name: r'clearAllAlertsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$clearAllAlertsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ClearAllAlertsRef = AutoDisposeFutureProviderRef<void>;
 String _$alertSearchQueryHash() => r'8833276897fb2da32e8c5a06f5f71467434c7b34';
 
 /// Search query for the alerts screen.

@@ -9,6 +9,7 @@ class ReportSummary with _$ReportSummary {
     required String id,
     required String title,
     @Default(0) int totalTechniquesReviewed,
+    @Default(0.0) double riskScore,
     @Default(0.0) double coveragePercentage,
     @Default([]) List<String> topRiskyTechniques,
     @Default([]) List<String> unresolvedGaps,

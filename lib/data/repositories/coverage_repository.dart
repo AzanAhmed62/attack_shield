@@ -8,6 +8,7 @@ abstract class CoverageRepository {
   Future<CoverageStatus?> getCoverageStatus(String techniqueId);
   Future<void> updateCoverageStatus(CoverageStatus status);
   Future<void> deleteCoverageStatus(String techniqueId);
+  Future<void> clearAllCoverageStatuses();
   Future<double> calculateCoveragePercentage();
   Future<Map<String, int>> getCoverageBreakdown();
 }
@@ -83,6 +84,15 @@ class CoverageRepositoryImpl implements CoverageRepository {
       );
     } catch (e) {
       throw DataException(message: 'Failed to delete coverage status: $e');
+    }
+  }
+
+  @override
+  Future<void> clearAllCoverageStatuses() async {
+    try {
+      await _storageService.remove(AppConstants.storageKeyCoverage);
+    } catch (e) {
+      throw DataException(message: 'Failed to clear coverage statuses: $e');
     }
   }
 

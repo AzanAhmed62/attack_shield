@@ -66,3 +66,12 @@ Future<void> deleteAsset(Ref ref, String id) async {
   ref.invalidate(assetCountByTypeProvider);
   ref.invalidate(criticalAssetCountProvider);
 }
+
+@Riverpod(keepAlive: false)
+Future<void> clearAllAssets(Ref ref) async {
+  final repository = ref.watch(assetRepositoryProvider);
+  await repository.clearAllAssets();
+  ref.invalidate(allAssetsProvider);
+  ref.invalidate(assetCountByTypeProvider);
+  ref.invalidate(criticalAssetCountProvider);
+}

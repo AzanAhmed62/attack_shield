@@ -58,3 +58,12 @@ Future<void> deleteCoverageStatus(Ref ref, String techniqueId) async {
   ref.invalidate(coveragePercentageProvider);
   ref.invalidate(coverageBreakdownProvider);
 }
+
+@Riverpod(keepAlive: false)
+Future<void> clearAllCoverageStatuses(Ref ref) async {
+  final repository = ref.watch(coverageRepositoryProvider);
+  await repository.clearAllCoverageStatuses();
+  ref.invalidate(allCoverageStatusesProvider);
+  ref.invalidate(coveragePercentageProvider);
+  ref.invalidate(coverageBreakdownProvider);
+}

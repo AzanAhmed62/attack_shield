@@ -501,5 +501,24 @@ class _DeleteCoverageStatusProviderElement
       (origin as DeleteCoverageStatusProvider).techniqueId;
 }
 
+String _$clearAllCoverageStatusesHash() =>
+    r'b77b964be337543216d0b854810eb1b0e92f6a41';
+
+/// See also [clearAllCoverageStatuses].
+@ProviderFor(clearAllCoverageStatuses)
+final clearAllCoverageStatusesProvider =
+    AutoDisposeFutureProvider<void>.internal(
+      clearAllCoverageStatuses,
+      name: r'clearAllCoverageStatusesProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$clearAllCoverageStatusesHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ClearAllCoverageStatusesRef = AutoDisposeFutureProviderRef<void>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

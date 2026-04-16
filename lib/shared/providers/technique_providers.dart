@@ -5,6 +5,8 @@ import 'repository_providers.dart';
 
 part 'technique_providers.g.dart';
 
+enum TechniqueSortOption { riskDesc, nameAsc, subTechniqueCountDesc }
+
 // ─── Raw data providers ───────────────────────────────────────────────────────
 
 /// All techniques — cached in repository, won't refetch on every watch.
@@ -63,6 +65,15 @@ class MinRiskFilter extends _$MinRiskFilter {
   void clear() => state = 0.0;
 }
 
+/// Sort mode for the library list.
+@Riverpod(keepAlive: false)
+class TechniqueSort extends _$TechniqueSort {
+  @override
+  TechniqueSortOption build() => TechniqueSortOption.riskDesc;
+
+  void setSort(TechniqueSortOption value) => state = value;
+}
+
 // ─── Computed / filtered providers ───────────────────────────────────────────
 
 /// Techniques filtered by tactic, search query, platform, and risk score.
@@ -73,6 +84,7 @@ Future<List<AttackTechnique>> filteredTechniques(Ref ref) async {
   final query = ref.watch(searchQueryProvider);
   final selectedPlatform = ref.watch(selectedPlatformProvider);
   final minRisk = ref.watch(minRiskFilterProvider);
+  final sort = ref.watch(techniqueSortProvider);
 
   var result = allTechs;
 
@@ -111,6 +123,17 @@ Future<List<AttackTechnique>> filteredTechniques(Ref ref) async {
               t.tactics.any((tac) => tac.toLowerCase().contains(q)),
         )
         .toList();
+  }
+
+  switch (sort) {
+    case TechniqueSortOption.nameAsc:
+      result.sort((a, b) => a.name.compareTo(b.name));
+    case TechniqueSortOption.subTechniqueCountDesc:
+      result.sort(
+        (a, b) => b.subTechniques.length.compareTo(a.subTechniques.length),
+      );
+    case TechniqueSortOption.riskDesc:
+      result.sort((a, b) => b.riskScore.compareTo(a.riskScore));
   }
 
   return result;

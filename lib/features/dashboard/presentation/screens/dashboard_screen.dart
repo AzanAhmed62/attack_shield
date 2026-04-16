@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:attackshield/core/theme/theme.dart';
 import 'package:attackshield/core/widgets/widgets.dart';
+import 'package:attackshield/shared/models/models.dart';
 import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/core/services/risk_engine.dart';
 
@@ -20,6 +21,8 @@ class DashboardScreen extends ConsumerWidget {
     final criticalAsync = ref.watch(criticalAlertCountProvider);
     final allAssetsAsync = ref.watch(allAssetsProvider);
     final topGapsAsync = ref.watch(topRiskGapsProvider(limit: 5));
+    final allAlertsAsync = ref.watch(allAlertsProvider);
+    final latestReportAsync = ref.watch(latestReportProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -45,11 +48,26 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(organizationRiskScoreProvider);
+          ref.invalidate(organizationRiskLabelProvider);
+          ref.invalidate(riskEngineCoveragePercentageProvider);
+          ref.invalidate(riskCoverageBreakdownProvider);
+          ref.invalidate(allTechniquesProvider);
+          ref.invalidate(openAlertCountProvider);
+          ref.invalidate(criticalAlertCountProvider);
+          ref.invalidate(allAssetsProvider);
+          ref.invalidate(topRiskGapsProvider(limit: 5));
+          ref.invalidate(allAlertsProvider);
+          ref.invalidate(latestReportProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // ── Risk Score Hero card ───────────────────────────────────
             _RiskHeroCard(
               riskScoreAsync: riskScoreAsync,
@@ -102,7 +120,7 @@ class DashboardScreen extends ConsumerWidget {
                       sub: 'Monitored',
                       icon: Icons.layers,
                       color: AppTheme.successColor,
-                      onTap: () => context.push('/settings'),
+                      onTap: () => context.push('/more/assets'),
                     ),
                     loading: () => const _MetricTileSkeleton(),
                     error: (_, __) => const SizedBox.shrink(),
@@ -138,6 +156,14 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
+            const SectionHeader(title: 'Recent Activity'),
+            const SizedBox(height: 12),
+            _RecentActivityCard(
+              alertsAsync: allAlertsAsync,
+              latestReportAsync: latestReportAsync,
+            ),
+            const SizedBox(height: 20),
+
             // ── Quick Actions ─────────────────────────────────────────
             const SectionHeader(title: 'Quick Actions'),
             const SizedBox(height: 12),
@@ -165,13 +191,13 @@ class DashboardScreen extends ConsumerWidget {
                   label: 'Simulations',
                   icon: Icons.science,
                   color: AppTheme.warningColor,
-                  onTap: () => context.push('/simulations'),
+                  onTap: () => context.push('/more/simulations'),
                 ),
                 _QuickAction(
                   label: 'Reports',
                   icon: Icons.assessment,
                   color: AppTheme.accentColor,
-                  onTap: () => context.push('/reports'),
+                  onTap: () => context.push('/more/reports'),
                 ),
                 _QuickAction(
                   label: 'Alerts',
@@ -183,12 +209,13 @@ class DashboardScreen extends ConsumerWidget {
                   label: 'Settings',
                   icon: Icons.settings,
                   color: Colors.grey,
-                  onTap: () => context.push('/settings'),
+                  onTap: () => context.push('/more/settings'),
                 ),
               ],
-            ),
-            const SizedBox(height: 32),
-          ],
+                ),
+                const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );
@@ -437,6 +464,8 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final numericValue = double.tryParse(value);
+
     return GestureDetector(
       onTap: onTap,
       child: Card(
@@ -447,11 +476,30 @@ class _MetricTile extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(height: 8),
-              Text(value,
-                  style: TextStyle(
+              if (numericValue != null)
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: numericValue),
+                  duration: const Duration(milliseconds: 700),
+                  builder: (context, animatedValue, _) => Text(
+                    animatedValue % 1 == 0
+                        ? animatedValue.toInt().toString()
+                        : animatedValue.toStringAsFixed(1),
+                    style: TextStyle(
                       color: color,
                       fontWeight: FontWeight.bold,
-                      fontSize: 22)),
+                      fontSize: 22,
+                    ),
+                  ),
+                )
+              else
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
+                ),
               Text(sub,
                   style: Theme.of(context)
                       .textTheme
@@ -464,6 +512,84 @@ class _MetricTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentActivityCard extends StatelessWidget {
+  final AsyncValue<List<AlertItem>> alertsAsync;
+  final AsyncValue<ReportSummary?> latestReportAsync;
+
+  const _RecentActivityCard({
+    required this.alertsAsync,
+    required this.latestReportAsync,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            latestReportAsync.when(
+              data: (report) {
+                if (report == null) {
+                  return Text(
+                    'No report generated yet.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  );
+                }
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(
+                    Icons.assessment_outlined,
+                    color: AppTheme.primaryColor,
+                  ),
+                  title: Text(report.title),
+                  subtitle: Text('Latest report snapshot'),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            const Divider(height: 20),
+            alertsAsync.when(
+              data: (alerts) {
+                final recentAlerts = [...alerts]
+                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                if (recentAlerts.isEmpty) {
+                  return Text(
+                    'No recent alerts.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  );
+                }
+                return Column(
+                  children: recentAlerts
+                      .take(3)
+                      .map(
+                        (alert) => ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(
+                            Icons.notifications_active_outlined,
+                            color: AppTheme.warningColor,
+                          ),
+                          title: Text(alert.title),
+                          subtitle: Text(
+                            '${alert.priority.name} · ${alert.status.name}',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
     );

@@ -24,6 +24,7 @@ mixin _$ReportSummary {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   int get totalTechniquesReviewed => throw _privateConstructorUsedError;
+  double get riskScore => throw _privateConstructorUsedError;
   double get coveragePercentage => throw _privateConstructorUsedError;
   List<String> get topRiskyTechniques => throw _privateConstructorUsedError;
   List<String> get unresolvedGaps => throw _privateConstructorUsedError;
@@ -52,6 +53,7 @@ abstract class $ReportSummaryCopyWith<$Res> {
     String id,
     String title,
     int totalTechniquesReviewed,
+    double riskScore,
     double coveragePercentage,
     List<String> topRiskyTechniques,
     List<String> unresolvedGaps,
@@ -79,6 +81,7 @@ class _$ReportSummaryCopyWithImpl<$Res, $Val extends ReportSummary>
     Object? id = null,
     Object? title = null,
     Object? totalTechniquesReviewed = null,
+    Object? riskScore = null,
     Object? coveragePercentage = null,
     Object? topRiskyTechniques = null,
     Object? unresolvedGaps = null,
@@ -100,6 +103,10 @@ class _$ReportSummaryCopyWithImpl<$Res, $Val extends ReportSummary>
                 ? _value.totalTechniquesReviewed
                 : totalTechniquesReviewed // ignore: cast_nullable_to_non_nullable
                       as int,
+            riskScore: null == riskScore
+                ? _value.riskScore
+                : riskScore // ignore: cast_nullable_to_non_nullable
+                      as double,
             coveragePercentage: null == coveragePercentage
                 ? _value.coveragePercentage
                 : coveragePercentage // ignore: cast_nullable_to_non_nullable
@@ -143,6 +150,7 @@ abstract class _$$ReportSummaryImplCopyWith<$Res>
     String id,
     String title,
     int totalTechniquesReviewed,
+    double riskScore,
     double coveragePercentage,
     List<String> topRiskyTechniques,
     List<String> unresolvedGaps,
@@ -169,6 +177,7 @@ class __$$ReportSummaryImplCopyWithImpl<$Res>
     Object? id = null,
     Object? title = null,
     Object? totalTechniquesReviewed = null,
+    Object? riskScore = null,
     Object? coveragePercentage = null,
     Object? topRiskyTechniques = null,
     Object? unresolvedGaps = null,
@@ -190,6 +199,10 @@ class __$$ReportSummaryImplCopyWithImpl<$Res>
             ? _value.totalTechniquesReviewed
             : totalTechniquesReviewed // ignore: cast_nullable_to_non_nullable
                   as int,
+        riskScore: null == riskScore
+            ? _value.riskScore
+            : riskScore // ignore: cast_nullable_to_non_nullable
+                  as double,
         coveragePercentage: null == coveragePercentage
             ? _value.coveragePercentage
             : coveragePercentage // ignore: cast_nullable_to_non_nullable
@@ -226,6 +239,7 @@ class _$ReportSummaryImpl implements _ReportSummary {
     required this.id,
     required this.title,
     this.totalTechniquesReviewed = 0,
+    this.riskScore = 0.0,
     this.coveragePercentage = 0.0,
     final List<String> topRiskyTechniques = const [],
     final List<String> unresolvedGaps = const [],
@@ -246,6 +260,9 @@ class _$ReportSummaryImpl implements _ReportSummary {
   @override
   @JsonKey()
   final int totalTechniquesReviewed;
+  @override
+  @JsonKey()
+  final double riskScore;
   @override
   @JsonKey()
   final double coveragePercentage;
@@ -285,7 +302,7 @@ class _$ReportSummaryImpl implements _ReportSummary {
 
   @override
   String toString() {
-    return 'ReportSummary(id: $id, title: $title, totalTechniquesReviewed: $totalTechniquesReviewed, coveragePercentage: $coveragePercentage, topRiskyTechniques: $topRiskyTechniques, unresolvedGaps: $unresolvedGaps, recommendedActions: $recommendedActions, generatedAt: $generatedAt, notes: $notes)';
+    return 'ReportSummary(id: $id, title: $title, totalTechniquesReviewed: $totalTechniquesReviewed, riskScore: $riskScore, coveragePercentage: $coveragePercentage, topRiskyTechniques: $topRiskyTechniques, unresolvedGaps: $unresolvedGaps, recommendedActions: $recommendedActions, generatedAt: $generatedAt, notes: $notes)';
   }
 
   @override
@@ -300,6 +317,8 @@ class _$ReportSummaryImpl implements _ReportSummary {
                   totalTechniquesReviewed,
                 ) ||
                 other.totalTechniquesReviewed == totalTechniquesReviewed) &&
+            (identical(other.riskScore, riskScore) ||
+                other.riskScore == riskScore) &&
             (identical(other.coveragePercentage, coveragePercentage) ||
                 other.coveragePercentage == coveragePercentage) &&
             const DeepCollectionEquality().equals(
@@ -326,6 +345,7 @@ class _$ReportSummaryImpl implements _ReportSummary {
     id,
     title,
     totalTechniquesReviewed,
+    riskScore,
     coveragePercentage,
     const DeepCollectionEquality().hash(_topRiskyTechniques),
     const DeepCollectionEquality().hash(_unresolvedGaps),
@@ -353,6 +373,7 @@ abstract class _ReportSummary implements ReportSummary {
     required final String id,
     required final String title,
     final int totalTechniquesReviewed,
+    final double riskScore,
     final double coveragePercentage,
     final List<String> topRiskyTechniques,
     final List<String> unresolvedGaps,
@@ -370,6 +391,8 @@ abstract class _ReportSummary implements ReportSummary {
   String get title;
   @override
   int get totalTechniquesReviewed;
+  @override
+  double get riskScore;
   @override
   double get coveragePercentage;
   @override

@@ -142,3 +142,13 @@ Future<void> deleteAlert(Ref ref, String id) async {
   ref.invalidate(openAlertCountProvider);
   ref.invalidate(criticalAlertCountProvider);
 }
+
+@Riverpod(keepAlive: false)
+Future<void> clearAllAlerts(Ref ref) async {
+  final repository = ref.watch(alertRepositoryProvider);
+  await repository.clearAllAlerts();
+  ref.invalidate(allAlertsProvider);
+  ref.invalidate(filteredAlertsProvider);
+  ref.invalidate(openAlertCountProvider);
+  ref.invalidate(criticalAlertCountProvider);
+}

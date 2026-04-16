@@ -190,12 +190,16 @@ class AlertsScreen extends ConsumerWidget {
     }
   }
 
-  void _updateStatus(WidgetRef ref, AlertItem alert, AlertStatus newStatus) {
+  Future<void> _updateStatus(
+    WidgetRef ref,
+    AlertItem alert,
+    AlertStatus newStatus,
+  ) async {
     final updated = alert.copyWith(
       status: newStatus,
       updatedAt: DateTime.now(),
     );
-    ref.read(updateAlertProvider(updated));
+    await ref.read(updateAlertProvider(updated).future);
   }
 
   void _showDetail(BuildContext context, WidgetRef ref, AlertItem alert) {
@@ -206,11 +210,15 @@ class AlertsScreen extends ConsumerWidget {
     );
   }
 
-  void _showCreateSheet(BuildContext context, WidgetRef ref) {
+  void _showCreateSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    AlertItem? existing,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _CreateAlertSheet(ref: ref),
+      builder: (_) => _CreateAlertSheet(ref: ref, existing: existing),
     );
   }
 }
@@ -570,8 +578,13 @@ class _AlertDetailSheet extends StatelessWidget {
                                 status: s,
                                 updatedAt: DateTime.now(),
                               );
-                              ref.read(updateAlertProvider(updated));
-                              Navigator.pop(context);
+                              ref
+                                  .read(updateAlertProvider(updated).future)
+                                  .then((_) {
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                }
+                              });
                             },
                       child: Text(s.name, style: const TextStyle(fontSize: 12)),
                     ),
@@ -580,6 +593,39 @@ class _AlertDetailSheet extends StatelessWidget {
               }).toList(),
             ),
             const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (_) => _CreateAlertSheet(
+                          ref: ref,
+                          existing: alert,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Edit Alert'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _confirmDelete(context),
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Delete'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.dangerColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Close'),
@@ -600,13 +646,44 @@ class _AlertDetailSheet extends StatelessWidget {
         return AppTheme.successColor;
     }
   }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Alert?'),
+        content: Text('Delete "${alert.title}"? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await ref.read(deleteAlertProvider(alert.id).future);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppTheme.dangerColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Create alert sheet ───────────────────────────────────────────────────────
 
 class _CreateAlertSheet extends StatefulWidget {
   final WidgetRef ref;
-  const _CreateAlertSheet({required this.ref});
+  final AlertItem? existing;
+
+  const _CreateAlertSheet({required this.ref, this.existing});
 
   @override
   State<_CreateAlertSheet> createState() => _CreateAlertSheetState();
@@ -619,6 +696,20 @@ class _CreateAlertSheetState extends State<_CreateAlertSheet> {
   final _techCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   AlertPriority _priority = AlertPriority.medium;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existing;
+    if (existing != null) {
+      _titleCtrl.text = existing.title;
+      _descCtrl.text = existing.description;
+      _sourceCtrl.text = existing.source;
+      _techCtrl.text = existing.relatedTechniqueId ?? '';
+      _notesCtrl.text = existing.notes ?? '';
+      _priority = existing.priority;
+    }
+  }
 
   @override
   void dispose() {
@@ -639,6 +730,8 @@ class _CreateAlertSheetState extends State<_CreateAlertSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isEdit = widget.existing != null;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -663,7 +756,7 @@ class _CreateAlertSheetState extends State<_CreateAlertSheet> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Create Security Alert',
+              isEdit ? 'Edit Security Alert' : 'Create Security Alert',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
@@ -757,34 +850,42 @@ class _CreateAlertSheetState extends State<_CreateAlertSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.add_alert),
-                label: const Text('Create Alert'),
+                icon: Icon(isEdit ? Icons.save_outlined : Icons.add_alert),
+                label: Text(isEdit ? 'Save Changes' : 'Create Alert'),
                 onPressed: () async {
                   if (_titleCtrl.text.trim().isEmpty) return;
                   final alert = AlertItem(
-                    id: const Uuid().v4(),
+                    id: widget.existing?.id ?? const Uuid().v4(),
                     title: _titleCtrl.text.trim(),
                     description: _descCtrl.text.trim(),
                     priority: _priority,
-                    status: AlertStatus.open,
+                    status: widget.existing?.status ?? AlertStatus.open,
                     source: _sourceCtrl.text.trim().isEmpty
                         ? 'Manual Entry'
                         : _sourceCtrl.text.trim(),
                     relatedTechniqueId: _techCtrl.text.trim().isEmpty
                         ? null
                         : _techCtrl.text.trim().toUpperCase(),
-                    createdAt: DateTime.now(),
+                    createdAt: widget.existing?.createdAt ?? DateTime.now(),
                     updatedAt: DateTime.now(),
                     notes: _notesCtrl.text.trim().isEmpty
                         ? null
                         : _notesCtrl.text.trim(),
                   );
-                  await widget.ref.read(createAlertProvider(alert).future);
+                  if (isEdit) {
+                    await widget.ref.read(updateAlertProvider(alert).future);
+                  } else {
+                    await widget.ref.read(createAlertProvider(alert).future);
+                  }
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Alert "${alert.title}" created'),
+                        content: Text(
+                          isEdit
+                              ? 'Alert "${alert.title}" updated'
+                              : 'Alert "${alert.title}" created',
+                        ),
                         backgroundColor: AppTheme.successColor,
                       ),
                     );

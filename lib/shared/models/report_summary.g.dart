@@ -12,6 +12,7 @@ _$ReportSummaryImpl _$$ReportSummaryImplFromJson(Map<String, dynamic> json) =>
       title: json['title'] as String,
       totalTechniquesReviewed:
           (json['totalTechniquesReviewed'] as num?)?.toInt() ?? 0,
+      riskScore: (json['riskScore'] as num?)?.toDouble() ?? 0.0,
       coveragePercentage:
           (json['coveragePercentage'] as num?)?.toDouble() ?? 0.0,
       topRiskyTechniques:
@@ -40,6 +41,7 @@ Map<String, dynamic> _$$ReportSummaryImplToJson(_$ReportSummaryImpl instance) =>
       'id': instance.id,
       'title': instance.title,
       'totalTechniquesReviewed': instance.totalTechniquesReviewed,
+      'riskScore': instance.riskScore,
       'coveragePercentage': instance.coveragePercentage,
       'topRiskyTechniques': instance.topRiskyTechniques,
       'unresolvedGaps': instance.unresolvedGaps,

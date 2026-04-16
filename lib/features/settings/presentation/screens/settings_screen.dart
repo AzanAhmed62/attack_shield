@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:attackshield/core/theme/theme.dart';
 import 'package:attackshield/core/widgets/widgets.dart';
 import 'package:attackshield/shared/providers/providers.dart';
@@ -29,7 +32,7 @@ class SettingsScreen extends ConsumerWidget {
                 ? _NoOrgCard(ref: ref)
                 : _OrgProfileCard(org: org, ref: ref),
             loading: () => const LoadingWidget(message: 'Loading profile…'),
-            error: (_, __) => _NoOrgCard(ref: ref),
+            error: (_, _) => _NoOrgCard(ref: ref),
           ),
           const SizedBox(height: 24),
 
@@ -65,7 +68,7 @@ class SettingsScreen extends ConsumerWidget {
                             );
                           },
                           loading: () => const LoadingWidget(),
-                          error: (_, __) => const Text('—'),
+                          error: (_, _) => const Text('—'),
                         ),
                       ),
                       Expanded(
@@ -88,7 +91,7 @@ class SettingsScreen extends ConsumerWidget {
                             ],
                           ),
                           loading: () => const LoadingWidget(),
-                          error: (_, __) => const Text('—'),
+                          error: (_, _) => const Text('—'),
                         ),
                       ),
                       Expanded(
@@ -111,7 +114,7 @@ class SettingsScreen extends ConsumerWidget {
                             ],
                           ),
                           loading: () => const LoadingWidget(),
-                          error: (_, __) => const Text('—'),
+                          error: (_, _) => const Text('—'),
                         ),
                       ),
                     ],
@@ -196,7 +199,7 @@ class SettingsScreen extends ConsumerWidget {
                           '${t.fold(0, (s, e) => s + e.subTechniques.length)} sub-techniques',
                     ),
                     loading: () => const _InfoRow('Techniques', 'Loading…'),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                   ),
                   const _InfoRow('Data Source', 'Embedded dataset (offline)'),
                   const SizedBox(height: 12),
@@ -285,7 +288,18 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Export Coverage Data'),
                   subtitle: const Text('Coverage statuses as JSON'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _showExportDialog(context),
+                  onTap: () => _exportCoverageData(context, ref),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.upload_file,
+                    color: AppTheme.successColor,
+                  ),
+                  title: const Text('Import Coverage'),
+                  subtitle: const Text('Paste exported coverage JSON'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showImportDialog(context, ref),
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -384,23 +398,31 @@ class SettingsScreen extends ConsumerWidget {
     return AppTheme.successColor;
   }
 
-  void _showExportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Export Data'),
-        content: const Text(
-          'Data export will be available in the next version. '
-          'Use the Reports screen to generate and share PDF reports.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+  Future<void> _exportCoverageData(BuildContext context, WidgetRef ref) async {
+    final statuses = await ref.read(allCoverageStatusesProvider.future);
+    final payload = jsonEncode({
+      'app': AppConstants.appName,
+      'version': AppConstants.appVersion,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'coverageStatuses': statuses.map((status) => status.toJson()).toList(),
+    });
+
+    await Share.share(
+      payload,
+      subject: 'AttackShield Coverage Export',
     );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Exported ${statuses.length} coverage status'
+            '${statuses.length == 1 ? '' : 'es'}',
+          ),
+          backgroundColor: AppTheme.primaryColor,
+        ),
+      );
+    }
   }
 
   void _showResetCoverageDialog(BuildContext context, WidgetRef ref) {
@@ -446,6 +468,87 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  void _showImportDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Import Coverage'),
+        content: SizedBox(
+          width: 560,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Paste a previous AttackShield coverage export. Existing coverage entries with the same technique ID will be replaced.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 12,
+                decoration: const InputDecoration(
+                  hintText: '{"coverageStatuses":[...]}',
+                  alignLabelWithHint: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final raw = controller.text.trim();
+              if (raw.isEmpty) return;
+
+              try {
+                final decoded = jsonDecode(raw);
+                final dynamic items = decoded is Map<String, dynamic>
+                    ? decoded['coverageStatuses']
+                    : decoded;
+
+                if (items is! List) {
+                  throw const FormatException('Invalid coverage export payload');
+                }
+
+                for (final item in items) {
+                  final status = CoverageStatus.fromJson(
+                    Map<String, dynamic>.from(item as Map),
+                  );
+                  await ref.read(updateCoverageStatusProvider(status).future);
+                }
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Imported ${items.length} coverage statuses'),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                }
+              } catch (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Import failed: $error'),
+                      backgroundColor: AppTheme.dangerColor,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showClearAllDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
@@ -462,16 +565,25 @@ class SettingsScreen extends ConsumerWidget {
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Data clear is disabled in this version to protect thesis data.',
+              await ref.read(clearAllAlertsProvider.future);
+              await ref.read(clearAllSimulationDataProvider.future);
+              await ref.read(clearAllReportsProvider.future);
+              await ref.read(clearAllBookmarksProvider.future);
+              await ref.read(clearAllCoverageStatusesProvider.future);
+              await ref.read(clearAllAssetsProvider.future);
+              ref.invalidate(openAlertCountProvider);
+              ref.invalidate(criticalAlertCountProvider);
+              ref.invalidate(latestReportProvider);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('All operational data cleared'),
+                    backgroundColor: AppTheme.dangerColor,
                   ),
-                  backgroundColor: Colors.grey,
-                ),
-              );
+                );
+              }
             },
             child: const Text('Clear All'),
           ),

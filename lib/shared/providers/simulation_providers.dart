@@ -68,3 +68,14 @@ Future<void> deleteSimulationScenario(Ref ref, String id) async {
   await repository.deleteScenario(id);
   ref.invalidate(allSimulationScenariosProvider);
 }
+
+@Riverpod(keepAlive: false)
+Future<void> clearAllSimulationData(Ref ref) async {
+  final repository = ref.watch(simulationRepositoryProvider);
+  await repository.clearAllScenarios();
+  await repository.clearAllResults();
+  ref.invalidate(allSimulationScenariosProvider);
+  ref.invalidate(allSimulationResultsProvider);
+  ref.invalidate(simulationReadinessProvider);
+  ref.invalidate(readinessPercentageProvider);
+}

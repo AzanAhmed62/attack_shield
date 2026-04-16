@@ -8,11 +8,13 @@ abstract class SimulationRepository {
   Future<void> createScenario(SimulationScenario scenario);
   Future<void> updateScenario(SimulationScenario scenario);
   Future<void> deleteScenario(String id);
+  Future<void> clearAllScenarios();
 
   Future<List<SimulationResult>> getAllResults();
   Future<SimulationResult?> getResultById(String id);
   Future<void> createResult(SimulationResult result);
   Future<void> updateResult(SimulationResult result);
+  Future<void> clearAllResults();
   Future<List<SimulationResult>> getResultsByScenario(String scenarioId);
   Future<List<SimulationResult>> getResultsByTechnique(String techniqueId);
 
@@ -99,6 +101,15 @@ class SimulationRepositoryImpl implements SimulationRepository {
   }
 
   @override
+  Future<void> clearAllScenarios() async {
+    try {
+      await _storageService.remove(_scenariosKey);
+    } catch (e) {
+      throw DataException(message: 'Failed to clear scenarios: $e');
+    }
+  }
+
+  @override
   Future<List<SimulationResult>> getAllResults() async {
     try {
       final resultsJson = _storageService.read<List>(_resultsKey) ?? [];
@@ -152,6 +163,15 @@ class SimulationRepositoryImpl implements SimulationRepository {
       }
     } catch (e) {
       throw DataException(message: 'Failed to update result: $e');
+    }
+  }
+
+  @override
+  Future<void> clearAllResults() async {
+    try {
+      await _storageService.remove(_resultsKey);
+    } catch (e) {
+      throw DataException(message: 'Failed to clear simulation results: $e');
     }
   }
 

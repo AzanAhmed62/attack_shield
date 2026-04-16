@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:attackshield/core/theme/theme.dart';
@@ -16,6 +17,7 @@ class SimulationsScreen extends ConsumerWidget {
     final scenariosAsync = ref.watch(allSimulationScenariosProvider);
     final readinessAsync = ref.watch(readinessPercentageProvider);
     final readinessMapAsync = ref.watch(simulationReadinessProvider);
+    final allResultsAsync = ref.watch(allSimulationResultsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Readiness Simulations')),
@@ -27,6 +29,12 @@ class SimulationsScreen extends ConsumerWidget {
             _ReadinessCard(
               readinessAsync: readinessAsync,
               readinessMapAsync: readinessMapAsync,
+            ),
+            const SizedBox(height: 24),
+            allResultsAsync.when(
+              data: (results) => _SimulationTrendCard(results: results),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 24),
             _SuggestedScenariosCard(ref: ref),
@@ -388,6 +396,14 @@ class _ScenarioCard extends ConsumerWidget {
                             style: Theme.of(context).textTheme.labelLarge),
                         const SizedBox(height: 4),
                         ...results.reversed.take(3).map((r) => _ResultRow(result: r)),
+                        if (results.length > 3)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => _showHistorySheet(context, results),
+                              child: const Text('View Full History'),
+                            ),
+                          ),
                       ],
                     ),
               loading: () => const SizedBox.shrink(),
@@ -437,6 +453,206 @@ class _ScenarioCard extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       builder: (_) => _RecordResultSheet(scenario: scenario, ref: ref),
+    );
+  }
+
+  void _showHistorySheet(
+    BuildContext context,
+    List<SimulationResult> results,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _ScenarioHistorySheet(
+        scenario: scenario,
+        results: results,
+      ),
+    );
+  }
+}
+
+class _SimulationTrendCard extends StatelessWidget {
+  final List<SimulationResult> results;
+
+  const _SimulationTrendCard({required this.results});
+
+  @override
+  Widget build(BuildContext context) {
+    if (results.length < 2) {
+      return const SizedBox.shrink();
+    }
+
+    final ordered = [...results]..sort((a, b) => a.testedAt.compareTo(b.testedAt));
+    var passed = 0;
+    var partial = 0;
+    final trendSpots = <FlSpot>[];
+    final labels = <String>[];
+
+    for (var i = 0; i < ordered.length; i++) {
+      final result = ordered[i];
+      if (result.result == TestResult.passed) {
+        passed += 1;
+      } else if (result.result == TestResult.partiallyPassed) {
+        partial += 1;
+      }
+
+      final readiness = ((passed * 2) + partial) / ((i + 1) * 2) * 100;
+      trendSpots.add(FlSpot(i.toDouble(), readiness));
+      labels.add(DateFormat('MMM d').format(result.testedAt));
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Readiness Trend',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Cumulative readiness across all simulation runs',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 180,
+              child: LineChart(
+                LineChartData(
+                  minY: 0,
+                  maxY: 100,
+                  gridData: FlGridData(
+                    show: true,
+                    horizontalInterval: 25,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: Colors.grey.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        interval: 25,
+                        reservedSize: 34,
+                        getTitlesWidget: (value, _) => Text(
+                          '${value.toInt()}%',
+                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 24,
+                        getTitlesWidget: (value, _) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= labels.length) {
+                            return const SizedBox.shrink();
+                          }
+                          if (index != 0 &&
+                              index != labels.length ~/ 2 &&
+                              index != labels.length - 1) {
+                            return const SizedBox.shrink();
+                          }
+                          return Text(
+                            labels[index],
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: trendSpots,
+                      color: AppTheme.successColor,
+                      isCurved: true,
+                      barWidth: 3,
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: AppTheme.successColor.withValues(alpha: 0.1),
+                      ),
+                      dotData: FlDotData(
+                        getDotPainter: (spot, x, bar, index) => FlDotCirclePainter(
+                          radius: 3.5,
+                          color: AppTheme.successColor,
+                          strokeWidth: 2,
+                          strokeColor: AppTheme.backgroundColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScenarioHistorySheet extends StatelessWidget {
+  final SimulationScenario scenario;
+  final List<SimulationResult> results;
+
+  const _ScenarioHistorySheet({
+    required this.scenario,
+    required this.results,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ordered = [...results]..sort((a, b) => b.testedAt.compareTo(a.testedAt));
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.72,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, controller) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: ListView(
+          controller: controller,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              scenario.name,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${ordered.length} recorded test runs',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            ...ordered.map((result) => _ResultRow(result: result)),
+          ],
+        ),
+      ),
     );
   }
 }

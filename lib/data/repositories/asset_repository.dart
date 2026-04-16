@@ -8,6 +8,7 @@ abstract class AssetRepository {
   Future<void> createAsset(SecurityAsset asset);
   Future<void> updateAsset(SecurityAsset asset);
   Future<void> deleteAsset(String id);
+  Future<void> clearAllAssets();
   Future<List<SecurityAsset>> getAssetsByType(String type);
   Future<List<SecurityAsset>> getAssetsByCriticality(AssetCriticality criticality);
 }
@@ -26,7 +27,7 @@ class AssetRepositoryImpl implements AssetRepository {
       final stored = data
           .map((e) => SecurityAsset.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
-      return stored.isEmpty ? _defaultAssets() : stored;
+      return stored;
     } catch (e) {
       throw DataException(message: 'Failed to fetch assets: $e');
     }
@@ -75,6 +76,15 @@ class AssetRepositoryImpl implements AssetRepository {
       await _save(assets);
     } catch (e) {
       throw DataException(message: 'Failed to delete asset: $e');
+    }
+  }
+
+  @override
+  Future<void> clearAllAssets() async {
+    try {
+      await _storageService.write(_key, <Map<String, dynamic>>[]);
+    } catch (e) {
+      throw DataException(message: 'Failed to clear assets: $e');
     }
   }
 

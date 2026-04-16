@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:attackshield/core/services/asset_technique_mapper.dart';
 import 'package:attackshield/core/theme/theme.dart';
 import 'package:attackshield/core/widgets/widgets.dart';
 import 'package:attackshield/shared/providers/providers.dart';
@@ -14,7 +15,7 @@ class ThreatMappingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Coverage & Risk'),
@@ -23,11 +24,17 @@ class ThreatMappingScreen extends ConsumerWidget {
               Tab(text: 'Overview'),
               Tab(text: 'Tactic Matrix'),
               Tab(text: 'Risk Gaps'),
+              Tab(text: 'Assets'),
             ],
           ),
         ),
         body: const TabBarView(
-          children: [_OverviewTab(), _TacticMatrixTab(), _RiskGapsTab()],
+          children: [
+            _OverviewTab(),
+            _TacticMatrixTab(),
+            _RiskGapsTab(),
+            _AssetsTab(),
+          ],
         ),
       ),
     );
@@ -45,6 +52,7 @@ class _OverviewTab extends ConsumerWidget {
     final riskLabelAsync = ref.watch(organizationRiskLabelProvider);
     final coveragePctAsync = ref.watch(riskEngineCoveragePercentageProvider);
     final breakdownAsync = ref.watch(riskCoverageBreakdownProvider);
+    final tacticRiskAsync = ref.watch(tacticRiskMapProvider);
     final allTechAsync = ref.watch(allTechniquesProvider);
 
     return SingleChildScrollView(
@@ -67,21 +75,29 @@ class _OverviewTab extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Defensive Coverage',
+                    'Defensive Coverage Overview',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
                   coveragePctAsync.when(
                     data: (pct) => Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ProgressRing(
-                              percentage: pct,
-                              progressColor: _coverageColor(pct),
-                            ),
-                          ],
+                        Text(
+                          '${pct.toStringAsFixed(1)}%',
+                          style: Theme.of(context)
+                              .textTheme
+                              .displaySmall
+                              ?.copyWith(
+                                color: _coverageColor(pct),
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        breakdownAsync.when(
+                          data: (breakdown) =>
+                              CoverageDonutChart(breakdown: breakdown, size: 180),
+                          loading: () => const LoadingWidget(),
+                          error: (error, _) => Text('Error: $error'),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -185,6 +201,12 @@ class _OverviewTab extends ConsumerWidget {
             loading: () => const LoadingWidget(),
             error: (e, _) => const SizedBox.shrink(),
           ),
+          const SizedBox(height: 16),
+          tacticRiskAsync.when(
+            data: (tacticRisks) => TacticBarChart(tacticRisks: tacticRisks),
+            loading: () => const LoadingWidget(),
+            error: (error, _) => Text('Error: $error'),
+          ),
         ],
       ),
     );
@@ -200,6 +222,135 @@ class _OverviewTab extends ConsumerWidget {
     if (pct >= 70) return 'Good coverage — keep monitoring';
     if (pct >= 40) return 'Partial coverage — address gaps';
     return 'Low coverage — immediate action needed';
+  }
+}
+
+class _AssetsTab extends ConsumerWidget {
+  const _AssetsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final assetsAsync = ref.watch(allAssetsProvider);
+    final techniquesAsync = ref.watch(allTechniquesProvider);
+
+    return assetsAsync.when(
+      data: (assets) => techniquesAsync.when(
+        data: (techniques) {
+          if (assets.isEmpty) {
+            return const EmptyStateWidget(
+              title: 'No Assets',
+              subtitle:
+                  'Add security assets to connect your environment to ATT&CK techniques.',
+              icon: Icons.layers_outlined,
+            );
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Asset Coverage Mapping',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Critical assets mapped to ATT&CK techniques by asset type, platform, and risk relevance.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                ...assets.map((asset) {
+                  final related = AssetTechniqueMapper.relatedTechniques(
+                    asset,
+                    techniques,
+                    limit: 4,
+                  );
+                  final tacticFocus = AssetTechniqueMapper.recommendedTactics(asset);
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      asset.name,
+                                      style:
+                                          Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    Text(
+                                      '${asset.type} · ${asset.criticality.name}',
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => context.push('/more/assets'),
+                                child: const Text('Manage'),
+                              ),
+                            ],
+                          ),
+                          if (tacticFocus.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: tacticFocus
+                                  .map((tactic) => Chip(label: Text(tactic)))
+                                  .toList(),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                          if (related.isEmpty)
+                            Text(
+                              'No related techniques found yet.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            )
+                          else
+                            ...related.map(
+                              (technique) => ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                onTap: () =>
+                                    context.push('/technique/${technique.id}'),
+                                leading: const Icon(
+                                  Icons.security,
+                                  color: AppTheme.primaryColor,
+                                ),
+                                title: Text(technique.name),
+                                subtitle: Text(technique.tactics.join(' · ')),
+                                trailing: Text(
+                                  technique.riskScore.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    color: AppTheme.accentColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        },
+        loading: () => const Center(child: LoadingWidget()),
+        error: (error, _) => Center(child: Text('Error: $error')),
+      ),
+      loading: () => const Center(child: LoadingWidget()),
+      error: (error, _) => Center(child: Text('Error: $error')),
+    );
   }
 }
 

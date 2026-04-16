@@ -45,7 +45,7 @@ final allTacticsProvider = FutureProvider<List<AttackTactic>>.internal(
 // ignore: unused_element
 typedef AllTacticsRef = FutureProviderRef<List<AttackTactic>>;
 String _$filteredTechniquesHash() =>
-    r'3ebd8f458beeb4a8a6262deab757a41c55d9a6e2';
+    r'e933e85c9ee3c491670cdfd85fdcfb9fcbfda13b';
 
 /// Techniques filtered by tactic, search query, platform, and risk score.
 ///
@@ -627,5 +627,23 @@ final minRiskFilterProvider =
     );
 
 typedef _$MinRiskFilter = AutoDisposeNotifier<double>;
+String _$techniqueSortHash() => r'980dc5a7aca7568bccf76e842fcfe308757ca53f';
+
+/// Sort mode for the library list.
+///
+/// Copied from [TechniqueSort].
+@ProviderFor(TechniqueSort)
+final techniqueSortProvider =
+    AutoDisposeNotifierProvider<TechniqueSort, TechniqueSortOption>.internal(
+      TechniqueSort.new,
+      name: r'techniqueSortProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$techniqueSortHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$TechniqueSort = AutoDisposeNotifier<TechniqueSortOption>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -15,8 +15,6 @@ class TechniqueDetailScreen extends ConsumerWidget {
     final techniqueAsync = ref.watch(techniqueByIdProvider(techniqueId));
     final isBookmarkedAsync =
         ref.watch(isTechniqueBookmarkedProvider(techniqueId));
-    final coverageAsync =
-        ref.watch(techniqueCoverageStatusProvider(techniqueId));
 
     return Scaffold(
       appBar: AppBar(
@@ -34,13 +32,14 @@ class TechniqueDetailScreen extends ConsumerWidget {
                 if (isBookmarked) {
                   await ref.read(removeBookmarkProvider(techniqueId).future);
                 } else {
-                  techniqueAsync.whenData((t) async {
-                    if (t != null) {
-                      await ref.read(
-                        addBookmarkProvider(techniqueId, t.name).future,
-                      );
-                    }
-                  });
+                  final technique = await ref.read(
+                    techniqueByIdProvider(techniqueId).future,
+                  );
+                  if (technique != null) {
+                    await ref.read(
+                      addBookmarkProvider(techniqueId, technique.name).future,
+                    );
+                  }
                 }
                 ref.invalidate(isTechniqueBookmarkedProvider(techniqueId));
               },
@@ -69,13 +68,11 @@ class TechniqueDetailScreen extends ConsumerWidget {
                 _HeaderCard(technique: technique),
                 const SizedBox(height: 16),
 
-                // ── Coverage toggle ──────────────────────────────────────
-                coverageAsync.when(
-                  data: (cov) => _CoverageCard(
-                      technique: technique, coverage: cov, ref: ref),
-                  loading: () => const LoadingWidget(),
-                  error: (_, __) => _CoverageCard(
-                      technique: technique, coverage: null, ref: ref),
+                CoverageEditorCard(
+                  techniqueId: technique.id,
+                  riskScore: technique.riskScore,
+                  subtitle:
+                      'Update status, add analyst notes, and track related defensive controls.',
                 ),
                 const SizedBox(height: 16),
 
@@ -146,7 +143,12 @@ class TechniqueDetailScreen extends ConsumerWidget {
                     icon: Icons.account_tree,
                     child: Column(
                       children: technique.subTechniques
-                          .map((s) => _SubTechCard(sub: s))
+                          .map(
+                            (s) => _SubTechCard(
+                              parentTechniqueId: technique.id,
+                              sub: s,
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -348,189 +350,12 @@ class _HeaderCard extends StatelessWidget {
   }
 }
 
-// ─── Coverage toggle card ─────────────────────────────────────────────────────
-
-class _CoverageCard extends StatelessWidget {
-  final AttackTechnique technique;
-  final CoverageStatus? coverage;
-  final WidgetRef ref;
-
-  const _CoverageCard({
-    required this.technique,
-    required this.coverage,
-    required this.ref,
-  });
-
-  Color _levelColor(CoverageLevel l) {
-    switch (l) {
-      case CoverageLevel.covered:
-        return AppTheme.successColor;
-      case CoverageLevel.partiallyCovered:
-        return AppTheme.warningColor;
-      case CoverageLevel.unknown:
-        return Colors.grey;
-      case CoverageLevel.notCovered:
-        return AppTheme.dangerColor;
-    }
-  }
-
-  String _levelLabel(CoverageLevel l) {
-    switch (l) {
-      case CoverageLevel.covered:
-        return 'Covered';
-      case CoverageLevel.partiallyCovered:
-        return 'Partial';
-      case CoverageLevel.unknown:
-        return 'Unknown';
-      case CoverageLevel.notCovered:
-        return 'Not Covered';
-    }
-  }
-
-  double _multiplier(CoverageLevel l) {
-    switch (l) {
-      case CoverageLevel.covered:
-        return 0.0;
-      case CoverageLevel.partiallyCovered:
-        return 0.5;
-      case CoverageLevel.unknown:
-        return 0.7;
-      case CoverageLevel.notCovered:
-        return 1.0;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final current = coverage?.level ?? CoverageLevel.notCovered;
-    final color = _levelColor(current);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.security, color: AppTheme.primaryColor, size: 20),
-                const SizedBox(width: 8),
-                Text('Defensive Coverage',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    _levelLabel(current),
-                    style: TextStyle(
-                        color: color,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Tap a level to update how well your controls defend against this technique.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-
-            // Level selector
-            Row(
-              children: CoverageLevel.values.map((level) {
-                final isSelected = current == level;
-                final c = _levelColor(level);
-                final labels = {
-                  CoverageLevel.covered: '✓ Covered',
-                  CoverageLevel.partiallyCovered: '~ Partial',
-                  CoverageLevel.unknown: '? Unknown',
-                  CoverageLevel.notCovered: '✗ None',
-                };
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      final updated = CoverageStatus(
-                        techniqueId: technique.id,
-                        level: level,
-                        notes: coverage?.notes,
-                        relatedControls: coverage?.relatedControls ?? [],
-                        lastUpdated: DateTime.now(),
-                      );
-                      await ref.read(
-                        updateCoverageStatusProvider(updated).future,
-                      );
-                      ref.invalidate(
-                          techniqueCoverageStatusProvider(technique.id));
-                      ref.invalidate(allCoverageStatusesProvider);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? c.withValues(alpha: 0.2)
-                            : c.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected ? c : c.withValues(alpha: 0.3),
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Text(
-                        labels[level]!,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: c,
-                          fontSize: 10,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 10),
-
-            // Risk engine formula display
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Risk Engine:  ${technique.riskScore.toStringAsFixed(1)} × ${_multiplier(current).toStringAsFixed(1)} = '
-                '${(technique.riskScore * _multiplier(current)).toStringAsFixed(2)} / 10  '
-                '(${_levelLabel(current)})',
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontSize: 11,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ─── Sub-technique card ───────────────────────────────────────────────────────
 
 class _SubTechCard extends StatelessWidget {
+  final String parentTechniqueId;
   final AttackSubTechnique sub;
-  const _SubTechCard({required this.sub});
+  const _SubTechCard({required this.parentTechniqueId, required this.sub});
 
   Color get _c {
     if (sub.riskScore >= 8.5) return AppTheme.dangerColor;
@@ -541,58 +366,75 @@ class _SubTechCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: AppTheme.primaryColor.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 3,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _c,
-              borderRadius: BorderRadius.circular(2),
-            ),
+    return InkWell(
+      onTap: () => context.push('/technique/$parentTechniqueId/sub/${sub.id}'),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppTheme.primaryColor.withValues(alpha: 0.15),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(sub.id,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 3,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _c,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        sub.id,
                         style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12)),
-                    const Spacer(),
-                    Text(sub.riskScore.toStringAsFixed(1),
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        sub.riskScore.toStringAsFixed(1),
                         style: TextStyle(
-                            color: _c,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(sub.name,
-                    style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 4),
-                Text(sub.description,
+                          color: _c,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    sub.name,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    sub.description,
                     style: Theme.of(context).textTheme.bodySmall,
                     maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
-              ],
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

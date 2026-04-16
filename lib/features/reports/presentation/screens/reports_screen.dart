@@ -29,6 +29,12 @@ class ReportsScreen extends ConsumerWidget {
             // ── Live Security Posture Summary ───────────────────────────
             const _LivePostureCard(),
             const SizedBox(height: 24),
+            reportsAsync.when(
+              data: (reports) => RiskTrendLineChart(reports: reports),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 24),
 
             // ── Latest Saved Report ─────────────────────────────────────
             const SectionHeader(title: 'Latest Report'),
@@ -119,6 +125,7 @@ class ReportsScreen extends ConsumerWidget {
       id: const Uuid().v4(),
       title: 'Security Posture Report — ${DateFormat('MMM d, yyyy').format(DateTime.now())}',
       totalTechniquesReviewed: techniques.length,
+      riskScore: riskScore,
       coveragePercentage: coverage,
       topRiskyTechniques: topRisky,
       unresolvedGaps: unresolvedGaps,
@@ -604,21 +611,28 @@ class _LatestReportCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: MetricCard(
-                    label: 'Coverage',
-                    value: '${report.coveragePercentage.toStringAsFixed(1)}%',
-                    icon: Icons.shield,
+                    label: 'Risk',
+                    value: '${report.riskScore.toStringAsFixed(1)}',
+                    icon: Icons.monitor_heart_outlined,
+                    valueColor: AppTheme.accentColor,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: MetricCard(
-                    label: 'Risk Gaps',
-                    value: report.unresolvedGaps.length.toString(),
-                    icon: Icons.warning,
-                    valueColor: AppTheme.dangerColor,
+                    label: 'Coverage',
+                    value: '${report.coveragePercentage.toStringAsFixed(1)}%',
+                    icon: Icons.shield,
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            MetricCard(
+              label: 'Risk Gaps',
+              value: report.unresolvedGaps.length.toString(),
+              icon: Icons.warning,
+              valueColor: AppTheme.dangerColor,
             ),
             if (report.notes != null) ...[
               const SizedBox(height: 8),
@@ -792,6 +806,15 @@ class _ReportDetailSheet extends StatelessWidget {
               children: [
                 Expanded(
                   child: MetricCard(
+                    label: 'Risk',
+                    value: '${report.riskScore.toStringAsFixed(1)}',
+                    icon: Icons.monitor_heart_outlined,
+                    valueColor: AppTheme.accentColor,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: MetricCard(
                     label: 'Coverage',
                     value: '${report.coveragePercentage.toStringAsFixed(1)}%',
                     icon: Icons.shield,
@@ -800,9 +823,10 @@ class _ReportDetailSheet extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: MetricCard(
-                    label: 'Techniques',
-                    value: '${report.totalTechniquesReviewed}',
-                    icon: Icons.category,
+                    label: 'Risk Gaps',
+                    value: '${report.unresolvedGaps.length}',
+                    icon: Icons.warning_amber_outlined,
+                    valueColor: AppTheme.dangerColor,
                   ),
                 ),
               ],
