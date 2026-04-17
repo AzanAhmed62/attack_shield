@@ -23,8 +23,18 @@ OrganizationProfile _$OrganizationProfileFromJson(Map<String, dynamic> json) {
 mixin _$OrganizationProfile {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  AppContext get context => throw _privateConstructorUsedError;
-  String get description => throw _privateConstructorUsedError;
+  String get description =>
+      throw _privateConstructorUsedError; // Use-case context from onboarding
+  String get context =>
+      throw _privateConstructorUsedError; // 'Personal Learning' | 'Lab' | 'Organization'
+  // New: structured profile fields
+  OrgSector get sector => throw _privateConstructorUsedError;
+  OrgSize get orgSize => throw _privateConstructorUsedError;
+  List<String> get techStack =>
+      throw _privateConstructorUsedError; // TechStackItem.name values
+  List<String> get currentControls =>
+      throw _privateConstructorUsedError; // SecurityControl.name values
+  // Legacy fields kept for compatibility
   List<String> get preferredSectors => throw _privateConstructorUsedError;
   List<String> get preferredPlatforms => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
@@ -50,8 +60,12 @@ abstract class $OrganizationProfileCopyWith<$Res> {
   $Res call({
     String id,
     String name,
-    AppContext context,
     String description,
+    String context,
+    OrgSector sector,
+    OrgSize orgSize,
+    List<String> techStack,
+    List<String> currentControls,
     List<String> preferredSectors,
     List<String> preferredPlatforms,
     DateTime createdAt,
@@ -76,8 +90,12 @@ class _$OrganizationProfileCopyWithImpl<$Res, $Val extends OrganizationProfile>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? context = null,
     Object? description = null,
+    Object? context = null,
+    Object? sector = null,
+    Object? orgSize = null,
+    Object? techStack = null,
+    Object? currentControls = null,
     Object? preferredSectors = null,
     Object? preferredPlatforms = null,
     Object? createdAt = null,
@@ -93,14 +111,30 @@ class _$OrganizationProfileCopyWithImpl<$Res, $Val extends OrganizationProfile>
                 ? _value.name
                 : name // ignore: cast_nullable_to_non_nullable
                       as String,
-            context: null == context
-                ? _value.context
-                : context // ignore: cast_nullable_to_non_nullable
-                      as AppContext,
             description: null == description
                 ? _value.description
                 : description // ignore: cast_nullable_to_non_nullable
                       as String,
+            context: null == context
+                ? _value.context
+                : context // ignore: cast_nullable_to_non_nullable
+                      as String,
+            sector: null == sector
+                ? _value.sector
+                : sector // ignore: cast_nullable_to_non_nullable
+                      as OrgSector,
+            orgSize: null == orgSize
+                ? _value.orgSize
+                : orgSize // ignore: cast_nullable_to_non_nullable
+                      as OrgSize,
+            techStack: null == techStack
+                ? _value.techStack
+                : techStack // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            currentControls: null == currentControls
+                ? _value.currentControls
+                : currentControls // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
             preferredSectors: null == preferredSectors
                 ? _value.preferredSectors
                 : preferredSectors // ignore: cast_nullable_to_non_nullable
@@ -135,8 +169,12 @@ abstract class _$$OrganizationProfileImplCopyWith<$Res>
   $Res call({
     String id,
     String name,
-    AppContext context,
     String description,
+    String context,
+    OrgSector sector,
+    OrgSize orgSize,
+    List<String> techStack,
+    List<String> currentControls,
     List<String> preferredSectors,
     List<String> preferredPlatforms,
     DateTime createdAt,
@@ -160,8 +198,12 @@ class __$$OrganizationProfileImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? context = null,
     Object? description = null,
+    Object? context = null,
+    Object? sector = null,
+    Object? orgSize = null,
+    Object? techStack = null,
+    Object? currentControls = null,
     Object? preferredSectors = null,
     Object? preferredPlatforms = null,
     Object? createdAt = null,
@@ -177,14 +219,30 @@ class __$$OrganizationProfileImplCopyWithImpl<$Res>
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
                   as String,
-        context: null == context
-            ? _value.context
-            : context // ignore: cast_nullable_to_non_nullable
-                  as AppContext,
         description: null == description
             ? _value.description
             : description // ignore: cast_nullable_to_non_nullable
                   as String,
+        context: null == context
+            ? _value.context
+            : context // ignore: cast_nullable_to_non_nullable
+                  as String,
+        sector: null == sector
+            ? _value.sector
+            : sector // ignore: cast_nullable_to_non_nullable
+                  as OrgSector,
+        orgSize: null == orgSize
+            ? _value.orgSize
+            : orgSize // ignore: cast_nullable_to_non_nullable
+                  as OrgSize,
+        techStack: null == techStack
+            ? _value._techStack
+            : techStack // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        currentControls: null == currentControls
+            ? _value._currentControls
+            : currentControls // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
         preferredSectors: null == preferredSectors
             ? _value._preferredSectors
             : preferredSectors // ignore: cast_nullable_to_non_nullable
@@ -212,13 +270,19 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
   const _$OrganizationProfileImpl({
     required this.id,
     required this.name,
-    this.context = AppContext.personalLearning,
     this.description = '',
+    this.context = 'Organization',
+    this.sector = OrgSector.sme,
+    this.orgSize = OrgSize.small,
+    final List<String> techStack = const [],
+    final List<String> currentControls = const [],
     final List<String> preferredSectors = const [],
     final List<String> preferredPlatforms = const [],
     required this.createdAt,
     required this.lastModified,
-  }) : _preferredSectors = preferredSectors,
+  }) : _techStack = techStack,
+       _currentControls = currentControls,
+       _preferredSectors = preferredSectors,
        _preferredPlatforms = preferredPlatforms;
 
   factory _$OrganizationProfileImpl.fromJson(Map<String, dynamic> json) =>
@@ -230,11 +294,44 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
   final String name;
   @override
   @JsonKey()
-  final AppContext context;
+  final String description;
+  // Use-case context from onboarding
   @override
   @JsonKey()
-  final String description;
+  final String context;
+  // 'Personal Learning' | 'Lab' | 'Organization'
+  // New: structured profile fields
+  @override
+  @JsonKey()
+  final OrgSector sector;
+  @override
+  @JsonKey()
+  final OrgSize orgSize;
+  final List<String> _techStack;
+  @override
+  @JsonKey()
+  List<String> get techStack {
+    if (_techStack is EqualUnmodifiableListView) return _techStack;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_techStack);
+  }
+
+  // TechStackItem.name values
+  final List<String> _currentControls;
+  // TechStackItem.name values
+  @override
+  @JsonKey()
+  List<String> get currentControls {
+    if (_currentControls is EqualUnmodifiableListView) return _currentControls;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_currentControls);
+  }
+
+  // SecurityControl.name values
+  // Legacy fields kept for compatibility
   final List<String> _preferredSectors;
+  // SecurityControl.name values
+  // Legacy fields kept for compatibility
   @override
   @JsonKey()
   List<String> get preferredSectors {
@@ -261,7 +358,7 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
 
   @override
   String toString() {
-    return 'OrganizationProfile(id: $id, name: $name, context: $context, description: $description, preferredSectors: $preferredSectors, preferredPlatforms: $preferredPlatforms, createdAt: $createdAt, lastModified: $lastModified)';
+    return 'OrganizationProfile(id: $id, name: $name, description: $description, context: $context, sector: $sector, orgSize: $orgSize, techStack: $techStack, currentControls: $currentControls, preferredSectors: $preferredSectors, preferredPlatforms: $preferredPlatforms, createdAt: $createdAt, lastModified: $lastModified)';
   }
 
   @override
@@ -271,9 +368,19 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
             other is _$OrganizationProfileImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.context, context) || other.context == context) &&
             (identical(other.description, description) ||
                 other.description == description) &&
+            (identical(other.context, context) || other.context == context) &&
+            (identical(other.sector, sector) || other.sector == sector) &&
+            (identical(other.orgSize, orgSize) || other.orgSize == orgSize) &&
+            const DeepCollectionEquality().equals(
+              other._techStack,
+              _techStack,
+            ) &&
+            const DeepCollectionEquality().equals(
+              other._currentControls,
+              _currentControls,
+            ) &&
             const DeepCollectionEquality().equals(
               other._preferredSectors,
               _preferredSectors,
@@ -294,8 +401,12 @@ class _$OrganizationProfileImpl implements _OrganizationProfile {
     runtimeType,
     id,
     name,
-    context,
     description,
+    context,
+    sector,
+    orgSize,
+    const DeepCollectionEquality().hash(_techStack),
+    const DeepCollectionEquality().hash(_currentControls),
     const DeepCollectionEquality().hash(_preferredSectors),
     const DeepCollectionEquality().hash(_preferredPlatforms),
     createdAt,
@@ -323,8 +434,12 @@ abstract class _OrganizationProfile implements OrganizationProfile {
   const factory _OrganizationProfile({
     required final String id,
     required final String name,
-    final AppContext context,
     final String description,
+    final String context,
+    final OrgSector sector,
+    final OrgSize orgSize,
+    final List<String> techStack,
+    final List<String> currentControls,
     final List<String> preferredSectors,
     final List<String> preferredPlatforms,
     required final DateTime createdAt,
@@ -339,9 +454,19 @@ abstract class _OrganizationProfile implements OrganizationProfile {
   @override
   String get name;
   @override
-  AppContext get context;
+  String get description; // Use-case context from onboarding
   @override
-  String get description;
+  String get context; // 'Personal Learning' | 'Lab' | 'Organization'
+  // New: structured profile fields
+  @override
+  OrgSector get sector;
+  @override
+  OrgSize get orgSize;
+  @override
+  List<String> get techStack; // TechStackItem.name values
+  @override
+  List<String> get currentControls; // SecurityControl.name values
+  // Legacy fields kept for compatibility
   @override
   List<String> get preferredSectors;
   @override

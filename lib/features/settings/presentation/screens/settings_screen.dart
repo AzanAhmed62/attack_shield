@@ -253,13 +253,19 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const _FormulaLine('Exposure', 'riskScore × coverageMultiplier'),
+                  const _FormulaLine(
+                    'Exposure',
+                    'riskScore × coverageMultiplier',
+                  ),
                   const _FormulaLine('Covered', '× 0.0  (no exposure)'),
                   const _FormulaLine('Partial', '× 0.5  (50% exposure)'),
                   const _FormulaLine('Unknown', '× 0.7  (assumed gap)'),
                   const _FormulaLine('Not Covered', '× 1.0  (full exposure)'),
                   const Divider(height: 20),
-                  const _FormulaLine('Tactic Risk', 'mean(Exposure) per tactic'),
+                  const _FormulaLine(
+                    'Tactic Risk',
+                    'mean(Exposure) per tactic',
+                  ),
                   const _FormulaLine(
                     'Org Risk',
                     'Σ(TacticRisk × weight) / Σ(weight) × 10',
@@ -407,10 +413,7 @@ class SettingsScreen extends ConsumerWidget {
       'coverageStatuses': statuses.map((status) => status.toJson()).toList(),
     });
 
-    await Share.share(
-      payload,
-      subject: 'AttackShield Coverage Export',
-    );
+    await Share.share(payload, subject: 'AttackShield Coverage Export');
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -512,7 +515,9 @@ class SettingsScreen extends ConsumerWidget {
                     : decoded;
 
                 if (items is! List) {
-                  throw const FormatException('Invalid coverage export payload');
+                  throw const FormatException(
+                    'Invalid coverage export payload',
+                  );
                 }
 
                 for (final item in items) {
@@ -526,7 +531,9 @@ class SettingsScreen extends ConsumerWidget {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Imported ${items.length} coverage statuses'),
+                      content: Text(
+                        'Imported ${items.length} coverage statuses',
+                      ),
                       backgroundColor: AppTheme.successColor,
                     ),
                   );
@@ -673,7 +680,7 @@ class _OrgProfileCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
-                        _contextLabel(org.context),
+                        _contextLabel(AppContextX.fromString(org.context)),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -736,7 +743,9 @@ void _showOrgEditDialog(
 ) {
   final nameCtrl = TextEditingController(text: existing?.name ?? '');
   final ctxCtrl = TextEditingController(
-    text: existing != null ? _contextLabel(existing.context) : '',
+    text: existing != null
+        ? _contextLabel(AppContextX.fromString(existing.context))
+        : '',
   );
   final descCtrl = TextEditingController(text: existing?.description ?? '');
 
@@ -786,7 +795,7 @@ void _showOrgEditDialog(
                   existing?.id ??
                   DateTime.now().millisecondsSinceEpoch.toString(),
               name: nameCtrl.text.trim(),
-              context: _contextFromLabel(ctxCtrl.text.trim()),
+              context: _contextFromLabel(ctxCtrl.text.trim()).value,
               description: descCtrl.text.trim(),
               preferredSectors: existing?.preferredSectors ?? [],
               preferredPlatforms: existing?.preferredPlatforms ?? [],

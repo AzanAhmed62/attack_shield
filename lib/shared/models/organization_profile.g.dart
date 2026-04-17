@@ -11,10 +11,20 @@ _$OrganizationProfileImpl _$$OrganizationProfileImplFromJson(
 ) => _$OrganizationProfileImpl(
   id: json['id'] as String,
   name: json['name'] as String,
-  context:
-      $enumDecodeNullable(_$AppContextEnumMap, json['context']) ??
-      AppContext.personalLearning,
   description: json['description'] as String? ?? '',
+  context: json['context'] as String? ?? 'Organization',
+  sector:
+      $enumDecodeNullable(_$OrgSectorEnumMap, json['sector']) ?? OrgSector.sme,
+  orgSize:
+      $enumDecodeNullable(_$OrgSizeEnumMap, json['orgSize']) ?? OrgSize.small,
+  techStack:
+      (json['techStack'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  currentControls:
+      (json['currentControls'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   preferredSectors:
       (json['preferredSectors'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -34,16 +44,36 @@ Map<String, dynamic> _$$OrganizationProfileImplToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
-  'context': _$AppContextEnumMap[instance.context]!,
   'description': instance.description,
+  'context': instance.context,
+  'sector': _$OrgSectorEnumMap[instance.sector]!,
+  'orgSize': _$OrgSizeEnumMap[instance.orgSize]!,
+  'techStack': instance.techStack,
+  'currentControls': instance.currentControls,
   'preferredSectors': instance.preferredSectors,
   'preferredPlatforms': instance.preferredPlatforms,
   'createdAt': instance.createdAt.toIso8601String(),
   'lastModified': instance.lastModified.toIso8601String(),
 };
 
-const _$AppContextEnumMap = {
-  AppContext.personalLearning: 'personalLearning',
-  AppContext.lab: 'lab',
-  AppContext.organizational: 'organizational',
+const _$OrgSectorEnumMap = {
+  OrgSector.healthcare: 'healthcare',
+  OrgSector.finance: 'finance',
+  OrgSector.education: 'education',
+  OrgSector.retail: 'retail',
+  OrgSector.government: 'government',
+  OrgSector.technology: 'technology',
+  OrgSector.manufacturing: 'manufacturing',
+  OrgSector.energy: 'energy',
+  OrgSector.sme: 'sme',
+  OrgSector.personal: 'personal',
+  OrgSector.other: 'other',
+};
+
+const _$OrgSizeEnumMap = {
+  OrgSize.micro: 'micro',
+  OrgSize.small: 'small',
+  OrgSize.medium: 'medium',
+  OrgSize.large: 'large',
+  OrgSize.enterprise: 'enterprise',
 };

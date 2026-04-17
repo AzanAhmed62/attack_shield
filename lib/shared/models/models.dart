@@ -9,3 +9,5 @@ export 'simulation_result.dart';
 export 'simulation_scenario.dart';
 export 'technique_detection.dart';
 export 'technique_mitigation.dart';
+
+export 'threat_profile.dart';
