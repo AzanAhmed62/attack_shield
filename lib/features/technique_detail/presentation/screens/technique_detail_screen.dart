@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:attackshield/core/theme/theme.dart';
 import 'package:attackshield/core/widgets/widgets.dart';
+import 'package:attackshield/core/widgets/ai_explainer_section.dart';
 import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/shared/models/models.dart';
 
@@ -13,8 +14,9 @@ class TechniqueDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final techniqueAsync = ref.watch(techniqueByIdProvider(techniqueId));
-    final isBookmarkedAsync =
-        ref.watch(isTechniqueBookmarkedProvider(techniqueId));
+    final isBookmarkedAsync = ref.watch(
+      isTechniqueBookmarkedProvider(techniqueId),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -26,8 +28,7 @@ class TechniqueDetailScreen extends ConsumerWidget {
                 isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                 color: AppTheme.primaryColor,
               ),
-              tooltip:
-                  isBookmarked ? 'Remove bookmark' : 'Bookmark technique',
+              tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark technique',
               onPressed: () async {
                 if (isBookmarked) {
                   await ref.read(removeBookmarkProvider(techniqueId).future);
@@ -76,6 +77,9 @@ class TechniqueDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
+                AIExplainerSection(technique: technique),
+                const SizedBox(height: 16),
+
                 // ── Description ──────────────────────────────────────────
                 _Section(
                   title: 'Description',
@@ -97,10 +101,13 @@ class TechniqueDetailScreen extends ConsumerWidget {
                           .map(
                             (t) => ActionChip(
                               label: Text(t),
-                              backgroundColor: AppTheme.primaryColor
-                                  .withValues(alpha: 0.1),
+                              backgroundColor: AppTheme.primaryColor.withValues(
+                                alpha: 0.1,
+                              ),
                               labelStyle: const TextStyle(
-                                  color: AppTheme.primaryColor, fontSize: 12),
+                                color: AppTheme.primaryColor,
+                                fontSize: 12,
+                              ),
                               onPressed: () {
                                 ref
                                     .read(selectedTacticProvider.notifier)
@@ -124,10 +131,11 @@ class TechniqueDetailScreen extends ConsumerWidget {
                       children: technique.platforms
                           .map(
                             (p) => Chip(
-                              label:
-                                  Text(p, style: const TextStyle(fontSize: 12)),
-                              avatar:
-                                  const Icon(Icons.computer, size: 14),
+                              label: Text(
+                                p,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              avatar: const Icon(Icons.computer, size: 14),
                             ),
                           )
                           .toList(),
@@ -138,8 +146,7 @@ class TechniqueDetailScreen extends ConsumerWidget {
                 // ── Sub-techniques ────────────────────────────────────────
                 if (technique.subTechniques.isNotEmpty) ...[
                   _Section(
-                    title:
-                        'Sub-Techniques (${technique.subTechniques.length})',
+                    title: 'Sub-Techniques (${technique.subTechniques.length})',
                     icon: Icons.account_tree,
                     child: Column(
                       children: technique.subTechniques
@@ -164,7 +171,8 @@ class TechniqueDetailScreen extends ConsumerWidget {
                     child: Column(
                       children: technique.detectionNotes
                           .map(
-                            (n) => _Bullet(text: n, color: AppTheme.warningColor),
+                            (n) =>
+                                _Bullet(text: n, color: AppTheme.warningColor),
                           )
                           .toList(),
                     ),
@@ -202,8 +210,11 @@ class TechniqueDetailScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.open_in_new,
-                          size: 16, color: AppTheme.primaryColor),
+                      const Icon(
+                        Icons.open_in_new,
+                        size: 16,
+                        color: AppTheme.primaryColor,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -270,14 +281,18 @@ class _HeaderCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(technique.name,
-                          style:
-                              Theme.of(context).textTheme.headlineMedium),
+                      Text(
+                        technique.name,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
                       const SizedBox(height: 4),
-                      Text(technique.id,
-                          style: const TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        technique.id,
+                        style: const TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -292,16 +307,22 @@ class _HeaderCard extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(technique.riskScore.toStringAsFixed(1),
-                          style: TextStyle(
-                              color: c,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18)),
-                      Text(_label,
-                          style: TextStyle(
-                              color: c,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        technique.riskScore.toStringAsFixed(1),
+                        style: TextStyle(
+                          color: c,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        _label,
+                        style: TextStyle(
+                          color: c,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -320,14 +341,17 @@ class _HeaderCard extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                Text('Risk: ${technique.riskScore.toStringAsFixed(1)}/10',
-                    style:
-                        TextStyle(color: c, fontSize: 12)),
+                Text(
+                  'Risk: ${technique.riskScore.toStringAsFixed(1)}/10',
+                  style: TextStyle(color: c, fontSize: 12),
+                ),
                 if (technique.subTechniques.isNotEmpty) ...[
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -335,9 +359,10 @@ class _HeaderCard extends StatelessWidget {
                     child: Text(
                       '${technique.subTechniques.length} sub-techniques',
                       style: const TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold),
+                        color: AppTheme.primaryColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -417,10 +442,7 @@ class _SubTechCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    sub.name,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
+                  Text(sub.name, style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 4),
                   Text(
                     sub.description,
@@ -463,12 +485,10 @@ class _Section extends StatelessWidget {
         Row(
           children: [
             if (icon != null) ...[
-              Icon(icon,
-                  size: 18, color: iconColor ?? AppTheme.primaryColor),
+              Icon(icon, size: 18, color: iconColor ?? AppTheme.primaryColor),
               const SizedBox(width: 6),
             ],
-            Text(title,
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
           ],
         ),
         const SizedBox(height: 10),
@@ -495,17 +515,17 @@ class _Bullet extends StatelessWidget {
             child: Container(
               width: 6,
               height: 6,
-              decoration: BoxDecoration(
-                  color: color, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontSize: 13)),
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontSize: 13),
+            ),
           ),
         ],
       ),

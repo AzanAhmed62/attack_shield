@@ -9,10 +9,7 @@ import 'package:attackshield/shared/providers/providers.dart';
 class ShellScaffold extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
-  const ShellScaffold({
-    super.key,
-    required this.navigationShell,
-  });
+  const ShellScaffold({super.key, required this.navigationShell});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,8 +47,7 @@ class ShellScaffold extends ConsumerWidget {
             icon: criticalAsync.when(
               data: (n) => n > 0
                   ? Badge(
-                      label: Text('$n',
-                          style: const TextStyle(fontSize: 10)),
+                      label: Text('$n', style: const TextStyle(fontSize: 10)),
                       child: const Icon(Icons.notifications_outlined),
                     )
                   : const Icon(Icons.notifications_outlined),
@@ -61,8 +57,7 @@ class ShellScaffold extends ConsumerWidget {
             selectedIcon: criticalAsync.when(
               data: (n) => n > 0
                   ? Badge(
-                      label: Text('$n',
-                          style: const TextStyle(fontSize: 10)),
+                      label: Text('$n', style: const TextStyle(fontSize: 10)),
                       child: const Icon(Icons.notifications),
                     )
                   : const Icon(Icons.notifications),
@@ -123,6 +118,14 @@ class MoreScreen extends StatelessWidget {
             onTap: () => context.push('/more/assets'),
           ),
           _MoreTile(
+            icon: Icons.document_scanner_outlined,
+            label: 'Threat Intel Mapper',
+            subtitle:
+                'Paste text → AI maps to ATT&CK techniques + creates alert',
+            color: AppTheme.primaryColor,
+            onTap: () => context.push('/threat-intel'),
+          ),
+          _MoreTile(
             icon: Icons.settings_outlined,
             label: 'Settings',
             subtitle: 'Preferences, org profile & data management',
@@ -164,10 +167,8 @@ class _MoreTile extends StatelessWidget {
           ),
           child: Icon(icon, color: color),
         ),
-        title: Text(label,
-            style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text(subtitle,
-            style: Theme.of(context).textTheme.bodySmall),
+        title: Text(label, style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
         trailing: const Icon(Icons.chevron_right, color: Colors.grey),
         onTap: onTap,
       ),

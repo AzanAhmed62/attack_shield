@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:attackshield/core/theme/theme.dart';
 import 'package:attackshield/core/widgets/widgets.dart';
+import 'package:attackshield/core/widgets/ai_debrief_sheet.dart';
 import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/shared/models/models.dart';
 
@@ -61,7 +62,9 @@ class SimulationsScreen extends ConsumerWidget {
                         ref: ref,
                         onDelete: () async {
                           await ref.read(
-                            deleteSimulationScenarioProvider(scenarios[i].id).future,
+                            deleteSimulationScenarioProvider(
+                              scenarios[i].id,
+                            ).future,
                           );
                         },
                       ),
@@ -98,7 +101,10 @@ class SimulationsScreen extends ConsumerWidget {
 class _ReadinessCard extends StatelessWidget {
   final AsyncValue<double> readinessAsync;
   final AsyncValue<Map<String, int>> readinessMapAsync;
-  const _ReadinessCard({required this.readinessAsync, required this.readinessMapAsync});
+  const _ReadinessCard({
+    required this.readinessAsync,
+    required this.readinessMapAsync,
+  });
 
   Color _color(double p) {
     if (p >= 70) return AppTheme.successColor;
@@ -124,8 +130,10 @@ class _ReadinessCard extends StatelessWidget {
               children: [
                 const Icon(Icons.verified_user, color: AppTheme.primaryColor),
                 const SizedBox(width: 8),
-                Text('Overall Readiness',
-                    style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  'Overall Readiness',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -138,23 +146,42 @@ class _ReadinessCard extends StatelessWidget {
                       children: [
                         Text(
                           '${pct.toStringAsFixed(1)}%',
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            color: _color(pct),
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
+                                color: _color(pct),
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
-                        Text(_label(pct),
-                            style: TextStyle(color: _color(pct), fontSize: 13)),
+                        Text(
+                          _label(pct),
+                          style: TextStyle(color: _color(pct), fontSize: 13),
+                        ),
                         const SizedBox(height: 10),
                         readinessMapAsync.when(
                           data: (m) => Wrap(
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _StatusChip('Passed', m['passed'] ?? 0, AppTheme.successColor),
-                              _StatusChip('Partial', m['partiallyPassed'] ?? 0, AppTheme.warningColor),
-                              _StatusChip('Failed', m['failed'] ?? 0, AppTheme.dangerColor),
-                              _StatusChip('Not Tested', m['notTested'] ?? 0, Colors.grey),
+                              _StatusChip(
+                                'Passed',
+                                m['passed'] ?? 0,
+                                AppTheme.successColor,
+                              ),
+                              _StatusChip(
+                                'Partial',
+                                m['partiallyPassed'] ?? 0,
+                                AppTheme.warningColor,
+                              ),
+                              _StatusChip(
+                                'Failed',
+                                m['failed'] ?? 0,
+                                AppTheme.dangerColor,
+                              ),
+                              _StatusChip(
+                                'Not Tested',
+                                m['notTested'] ?? 0,
+                                Colors.grey,
+                              ),
                             ],
                           ),
                           loading: () => const SizedBox.shrink(),
@@ -197,7 +224,11 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         '$label: $count',
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -212,37 +243,50 @@ class _SuggestedScenariosCard extends StatelessWidget {
   static const _suggestions = [
     (
       name: 'Phishing Awareness Test',
-      desc: 'Simulate a spearphishing campaign and measure detection/response time.',
+      desc:
+          'Simulate a spearphishing campaign and measure detection/response time.',
       techniques: ['T1566', 'T1566.001', 'T1566.002'],
-      obj: 'Verify email filtering, user reporting, and incident response to phishing.',
-      expected: 'Email blocked or flagged within 5 min. User reports suspicious email.',
+      obj:
+          'Verify email filtering, user reporting, and incident response to phishing.',
+      expected:
+          'Email blocked or flagged within 5 min. User reports suspicious email.',
     ),
     (
       name: 'Credential Dumping Detection',
-      desc: 'Test whether LSASS access and credential dumping triggers EDR alerts.',
+      desc:
+          'Test whether LSASS access and credential dumping triggers EDR alerts.',
       techniques: ['T1003', 'T1003.001', 'T1558'],
-      obj: 'Verify Credential Guard, LSASS audit policies, and EDR behavioral detection.',
-      expected: 'Alert generated within 2 minutes. LSASS access blocked or logged.',
+      obj:
+          'Verify Credential Guard, LSASS audit policies, and EDR behavioral detection.',
+      expected:
+          'Alert generated within 2 minutes. LSASS access blocked or logged.',
     ),
     (
       name: 'Lateral Movement via RDP',
       desc: 'Test detection of lateral movement using Remote Desktop Protocol.',
       techniques: ['T1021', 'T1021.001', 'T1550.002'],
-      obj: 'Verify network segmentation, RDP logging, and anomalous login detection.',
-      expected: 'Unusual RDP connection flagged. Pass-the-hash attempt blocked.',
+      obj:
+          'Verify network segmentation, RDP logging, and anomalous login detection.',
+      expected:
+          'Unusual RDP connection flagged. Pass-the-hash attempt blocked.',
     ),
     (
       name: 'Ransomware Readiness Check',
-      desc: 'Validate backup integrity and recovery against ransomware simulation.',
+      desc:
+          'Validate backup integrity and recovery against ransomware simulation.',
       techniques: ['T1486', 'T1490', 'T1562.001'],
-      obj: 'Test backup restoration, shadow copy protection, and AV/EDR ransomware detection.',
-      expected: 'Encryption attempt blocked. Backup restore completes in under 4 hours.',
+      obj:
+          'Test backup restoration, shadow copy protection, and AV/EDR ransomware detection.',
+      expected:
+          'Encryption attempt blocked. Backup restore completes in under 4 hours.',
     ),
     (
       name: 'Defense Evasion Detection',
-      desc: 'Test detection of log clearing, UAC bypass, and obfuscated scripts.',
+      desc:
+          'Test detection of log clearing, UAC bypass, and obfuscated scripts.',
       techniques: ['T1070.001', 'T1548.002', 'T1027'],
-      obj: 'Verify SIEM alerting on log tampering and EDR detection of UAC bypass.',
+      obj:
+          'Verify SIEM alerting on log tampering and EDR detection of UAC bypass.',
       expected: 'Log clear event triggers alert. UAC bypass attempt detected.',
     ),
   ];
@@ -257,29 +301,42 @@ class _SuggestedScenariosCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.lightbulb_outline, color: AppTheme.warningColor),
+                const Icon(
+                  Icons.lightbulb_outline,
+                  color: AppTheme.warningColor,
+                ),
                 const SizedBox(width: 8),
-                Text('ATT&CK Scenario Templates',
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'ATT&CK Scenario Templates',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ],
             ),
             const SizedBox(height: 4),
-            Text('Pre-built defensive exercises. Tap + to add.',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              'Pre-built defensive exercises. Tap + to add.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 12),
             ..._suggestions.map(
               (s) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(s.name,
-                    style: Theme.of(context).textTheme.titleSmall),
+                title: Text(
+                  s.name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 subtitle: Text(
                   s.techniques.join(', '),
                   style: const TextStyle(
-                      color: AppTheme.primaryColor, fontSize: 11),
+                    color: AppTheme.primaryColor,
+                    fontSize: 11,
+                  ),
                 ),
                 trailing: IconButton(
-                  icon: const Icon(Icons.add_circle_outline,
-                      color: AppTheme.primaryColor),
+                  icon: const Icon(
+                    Icons.add_circle_outline,
+                    color: AppTheme.primaryColor,
+                  ),
                   onPressed: () async {
                     final scenario = SimulationScenario(
                       id: const Uuid().v4(),
@@ -291,7 +348,8 @@ class _SuggestedScenariosCard extends StatelessWidget {
                       createdAt: DateTime.now(),
                     );
                     await ref.read(
-                        createSimulationScenarioProvider(scenario).future);
+                      createSimulationScenarioProvider(scenario).future,
+                    );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -337,12 +395,17 @@ class _ScenarioCard extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(scenario.name,
-                      style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(
+                    scenario.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      size: 20, color: Colors.grey),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
                   onPressed: () => _confirmDelete(context),
                 ),
               ],
@@ -364,7 +427,9 @@ class _ScenarioCard extends ConsumerWidget {
                         onTap: () => context.push('/technique/$t'),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 3),
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
@@ -387,20 +452,27 @@ class _ScenarioCard extends ConsumerWidget {
             // Results history
             resultsAsync.when(
               data: (results) => results.isEmpty
-                  ? Text('No test results yet.',
-                      style: Theme.of(context).textTheme.bodySmall)
+                  ? Text(
+                      'No test results yet.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    )
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('History',
-                            style: Theme.of(context).textTheme.labelLarge),
+                        Text(
+                          'History',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
                         const SizedBox(height: 4),
-                        ...results.reversed.take(3).map((r) => _ResultRow(result: r)),
+                        ...results.reversed
+                            .take(3)
+                            .map((r) => _ResultRow(result: r)),
                         if (results.length > 3)
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () => _showHistorySheet(context, results),
+                              onPressed: () =>
+                                  _showHistorySheet(context, results),
                               child: const Text('View Full History'),
                             ),
                           ),
@@ -433,15 +505,18 @@ class _ScenarioCard extends ConsumerWidget {
         content: Text('Delete "${scenario.name}"? This cannot be undone.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               onDelete();
             },
-            child: const Text('Delete',
-                style: TextStyle(color: AppTheme.dangerColor)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppTheme.dangerColor),
+            ),
           ),
         ],
       ),
@@ -456,17 +531,12 @@ class _ScenarioCard extends ConsumerWidget {
     );
   }
 
-  void _showHistorySheet(
-    BuildContext context,
-    List<SimulationResult> results,
-  ) {
+  void _showHistorySheet(BuildContext context, List<SimulationResult> results) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _ScenarioHistorySheet(
-        scenario: scenario,
-        results: results,
-      ),
+      builder: (_) =>
+          _ScenarioHistorySheet(scenario: scenario, results: results),
     );
   }
 }
@@ -482,7 +552,8 @@ class _SimulationTrendCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final ordered = [...results]..sort((a, b) => a.testedAt.compareTo(b.testedAt));
+    final ordered = [...results]
+      ..sort((a, b) => a.testedAt.compareTo(b.testedAt));
     var passed = 0;
     var partial = 0;
     final trendSpots = <FlSpot>[];
@@ -527,9 +598,8 @@ class _SimulationTrendCard extends StatelessWidget {
                     show: true,
                     horizontalInterval: 25,
                     drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.grey.withValues(alpha: 0.15),
-                    ),
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: Colors.grey.withValues(alpha: 0.15)),
                   ),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
@@ -546,7 +616,10 @@ class _SimulationTrendCard extends StatelessWidget {
                         reservedSize: 34,
                         getTitlesWidget: (value, _) => Text(
                           '${value.toInt()}%',
-                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ),
@@ -586,12 +659,13 @@ class _SimulationTrendCard extends StatelessWidget {
                         color: AppTheme.successColor.withValues(alpha: 0.1),
                       ),
                       dotData: FlDotData(
-                        getDotPainter: (spot, x, bar, index) => FlDotCirclePainter(
-                          radius: 3.5,
-                          color: AppTheme.successColor,
-                          strokeWidth: 2,
-                          strokeColor: AppTheme.backgroundColor,
-                        ),
+                        getDotPainter: (spot, x, bar, index) =>
+                            FlDotCirclePainter(
+                              radius: 3.5,
+                              color: AppTheme.successColor,
+                              strokeWidth: 2,
+                              strokeColor: AppTheme.backgroundColor,
+                            ),
                       ),
                     ),
                   ],
@@ -609,14 +683,12 @@ class _ScenarioHistorySheet extends StatelessWidget {
   final SimulationScenario scenario;
   final List<SimulationResult> results;
 
-  const _ScenarioHistorySheet({
-    required this.scenario,
-    required this.results,
-  });
+  const _ScenarioHistorySheet({required this.scenario, required this.results});
 
   @override
   Widget build(BuildContext context) {
-    final ordered = [...results]..sort((a, b) => b.testedAt.compareTo(a.testedAt));
+    final ordered = [...results]
+      ..sort((a, b) => b.testedAt.compareTo(a.testedAt));
 
     return DraggableScrollableSheet(
       initialChildSize: 0.72,
@@ -701,12 +773,19 @@ class _ResultRow extends StatelessWidget {
             decoration: BoxDecoration(color: _color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
-          Text(_label,
-              style: TextStyle(
-                  color: _color, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(
+            _label,
+            style: TextStyle(
+              color: _color,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
           const Spacer(),
-          Text(DateFormat('MMM d, yyyy').format(result.testedAt),
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            DateFormat('MMM d, yyyy').format(result.testedAt),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );
@@ -756,7 +835,11 @@ class _RecordResultSheetState extends State<_RecordResultSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -764,16 +847,23 @@ class _RecordResultSheetState extends State<_RecordResultSheet> {
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey, borderRadius: BorderRadius.circular(2)),
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            Text('Record Test Result',
-                style: Theme.of(context).textTheme.titleLarge),
-            Text(widget.scenario.name,
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              'Record Test Result',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            Text(
+              widget.scenario.name,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 16),
 
             if (widget.scenario.objectives?.isNotEmpty == true) ...[
@@ -786,11 +876,15 @@ class _RecordResultSheetState extends State<_RecordResultSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Objectives',
-                        style: Theme.of(context).textTheme.labelLarge),
+                    Text(
+                      'Objectives',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
                     const SizedBox(height: 4),
-                    Text(widget.scenario.objectives!,
-                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      widget.scenario.objectives!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),
@@ -815,8 +909,9 @@ class _RecordResultSheetState extends State<_RecordResultSheet> {
                             : c.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                            color: isSelected ? c : c.withValues(alpha: 0.3),
-                            width: isSelected ? 2 : 1),
+                          color: isSelected ? c : c.withValues(alpha: 0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
                       ),
                       child: Text(
                         _resultLabels[r]!,
@@ -824,8 +919,9 @@ class _RecordResultSheetState extends State<_RecordResultSheet> {
                         style: TextStyle(
                           color: c,
                           fontSize: 10,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -838,23 +934,26 @@ class _RecordResultSheetState extends State<_RecordResultSheet> {
             TextField(
               controller: _testerCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Tester / Team',
-                  prefixIcon: Icon(Icons.person)),
+                labelText: 'Tester / Team',
+                prefixIcon: Icon(Icons.person),
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _obsCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Observations',
-                  prefixIcon: Icon(Icons.notes)),
+                labelText: 'Observations',
+                prefixIcon: Icon(Icons.notes),
+              ),
               maxLines: 3,
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _recCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Recommendations',
-                  prefixIcon: Icon(Icons.lightbulb_outline)),
+                labelText: 'Recommendations',
+                prefixIcon: Icon(Icons.lightbulb_outline),
+              ),
               maxLines: 2,
             ),
             const SizedBox(height: 20),
@@ -880,15 +979,49 @@ class _RecordResultSheetState extends State<_RecordResultSheet> {
                         ? 'Security Team'
                         : _testerCtrl.text,
                   );
-                  await widget.ref
-                      .read(createSimulationResultProvider(simResult).future);
+                  await widget.ref.read(
+                    createSimulationResultProvider(simResult).future,
+                  );
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text('Result recorded'),
-                          backgroundColor: AppTheme.successColor),
+                        content: Text('Result recorded'),
+                        backgroundColor: AppTheme.successColor,
+                      ),
                     );
+                    // Ask user if they want an AI debrief
+                    if (context.mounted) {
+                      final wantsDebrief = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('AI Debrief Available'),
+                          content: const Text(
+                            'Generate an AI-powered exercise debrief?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Skip'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Generate Debrief'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (wantsDebrief == true && context.mounted) {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (_) => AIDebriefSheet(
+                            scenario: widget.scenario,
+                            result: simResult,
+                          ),
+                        );
+                      }
+                    }
                   }
                 },
               ),
@@ -930,7 +1063,11 @@ class _CreateScenarioSheetState extends State<_CreateScenarioSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -938,19 +1075,23 @@ class _CreateScenarioSheetState extends State<_CreateScenarioSheet> {
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey, borderRadius: BorderRadius.circular(2)),
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            Text('Create Test Scenario',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Create Test Scenario',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _nameCtrl,
-              decoration:
-                  const InputDecoration(labelText: 'Scenario Name *'),
+              decoration: const InputDecoration(labelText: 'Scenario Name *'),
             ),
             const SizedBox(height: 10),
             TextField(
@@ -962,8 +1103,9 @@ class _CreateScenarioSheetState extends State<_CreateScenarioSheet> {
             TextField(
               controller: _objCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Objectives',
-                  hintText: 'What defensive controls are you testing?'),
+                labelText: 'Objectives',
+                hintText: 'What defensive controls are you testing?',
+              ),
               maxLines: 2,
             ),
             const SizedBox(height: 10),
@@ -974,15 +1116,18 @@ class _CreateScenarioSheetState extends State<_CreateScenarioSheet> {
                   child: TextField(
                     controller: _techCtrl,
                     decoration: const InputDecoration(
-                        labelText: 'ATT&CK Technique ID',
-                        hintText: 'e.g. T1566'),
+                      labelText: 'ATT&CK Technique ID',
+                      hintText: 'e.g. T1566',
+                    ),
                     textCapitalization: TextCapitalization.characters,
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.add_circle,
-                      color: AppTheme.primaryColor),
+                  icon: const Icon(
+                    Icons.add_circle,
+                    color: AppTheme.primaryColor,
+                  ),
                   onPressed: () {
                     final id = _techCtrl.text.trim().toUpperCase();
                     if (id.isNotEmpty && !_techniques.contains(id)) {
@@ -1001,12 +1146,12 @@ class _CreateScenarioSheetState extends State<_CreateScenarioSheet> {
                 children: _techniques
                     .map(
                       (t) => Chip(
-                        label: Text(t,
-                            style: const TextStyle(
-                                color: AppTheme.primaryColor)),
+                        label: Text(
+                          t,
+                          style: const TextStyle(color: AppTheme.primaryColor),
+                        ),
                         deleteIconColor: AppTheme.primaryColor,
-                        onDeleted: () =>
-                            setState(() => _techniques.remove(t)),
+                        onDeleted: () => setState(() => _techniques.remove(t)),
                       ),
                     )
                     .toList(),
@@ -1031,13 +1176,15 @@ class _CreateScenarioSheetState extends State<_CreateScenarioSheet> {
                     createdAt: DateTime.now(),
                   );
                   await widget.ref.read(
-                      createSimulationScenarioProvider(scenario).future);
+                    createSimulationScenarioProvider(scenario).future,
+                  );
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text('Scenario created'),
-                          backgroundColor: AppTheme.successColor),
+                        content: Text('Scenario created'),
+                        backgroundColor: AppTheme.successColor,
+                      ),
                     );
                   }
                 },

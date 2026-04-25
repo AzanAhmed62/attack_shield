@@ -8,6 +8,7 @@ import 'package:attackshield/core/widgets/widgets.dart';
 import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/shared/models/models.dart';
 import 'package:attackshield/core/constants/constants.dart';
+import 'package:attackshield/features/settings/presentation/widgets/ai_settings_section.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -331,6 +332,10 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // ── AI Settings ──────────────────────────────────────────────
+          const AISettingsSection(),
           const SizedBox(height: 24),
 
           // ── About ────────────────────────────────────────────────────

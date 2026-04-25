@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:attackshield/core/theme/theme.dart';
 import 'package:attackshield/core/widgets/widgets.dart';
+import 'package:attackshield/core/widgets/ai_coverage_advisor_card.dart';
 import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/shared/models/models.dart';
 import 'package:attackshield/core/services/risk_engine.dart';
@@ -28,6 +29,8 @@ class ReportsScreen extends ConsumerWidget {
           children: [
             // ── Live Security Posture Summary ───────────────────────────
             const _LivePostureCard(),
+            const SizedBox(height: 16),
+            const AICoverageAdvisorCard(),
             const SizedBox(height: 24),
             reportsAsync.when(
               data: (reports) => RiskTrendLineChart(reports: reports),
@@ -41,7 +44,9 @@ class ReportsScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             latestAsync.when(
               data: (latest) => latest == null
-                  ? _EmptyReportCard(onGenerate: () => _generateReport(context, ref))
+                  ? _EmptyReportCard(
+                      onGenerate: () => _generateReport(context, ref),
+                    )
                   : _LatestReportCard(
                       report: latest,
                       onExport: () => _exportPdf(context, ref, latest),
@@ -59,7 +64,8 @@ class ReportsScreen extends ConsumerWidget {
               data: (reports) => reports.isEmpty
                   ? EmptyStateWidget(
                       title: 'No Reports Yet',
-                      subtitle: 'Generate a report to track security posture over time',
+                      subtitle:
+                          'Generate a report to track security posture over time',
                       icon: Icons.article_outlined,
                       actionLabel: 'Generate Report',
                       onActionPressed: () => _generateReport(context, ref),
@@ -98,9 +104,19 @@ class ReportsScreen extends ConsumerWidget {
     final techniques = await ref.read(allTechniquesProvider.future);
     final coverageStatuses = await ref.read(allCoverageStatusesProvider.future);
 
-    final riskScore = RiskEngine.organizationRiskScore(techniques, coverageStatuses);
-    final coverage = RiskEngine.coveragePercentage(techniques, coverageStatuses);
-    final gaps = RiskEngine.topRiskGaps(techniques, coverageStatuses, limit: 10);
+    final riskScore = RiskEngine.organizationRiskScore(
+      techniques,
+      coverageStatuses,
+    );
+    final coverage = RiskEngine.coveragePercentage(
+      techniques,
+      coverageStatuses,
+    );
+    final gaps = RiskEngine.topRiskGaps(
+      techniques,
+      coverageStatuses,
+      limit: 10,
+    );
     final tacticRisks = RiskEngine.tacticRiskMap(techniques, coverageStatuses);
 
     // Top risky technique labels
@@ -113,17 +129,23 @@ class ReportsScreen extends ConsumerWidget {
     final unresolvedGaps = gaps
         .where((g) => g.coverageLevel != CoverageLevel.partiallyCovered)
         .take(5)
-        .map((g) => 'No detection/mitigation for ${g.technique.id} (${g.technique.name})')
+        .map(
+          (g) =>
+              'No detection/mitigation for ${g.technique.id} (${g.technique.name})',
+        )
         .toList();
 
     // Recommendations derived from highest-risk tactics
     final sortedTactics = tacticRisks.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    final recommendations = _buildRecommendations(sortedTactics.take(5).toList());
+    final recommendations = _buildRecommendations(
+      sortedTactics.take(5).toList(),
+    );
 
     final report = ReportSummary(
       id: const Uuid().v4(),
-      title: 'Security Posture Report — ${DateFormat('MMM d, yyyy').format(DateTime.now())}',
+      title:
+          'Security Posture Report — ${DateFormat('MMM d, yyyy').format(DateTime.now())}',
       totalTechniquesReviewed: techniques.length,
       riskScore: riskScore,
       coveragePercentage: coverage,
@@ -141,7 +163,9 @@ class ReportsScreen extends ConsumerWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Report generated — coverage ${coverage.toStringAsFixed(1)}%'),
+          content: Text(
+            'Report generated — coverage ${coverage.toStringAsFixed(1)}%',
+          ),
           backgroundColor: AppTheme.successColor,
         ),
       );
@@ -205,9 +229,19 @@ class ReportsScreen extends ConsumerWidget {
   ) async {
     final techniques = await ref.read(allTechniquesProvider.future);
     final coverageStatuses = await ref.read(allCoverageStatusesProvider.future);
-    final riskScore = RiskEngine.organizationRiskScore(techniques, coverageStatuses);
-    final gaps = RiskEngine.topRiskGaps(techniques, coverageStatuses, limit: 10);
-    final breakdown = RiskEngine.coverageBreakdown(techniques, coverageStatuses);
+    final riskScore = RiskEngine.organizationRiskScore(
+      techniques,
+      coverageStatuses,
+    );
+    final gaps = RiskEngine.topRiskGaps(
+      techniques,
+      coverageStatuses,
+      limit: 10,
+    );
+    final breakdown = RiskEngine.coverageBreakdown(
+      techniques,
+      coverageStatuses,
+    );
 
     final pdf = pw.Document();
 
@@ -242,7 +276,9 @@ class ReportsScreen extends ConsumerWidget {
                   ],
                 ),
                 pw.Text(
-                  DateFormat('MMM d, yyyy').format(report.generatedAt ?? DateTime.now()),
+                  DateFormat(
+                    'MMM d, yyyy',
+                  ).format(report.generatedAt ?? DateTime.now()),
                   style: const pw.TextStyle(color: PdfColors.grey600),
                 ),
               ],
@@ -255,10 +291,7 @@ class ReportsScreen extends ConsumerWidget {
           // ── Title ─────────────────────────────────────────────────────
           pw.Text(
             report.title,
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
           pw.Text(
@@ -285,10 +318,7 @@ class ReportsScreen extends ConsumerWidget {
                 'Techniques Reviewed',
                 '${report.totalTechniquesReviewed}',
               ]),
-              _pdfTableRow([
-                'Covered',
-                '${breakdown['covered']} techniques',
-              ]),
+              _pdfTableRow(['Covered', '${breakdown['covered']} techniques']),
               _pdfTableRow([
                 'Partially Covered',
                 '${breakdown['partiallyCovered']} techniques',
@@ -312,7 +342,12 @@ class ReportsScreen extends ConsumerWidget {
               3: const pw.FixedColumnWidth(80),
             },
             children: [
-              _pdfTableRow(['ID', 'Technique', 'Risk', 'Coverage'], isHeader: true),
+              _pdfTableRow([
+                'ID',
+                'Technique',
+                'Risk',
+                'Coverage',
+              ], isHeader: true),
               ...gaps.map(
                 (g) => _pdfTableRow([
                   g.technique.id,
@@ -328,25 +363,25 @@ class ReportsScreen extends ConsumerWidget {
           // ── Recommendations ───────────────────────────────────────────
           _pdfSection('Recommended Actions'),
           ...report.recommendedActions.asMap().entries.map(
-                (e) => pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 8),
-                  child: pw.Row(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        '${e.key + 1}. ',
-                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                      ),
-                      pw.Expanded(
-                        child: pw.Text(
-                          e.value,
-                          style: const pw.TextStyle(fontSize: 10),
-                        ),
-                      ),
-                    ],
+            (e) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 8),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    '${e.key + 1}. ',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   ),
-                ),
+                  pw.Expanded(
+                    child: pw.Text(
+                      e.value,
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ),
           pw.SizedBox(height: 20),
 
           // ── Footer note ───────────────────────────────────────────────
@@ -369,16 +404,16 @@ class ReportsScreen extends ConsumerWidget {
   // ── PDF helpers ───────────────────────────────────────────────────────────
 
   pw.Widget _pdfSection(String title) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 8),
-        child: pw.Text(
-          title,
-          style: pw.TextStyle(
-            fontSize: 13,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.cyan800,
-          ),
-        ),
-      );
+    padding: const pw.EdgeInsets.only(bottom: 8),
+    child: pw.Text(
+      title,
+      style: pw.TextStyle(
+        fontSize: 13,
+        fontWeight: pw.FontWeight.bold,
+        color: PdfColors.cyan800,
+      ),
+    ),
+  );
 
   pw.TableRow _pdfTableRow(List<String> cells, {bool isHeader = false}) =>
       pw.TableRow(
@@ -393,8 +428,9 @@ class ReportsScreen extends ConsumerWidget {
                   cell,
                   style: pw.TextStyle(
                     fontSize: 9,
-                    fontWeight:
-                        isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
+                    fontWeight: isHeader
+                        ? pw.FontWeight.bold
+                        : pw.FontWeight.normal,
                   ),
                 ),
               ),
@@ -439,7 +475,10 @@ class _LivePostureCard extends ConsumerWidget {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.successColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -466,7 +505,10 @@ class _LivePostureCard extends ConsumerWidget {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Risk Score', style: Theme.of(context).textTheme.bodySmall),
+                          Text(
+                            'Risk Score',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             score.toStringAsFixed(1),
@@ -507,9 +549,21 @@ class _LivePostureCard extends ConsumerWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _BreakdownChip('Covered', b['covered'] ?? 0, AppTheme.successColor),
-                  _BreakdownChip('Partial', b['partiallyCovered'] ?? 0, AppTheme.warningColor),
-                  _BreakdownChip('Not Covered', b['notCovered'] ?? 0, AppTheme.dangerColor),
+                  _BreakdownChip(
+                    'Covered',
+                    b['covered'] ?? 0,
+                    AppTheme.successColor,
+                  ),
+                  _BreakdownChip(
+                    'Partial',
+                    b['partiallyCovered'] ?? 0,
+                    AppTheme.warningColor,
+                  ),
+                  _BreakdownChip(
+                    'Not Covered',
+                    b['notCovered'] ?? 0,
+                    AppTheme.dangerColor,
+                  ),
                   _BreakdownChip('Unknown', b['unknown'] ?? 0, Colors.grey),
                 ],
               ),
@@ -559,8 +613,10 @@ class _EmptyReportCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('No Reports Generated Yet',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'No Reports Generated Yet',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             Text(
               'Generate your first report to snapshot the current security posture.',
@@ -695,7 +751,10 @@ class _ReportCard extends StatelessWidget {
                   color: AppTheme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.description, color: AppTheme.primaryColor),
+                child: const Icon(
+                  Icons.description,
+                  color: AppTheme.primaryColor,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -710,9 +769,9 @@ class _ReportCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      DateFormat('MMM d, yyyy').format(
-                        report.generatedAt ?? DateTime.now(),
-                      ),
+                      DateFormat(
+                        'MMM d, yyyy',
+                      ).format(report.generatedAt ?? DateTime.now()),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -781,7 +840,10 @@ class _ReportDetailSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(report.title, style: Theme.of(context).textTheme.headlineSmall),
+            Text(
+              report.title,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 4),
             Text(
               'Generated ${DateFormat('MMM d, yyyy – HH:mm').format(report.generatedAt ?? DateTime.now())}',
@@ -795,7 +857,10 @@ class _ReportDetailSheet extends StatelessWidget {
                   color: AppTheme.primaryColor.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(report.notes!, style: Theme.of(context).textTheme.bodySmall),
+                child: Text(
+                  report.notes!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
             ],
             const SizedBox(height: 20),
@@ -838,7 +903,10 @@ class _ReportDetailSheet extends StatelessWidget {
             ...report.topRiskyTechniques.map(
               (t) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.security, color: AppTheme.accentColor),
+                leading: const Icon(
+                  Icons.security,
+                  color: AppTheme.accentColor,
+                ),
                 title: Text(t, style: Theme.of(context).textTheme.bodyMedium),
               ),
             ),
@@ -849,7 +917,10 @@ class _ReportDetailSheet extends StatelessWidget {
             ...report.unresolvedGaps.map(
               (g) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.warning_amber, color: AppTheme.dangerColor),
+                leading: const Icon(
+                  Icons.warning_amber,
+                  color: AppTheme.dangerColor,
+                ),
                 title: Text(g, style: Theme.of(context).textTheme.bodyMedium),
               ),
             ),
@@ -877,7 +948,10 @@ class _ReportDetailSheet extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(e.value, style: Theme.of(context).textTheme.bodyMedium),
+                      child: Text(
+                        e.value,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ),
                   ],
                 ),

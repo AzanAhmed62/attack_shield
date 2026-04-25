@@ -12,6 +12,7 @@ import '../../features/attack_library/presentation/screens/attack_library_screen
 import '../../features/technique_detail/presentation/screens/technique_detail_screen.dart';
 import '../../features/technique_detail/presentation/screens/sub_technique_detail_screen.dart';
 import '../../features/threat_mapping/presentation/screens/threat_mapping_screen.dart';
+import '../../features/threat_intel/presentation/screens/threat_intel_mapper_screen.dart';
 import '../../features/simulations/presentation/screens/simulations_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/alerts/presentation/screens/alerts_screen.dart';
@@ -173,6 +174,12 @@ final appRouter = GoRouter(
     ),
 
     // ── Standalone routes (pushed on top of shell) ───────────────────────
+    GoRoute(
+      path: '/threat-intel',
+      name: 'threat-intel',
+      pageBuilder: (context, state) =>
+          _slide(state, const ThreatIntelMapperScreen()),
+    ),
     GoRoute(
       path: '/simulations',
       name: 'simulations',
