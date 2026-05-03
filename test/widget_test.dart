@@ -28,20 +28,20 @@ void main() {
         discoveredAt: DateTime(2026, 1, 1),
       );
 
-      final matching = AttackTechnique(
+      const matching = AttackTechnique(
         id: 'T1003',
         name: 'Credential Dumping',
         description: 'Steal credentials from OS stores.',
-        tactics: const ['Credential Access'],
-        platforms: const ['Windows'],
+        tactics: ['Credential Access'],
+        platforms: ['Windows'],
         riskScore: 8.0,
       );
-      final nonMatching = AttackTechnique(
+      const nonMatching = AttackTechnique(
         id: 'T1496',
         name: 'Resource Hijacking',
         description: 'Use victim resources for miner workloads.',
-        tactics: const ['Impact'],
-        platforms: const ['Linux'],
+        tactics: ['Impact'],
+        platforms: ['Linux'],
         riskScore: 9.0,
       );
 

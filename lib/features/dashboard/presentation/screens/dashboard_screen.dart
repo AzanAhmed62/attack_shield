@@ -42,7 +42,7 @@ class DashboardScreen extends ConsumerWidget {
                   )
                 : const SizedBox.shrink(),
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
         ],
       ),
@@ -66,7 +66,7 @@ class DashboardScreen extends ConsumerWidget {
                     ? const ThreatProfileCard(compact: true)
                     : const ThreatProfileCard(),
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 16),
 
@@ -94,7 +94,7 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: () => context.push('/library'),
                       ),
                       loading: () => const _MetricTileSkeleton(),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -109,7 +109,7 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: () => context.push('/alerts'),
                       ),
                       loading: () => const _MetricTileSkeleton(),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -124,7 +124,7 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: () => context.push('/assets'),
                       ),
                       loading: () => const _MetricTileSkeleton(),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
                   ),
                 ],
@@ -152,7 +152,7 @@ class DashboardScreen extends ConsumerWidget {
                             .toList(),
                       ),
                 loading: () => const LoadingWidget(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 16),
 
@@ -336,13 +336,13 @@ class _RiskHeroCard extends StatelessWidget {
                                         fontSize: 11)),
                               ),
                               loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
+                              error: (_, _) => const SizedBox.shrink(),
                             ),
                           ],
                         );
                       },
                       loading: () => const LoadingWidget(),
-                      error: (_, __) => const Text('—'),
+                      error: (_, _) => const Text('—'),
                     ),
                   ),
                   coverageAsync.when(
@@ -352,7 +352,7 @@ class _RiskHeroCard extends StatelessWidget {
                       label: 'Coverage',
                     ),
                     loading: () => const LoadingWidget(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                   ),
                 ],
               ),
@@ -371,7 +371,7 @@ class _RiskHeroCard extends StatelessWidget {
                   );
                 },
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 10),
               breakdownAsync.when(
@@ -386,7 +386,7 @@ class _RiskHeroCard extends StatelessWidget {
                   ],
                 ),
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
               ),
               const SizedBox(height: 8),
               const Align(

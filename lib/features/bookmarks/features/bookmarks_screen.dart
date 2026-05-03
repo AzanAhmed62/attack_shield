@@ -26,7 +26,7 @@ class BookmarksScreen extends ConsumerWidget {
                   )
                 : const SizedBox.shrink(),
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
         ],
       ),
@@ -276,7 +276,7 @@ class _BookmarkCard extends ConsumerWidget {
                   );
                 },
                 loading: () => const SizedBox(width: 20),
-                error: (_, __) => const SizedBox(width: 20),
+                error: (_, _) => const SizedBox(width: 20),
               ),
               // Content
               Expanded(

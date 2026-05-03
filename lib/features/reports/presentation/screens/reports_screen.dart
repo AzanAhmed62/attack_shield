@@ -35,7 +35,7 @@ class ReportsScreen extends ConsumerWidget {
             reportsAsync.when(
               data: (reports) => RiskTrendLineChart(reports: reports),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 24),
 
@@ -53,7 +53,7 @@ class ReportsScreen extends ConsumerWidget {
                       onView: () => _showDetail(context, latest),
                     ),
               loading: () => const LoadingWidget(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 24),
 
@@ -526,7 +526,7 @@ class _LivePostureCard extends ConsumerWidget {
                       );
                     },
                     loading: () => const LoadingWidget(),
-                    error: (_, __) => const Text('—'),
+                    error: (_, _) => const Text('—'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -538,7 +538,7 @@ class _LivePostureCard extends ConsumerWidget {
                     label: 'Coverage',
                   ),
                   loading: () => const LoadingWidget(),
-                  error: (_, __) => const Text('—'),
+                  error: (_, _) => const Text('—'),
                 ),
               ],
             ),
@@ -568,7 +568,7 @@ class _LivePostureCard extends ConsumerWidget {
                 ],
               ),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 8),
             allTechAsync.when(
@@ -577,7 +577,7 @@ class _LivePostureCard extends ConsumerWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
           ],
         ),
@@ -668,6 +668,7 @@ class _LatestReportCard extends StatelessWidget {
                 Expanded(
                   child: MetricCard(
                     label: 'Risk',
+                    // ignore: unnecessary_string_interpolations
                     value: '${report.riskScore.toStringAsFixed(1)}',
                     icon: Icons.monitor_heart_outlined,
                     valueColor: AppTheme.accentColor,
@@ -872,7 +873,7 @@ class _ReportDetailSheet extends StatelessWidget {
                 Expanded(
                   child: MetricCard(
                     label: 'Risk',
-                    value: '${report.riskScore.toStringAsFixed(1)}',
+                    value: report.riskScore.toStringAsFixed(1),
                     icon: Icons.monitor_heart_outlined,
                     valueColor: AppTheme.accentColor,
                   ),

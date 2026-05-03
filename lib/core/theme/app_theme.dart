@@ -41,8 +41,8 @@ class AppTheme {
         bodyLarge:     TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: muted),
         bodyMedium:    TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: muted),
         bodySmall:     TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: subtle),
-        labelLarge:    TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor),
-        labelMedium:   TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: primaryColor),
+        labelLarge:    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: primaryColor),
+        labelMedium:   const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: primaryColor),
         labelSmall:    TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: subtle),
       ),
     );
@@ -57,7 +57,7 @@ class AppTheme {
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
       textTheme: _buildTextTheme(dark: true),
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: primaryColor,
         secondary: accentColor,
         surface: surfaceColor,

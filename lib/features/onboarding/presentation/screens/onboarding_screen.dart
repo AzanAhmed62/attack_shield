@@ -258,7 +258,7 @@ class _ProgressBar extends StatelessWidget {
             children: [
               Text(
                 labels[current],
-                style: TextStyle(
+                style: const TextStyle(
                     color: AppTheme.primaryColor,
                     fontSize: 11,
                     fontWeight: FontWeight.bold),
@@ -397,7 +397,7 @@ class _WelcomePage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 36),
-          Wrap(
+          const Wrap(
             spacing: 10,
             runSpacing: 10,
             alignment: WrapAlignment.center,
@@ -433,25 +433,25 @@ class _AttackExplainerPage extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
-          _ExplCard(
+          const _ExplCard(
             icon: Icons.map,
             color: AppTheme.primaryColor,
             title: '14 Attack Phases',
             body: 'From "Gathering information" to "Causing damage" — the full attacker kill-chain.',
           ),
-          _ExplCard(
+          const _ExplCard(
             icon: Icons.category,
             color: AppTheme.warningColor,
             title: '110+ Attack Techniques',
             body: 'Specific methods attackers use, with real-world examples and detection guidance.',
           ),
-          _ExplCard(
+          const _ExplCard(
             icon: Icons.account_tree,
             color: AppTheme.successColor,
             title: 'Sub-Techniques',
             body: 'Detailed variants — e.g. T1566.001 means "Phishing via email attachment".',
           ),
-          _ExplCard(
+          const _ExplCard(
             icon: Icons.shield,
             color: AppTheme.accentColor,
             title: 'Defensive Focus',
@@ -656,7 +656,7 @@ class _TechControlsPage extends StatelessWidget {
                   color: AppTheme.dangerColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text('Required',
+                child: const Text('Required',
                     style: TextStyle(
                         color: AppTheme.dangerColor,
                         fontSize: 10,
@@ -765,11 +765,11 @@ class _TechControlsPage extends StatelessWidget {
               color: AppTheme.primaryColor.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.auto_awesome,
+                Icon(Icons.auto_awesome,
                     color: AppTheme.primaryColor, size: 16),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Controls you select will auto-fill coverage for related ATT&CK techniques. You can always adjust manually.',

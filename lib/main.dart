@@ -5,6 +5,7 @@ import 'app.dart';
 import 'data/services/services.dart';
 import 'data/repositories/repositories.dart';
 import 'core/services/seed_data_service.dart';
+import 'core/services/mitre_stix_data_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,11 +13,16 @@ void main() async {
   // 1. Initialise GetStorage
   await GetStorage.init();
 
-  // 2. Initialise LocalStorageService singleton
+  // 2. Load MITRE STIX data (one-time: ~10s, cached: <2s after)
+  print('🔄 Loading MITRE STIX data...');
+  await MitreStixDataService().initialize();
+  print('✅ MITRE data loaded');
+
+  // 3. Initialise LocalStorageService singleton
   final storageService = LocalStorageService();
   await storageService.initialize();
 
-  // 3. Seed sample data on first launch after onboarding
+  // 4. Seed sample data on first launch after onboarding
   final seedService = SeedDataService(
     storage: storageService,
     alertRepo: AlertRepositoryImpl(storageService),

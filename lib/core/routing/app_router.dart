@@ -9,7 +9,8 @@ import 'package:attackshield/core/routing/shell_nav.dart';
 // ── Screen imports ────────────────────────────────────────────────────────────
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/attack_library/presentation/screens/attack_library_screen.dart';
-import '../../features/technique_detail/presentation/screens/technique_detail_screen.dart';
+import '../../features/technique_detail/presentation/screens/technique_detail_screen.dart'
+    as TechniqueDetail;
 import '../../features/technique_detail/presentation/screens/sub_technique_detail_screen.dart';
 import '../../features/threat_mapping/presentation/screens/threat_mapping_screen.dart';
 import '../../features/threat_intel/presentation/screens/threat_intel_mapper_screen.dart';
@@ -18,6 +19,7 @@ import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/alerts/presentation/screens/alerts_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/organization/presentation/screens/organization_setup_wizard.dart';
 
 bool _onboardingComplete() {
   final storage = GetStorage();
@@ -67,12 +69,7 @@ final appRouter = GoRouter(
               path: '/library',
               name: 'library',
               pageBuilder: (context, state) {
-                // FIX: read tactic query param and pass it to screen
-                final tactic = state.uri.queryParameters['tactic'];
-                return _slide(
-                  state,
-                  AttackLibraryScreen(initialTactic: tactic),
-                );
+                return _slide(state, const AttackLibraryScreen());
               },
               routes: [
                 GoRoute(
@@ -82,7 +79,7 @@ final appRouter = GoRouter(
                     final id = state.pathParameters['id']!;
                     return _slide(
                       state,
-                      TechniqueDetailScreen(techniqueId: id),
+                      TechniqueDetail.TechniqueDetailScreen(techniqueId: id),
                     );
                   },
                   routes: [
@@ -175,6 +172,12 @@ final appRouter = GoRouter(
 
     // ── Standalone routes (pushed on top of shell) ───────────────────────
     GoRoute(
+      path: '/setup-organization',
+      name: 'setup-organization',
+      pageBuilder: (context, state) =>
+          _slide(state, const OrganizationSetupWizard()),
+    ),
+    GoRoute(
       path: '/threat-intel',
       name: 'threat-intel',
       pageBuilder: (context, state) =>
@@ -211,7 +214,10 @@ final appRouter = GoRouter(
       name: 'technique-detail-global',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id']!;
-        return _slide(state, TechniqueDetailScreen(techniqueId: id));
+        return _slide(
+          state,
+          TechniqueDetail.TechniqueDetailScreen(techniqueId: id),
+        );
       },
     ),
     GoRoute(

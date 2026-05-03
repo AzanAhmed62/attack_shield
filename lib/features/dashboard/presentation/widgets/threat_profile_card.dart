@@ -83,7 +83,7 @@ class _FullCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${profile.baselineRiskScore.toStringAsFixed(0)}',
+                        profile.baselineRiskScore.toStringAsFixed(0),
                         style: TextStyle(
                             color: _riskColor,
                             fontWeight: FontWeight.bold,
@@ -267,7 +267,7 @@ class _CompactCard extends StatelessWidget {
                     ?.copyWith(color: AppTheme.primaryColor),
               ),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
             ),
             const SizedBox(height: 8),
             // Top 3 threats compact
@@ -378,7 +378,7 @@ class _ThreatRow extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       threat.techniqueId,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: AppTheme.primaryColor,
                           fontSize: 10,
                           fontWeight: FontWeight.bold),

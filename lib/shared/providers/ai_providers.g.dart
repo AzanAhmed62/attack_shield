@@ -87,7 +87,7 @@ final threatIntelMapperStateProvider =
 typedef _$ThreatIntelMapperState =
     AutoDisposeNotifier<AsyncValue<ThreatIntelResult>?>;
 String _$coverageAdvisorStateHash() =>
-    r'b194a019fad7e488415aaa5f383d7091ff248c49';
+    r'2e7fc6dfbc5713f1dfe13cbbd3bad5cacd628ef7';
 
 /// See also [CoverageAdvisorState].
 @ProviderFor(CoverageAdvisorState)
@@ -108,7 +108,7 @@ final coverageAdvisorStateProvider =
 typedef _$CoverageAdvisorState =
     AutoDisposeNotifier<AsyncValue<CoverageAdvice>?>;
 String _$simulationDebriefStateHash() =>
-    r'c4a633da0430cdfb4038a630fe3754a251434280';
+    r'a4cea87b6601feb09078f70bde656d0dda9f4273';
 
 /// Keyed by simulation result ID so each result has independent state.
 ///
