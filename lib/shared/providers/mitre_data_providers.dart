@@ -2,8 +2,8 @@
 //
 // USAGE:
 //   Copy to lib/shared/providers/mitre_data_providers.dart
-//   Initialize MitreStixDataService in main() BEFORE runApp()
-//   Then watch any provider below from any widget
+//   Providers lazy-initialize the MITRE service on first use.
+//   Then watch any provider below from any widget.
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:attackshield/core/services/mitre_stix_data_service.dart';
@@ -19,6 +19,16 @@ final mitreServiceProvider = Provider<MitreStixDataService>(
   (ref) => MitreStixDataService(),
 );
 
+final mitreInitializationProvider = FutureProvider<void>((ref) async {
+  await ref.watch(mitreServiceProvider).initialize();
+});
+
+Future<MitreStixDataService> _readyMitreService(Ref ref) async {
+  final service = ref.watch(mitreServiceProvider);
+  await ref.watch(mitreInitializationProvider.future);
+  return service;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // TECHNIQUES
 // ═══════════════════════════════════════════════════════════════
@@ -26,7 +36,7 @@ final mitreServiceProvider = Provider<MitreStixDataService>(
 /// All main techniques (excludes sub-techniques).
 /// Result: ~600 objects, cached after first load.
 final allTechniquesProvider = FutureProvider<List<StixTechnique>>((ref) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   final all = svc.getAllTechniques();
   return all.where((t) => !t.isSubTechnique).toList();
 });
@@ -35,7 +45,7 @@ final allTechniquesProvider = FutureProvider<List<StixTechnique>>((ref) async {
 final allSubTechniquesProvider = FutureProvider<List<StixTechnique>>((
   ref,
 ) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getAllTechniques().where((t) => t.isSubTechnique).toList();
 });
 
@@ -43,14 +53,14 @@ final allSubTechniquesProvider = FutureProvider<List<StixTechnique>>((
 final allTechniquesAndSubsProvider = FutureProvider<List<StixTechnique>>((
   ref,
 ) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getAllTechniques();
 });
 
 /// Single technique by ATT&CK external ID (e.g. "T1566").
 final techniqueByAttackIdProvider =
     FutureProvider.family<StixTechnique?, String>((ref, attackId) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.getTechniqueByAttackId(attackId);
     });
 
@@ -61,7 +71,7 @@ final techniquesByTacticProvider =
       ref,
       tacticShortname,
     ) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.getTechniquesByTactic(tacticShortname);
     });
 
@@ -71,7 +81,7 @@ final subTechniquesForParentProvider =
       ref,
       parentAttackId,
     ) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.getSubTechniquesForParent(parentAttackId);
     });
 
@@ -81,7 +91,7 @@ final subTechniquesForParentProvider =
 
 /// All 14 ATT&CK tactics, sorted by ATT&CK order.
 final allTacticsProvider = FutureProvider<List<StixTactic>>((ref) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getAllTactics();
 });
 
@@ -93,21 +103,21 @@ final allTacticsProvider = FutureProvider<List<StixTactic>>((ref) async {
 final allThreatGroupsProvider = FutureProvider<List<StixThreatGroup>>((
   ref,
 ) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getAllThreatGroups();
 });
 
 /// Threat groups that use a given technique (by ATT&CK ID).
 final threatGroupsForTechniqueProvider =
     FutureProvider.family<List<StixThreatGroup>, String>((ref, attackId) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.getThreatGroupsForTechnique(attackId);
     });
 
 /// Techniques used by a specific threat group (by group name or ID).
 final techniquesForThreatGroupProvider =
     FutureProvider.family<List<StixTechnique>, String>((ref, groupId) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.getTechniquesForThreatGroup(groupId);
     });
 
@@ -119,14 +129,14 @@ final techniquesForThreatGroupProvider =
 final allMitigationsProvider = FutureProvider<List<StixMitigation>>((
   ref,
 ) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getAllMitigations();
 });
 
 /// Mitigations for a technique (by ATT&CK ID).
 final mitigationsForTechniqueProvider =
     FutureProvider.family<List<StixMitigation>, String>((ref, attackId) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.getMitigationsForTechnique(attackId);
     });
 
@@ -136,20 +146,20 @@ final mitigationsForTechniqueProvider =
 
 /// All malware families (500+).
 final allMalwareProvider = FutureProvider<List<StixMalware>>((ref) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getAllMalware();
 });
 
 /// All tools (400+).
 final allToolsProvider = FutureProvider<List<StixTool>>((ref) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getAllTools();
 });
 
 /// Malware that uses a given technique.
 final malwareForTechniqueProvider =
     FutureProvider.family<List<StixMalware>, String>((ref, attackId) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.getMalwareForTechnique(attackId);
     });
 
@@ -162,7 +172,7 @@ final relatedTechniquesProvider = FutureProvider.family<List<String>, String>((
   ref,
   attackId,
 ) async {
-  final svc = ref.watch(mitreServiceProvider);
+  final svc = await _readyMitreService(ref);
   return svc.getRelatedTechniques(attackId);
 });
 
@@ -175,7 +185,7 @@ final relatedTechniquesProvider = FutureProvider.family<List<String>, String>((
 final searchTechniquesProvider =
     FutureProvider.family<List<StixTechnique>, String>((ref, query) async {
       if (query.trim().isEmpty) return [];
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return svc.searchTechniques(query.trim());
     });
 
@@ -204,7 +214,7 @@ final prioritisedTechniquesProvider =
       ref,
       profile,
     ) async {
-      final svc = ref.watch(mitreServiceProvider);
+      final svc = await _readyMitreService(ref);
       return _rankTechniquesForOrg(svc, profile);
     });
 

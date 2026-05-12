@@ -7,8 +7,8 @@ part 'attack_technique.g.dart';
 @freezed
 class AttackSubTechnique with _$AttackSubTechnique {
   const factory AttackSubTechnique({
-    required String id,           // e.g. "T1566.001"
-    required String name,         // e.g. "Spearphishing Attachment"
+    required String id, // e.g. "T1566.001"
+    required String name, // e.g. "Spearphishing Attachment"
     required String description,
     @Default([]) List<String> platforms,
     @Default([]) List<String> detectionIds,
@@ -24,40 +24,25 @@ class AttackSubTechnique with _$AttackSubTechnique {
 @freezed
 class AttackTechnique with _$AttackTechnique {
   const factory AttackTechnique({
-    required String id,                         // e.g. "T1566"
-    required String name,                       // e.g. "Phishing"
+    required String id, // e.g. "T1566"
+    required String name, // e.g. "Phishing"
     required String description,
-    required List<String> tactics,              // tactic names this belongs to
+    required List<String> tactics, // tactic names this belongs to
     @Default([]) List<String> platforms,
     @Default([]) List<String> detectionIds,
     @Default([]) List<String> mitigationIds,
     @Default([]) List<String> relatedTechniqueIds,
     @Default([]) List<AttackSubTechnique> subTechniques,
-    @Default(5.0) double riskScore,             // 0.0 – 10.0
+    @Default(5.0) double riskScore, // 0.0 – 10.0
     String? source,
     DateTime? lastModified,
     String? externalUrl,
     // Defensive enrichment fields
-    @Default([]) List<String> detectionNotes,   // free-text detection hints
-    @Default([]) List<String> mitigationNotes,  // free-text mitigation hints
-    String? dataSource,                         // e.g. "Process monitoring"
+    @Default([]) List<String> detectionNotes, // free-text detection hints
+    @Default([]) List<String> mitigationNotes, // free-text mitigation hints
+    String? dataSource, // e.g. "Process monitoring"
   }) = _AttackTechnique;
 
   factory AttackTechnique.fromJson(Map<String, dynamic> json) =>
       _$AttackTechniqueFromJson(json);
-}
-
-/// Represents a MITRE ATT&CK tactic (the kill-chain phase)
-@freezed
-class AttackTactic with _$AttackTactic {
-  const factory AttackTactic({
-    required String id,          // e.g. "TA0001"
-    required String name,        // e.g. "Initial Access"
-    required String description,
-    @Default([]) List<String> techniqueIds,
-    String? shortName,           // e.g. "initial-access"
-  }) = _AttackTactic;
-
-  factory AttackTactic.fromJson(Map<String, dynamic> json) =>
-      _$AttackTacticFromJson(json);
 }

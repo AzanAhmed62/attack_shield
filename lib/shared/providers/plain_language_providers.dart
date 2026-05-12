@@ -1,10 +1,11 @@
 // lib/shared/providers/plain_language_providers.dart
 
+import 'package:get_storage/get_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:attackshield/shared/models/plain_language_model.dart';
 import 'dart:convert';
-import 'package:get_storage/get_storage.dart';
 
 // ════════════════════════════════════════════════════════════════════════════════
 // APP MODE STATE
@@ -46,7 +47,7 @@ final plainLanguageMappingsProvider =
 
         return mappings;
       } catch (e) {
-        // Silent fail - return empty map
+        if (kDebugMode) print('Error loading plain language mappings: $e');
         return {};
       }
     });
@@ -172,13 +173,14 @@ class OrganizationProfileNotifier
   }
 
   Future<void> createOrUpdateProfile(OrganizationProfileV2 profile) async {
+    final previousState = state;
     try {
-      state = const AsyncValue.loading();
       // Save to GetStorage
       final box = GetStorage();
       await box.write('org_profile_v2', profile.toJson());
       state = AsyncValue.data(profile);
     } catch (e, st) {
+      state = previousState;
       state = AsyncValue.error(e, st);
     }
   }
@@ -417,6 +419,7 @@ class ThreatProfileGenerator {
       'T1482',
       'T1007',
       'T1083',
+      // ... more techniques
     ];
   }
 
@@ -637,3 +640,12 @@ class ThreatProfileGenerator {
     return recommendations.take(5).toList();
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════════════
+// IMPORT STATEMENTS (Add to top of file)
+// ════════════════════════════════════════════════════════════════════════════════
+
+// import 'package:get_storage/get_storage.dart';
+// import 'package:flutter/services.dart';
+// import 'dart:convert';
+// import 'package:attackshield/shared/models/plain_language_model.dart';

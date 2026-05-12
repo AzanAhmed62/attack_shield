@@ -7,7 +7,7 @@ part of 'organization_providers.dart';
 // **************************************************************************
 
 String _$organizationProfileHash() =>
-    r'71968d58097a2f2e8671973265d8c1c947b5adba';
+    r'c1d8ad9b83292b00fa7bd5290b03ca6342086904';
 
 /// Current organization profile. Returns null if not set (triggers onboarding).
 ///
@@ -29,7 +29,7 @@ final organizationProfileProvider =
 typedef OrganizationProfileRef =
     AutoDisposeFutureProviderRef<OrganizationProfile?>;
 String _$updateOrganizationProfileHash() =>
-    r'8af61d64f4687fa1048cd9bad5af35254762319d';
+    r'ee4ddf5bd784cc324bae2349cae7dba273d1cde0';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -189,7 +189,7 @@ class _UpdateOrganizationProfileProviderElement
 }
 
 String _$deleteOrganizationProfileHash() =>
-    r'4c691dc5543479fc197a63a0f3538097d1fbe9a3';
+    r'fec8c99201a18f8c04e0b78b3f656596eb0f036a';
 
 /// Delete the organization profile (forces onboarding on next cold start).
 ///

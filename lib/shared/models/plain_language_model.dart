@@ -184,6 +184,101 @@ enum UserTechLevel {
   veryTechnical,
 }
 
+extension BusinessSectorExt on BusinessSector {
+  String get displayName {
+    switch (this) {
+      case BusinessSector.healthcare:
+        return 'Healthcare';
+      case BusinessSector.finance:
+        return 'Finance';
+      case BusinessSector.education:
+        return 'Education';
+      case BusinessSector.retail:
+        return 'Retail';
+      case BusinessSector.manufacturing:
+        return 'Manufacturing';
+      case BusinessSector.government:
+        return 'Government';
+      case BusinessSector.nonprofit:
+        return 'Nonprofit';
+      case BusinessSector.technology:
+        return 'Technology';
+      case BusinessSector.hospitality:
+        return 'Hospitality';
+      case BusinessSector.other:
+        return 'Other';
+    }
+  }
+}
+
+extension OrganizationSizeExt on OrganizationSize {
+  String get displayName {
+    switch (this) {
+      case OrganizationSize.solo:
+        return 'Solo';
+      case OrganizationSize.small:
+        return 'Small';
+      case OrganizationSize.medium:
+        return 'Medium';
+      case OrganizationSize.largeSmall:
+        return 'Large-Small';
+      case OrganizationSize.large:
+        return 'Large';
+    }
+  }
+
+  String get jsonValue {
+    switch (this) {
+      case OrganizationSize.solo:
+        return 'solo';
+      case OrganizationSize.small:
+        return 'small';
+      case OrganizationSize.medium:
+        return 'medium';
+      case OrganizationSize.largeSmall:
+        return 'largesmall';
+      case OrganizationSize.large:
+        return 'large';
+    }
+  }
+}
+
+extension PrimaryTechnologyExt on PrimaryTechnology {
+  String get displayName {
+    switch (this) {
+      case PrimaryTechnology.windowsOnly:
+        return 'Windows Only';
+      case PrimaryTechnology.macOnly:
+        return 'Mac Only';
+      case PrimaryTechnology.linuxOnly:
+        return 'Linux Only';
+      case PrimaryTechnology.mixedOnPrem:
+        return 'Mixed On-Prem';
+      case PrimaryTechnology.cloudPrimary:
+        return 'Cloud Primary';
+      case PrimaryTechnology.hybrid:
+        return 'Hybrid';
+    }
+  }
+
+  String get jsonValue {
+    switch (this) {
+      case PrimaryTechnology.windowsOnly:
+        return 'windows_only';
+      case PrimaryTechnology.macOnly:
+        return 'mac_only';
+      case PrimaryTechnology.linuxOnly:
+        return 'linux_only';
+      case PrimaryTechnology.mixedOnPrem:
+        return 'mixed_onprem';
+      case PrimaryTechnology.cloudPrimary:
+        return 'cloud_primary';
+      case PrimaryTechnology.hybrid:
+        return 'hybrid';
+    }
+  }
+}
+
 @freezed
 class OrganizationProfileV2 with _$OrganizationProfileV2 {
   const factory OrganizationProfileV2({

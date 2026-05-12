@@ -3,8 +3,7 @@ import 'package:get_storage/get_storage.dart';
 /// Singleton wrapper around GetStorage.
 /// All repositories use this service — never call GetStorage directly.
 class LocalStorageService {
-  static final LocalStorageService _instance =
-      LocalStorageService._internal();
+  static final LocalStorageService _instance = LocalStorageService._internal();
   factory LocalStorageService() => _instance;
   LocalStorageService._internal();
 
@@ -52,7 +51,12 @@ class LocalStorageService {
   }
 
   void _assertInitialized() {
-    assert(_initialized,
-        'LocalStorageService must be initialized before use. Call initialize() in main().');
+    if (_initialized) {
+      return;
+    }
+
+    throw StateError(
+      'LocalStorageService must be initialized before use. Call initialize() in main().',
+    );
   }
 }

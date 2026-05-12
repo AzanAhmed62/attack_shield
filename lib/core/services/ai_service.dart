@@ -431,7 +431,7 @@ Your explanations must be clear, concrete, and actionable. Always respond with v
 ''';
 
     final orgContext = orgProfile != null
-        ? '(Organization sector: ${orgProfile.sector.name}, primary tech: ${orgProfile.techStackItems.isNotEmpty ? orgProfile.techStackItems.first.name : 'unknown'})'
+        ? '(Organization sector: ${orgProfile.sector})'
         : '';
 
     final userMessage =
@@ -488,20 +488,13 @@ $truncated
 
 Return ONLY valid JSON with this exact structure:
 {
-  "summary": "1-2 sentence summary of the threat",
-  "threatActor": "Name or group of threat actor",
-  "targetedSectors": ["sector1", "sector2"],
-  "mappedTechniques": [
-    {
-      "techniqueId": "T1234",
-      "techniqueName": "Technique Name",
-      "confidence": "high/medium/low",
-      "evidence": "Quote or fact supporting this mapping"
-    }
-  ],
-  "recommendedActions": ["action1", "action2"],
-  "severityLevel": "Critical/High/Medium",
-  "alertTitle": "Concise alert title"
+  "summary": "" ,
+  "threatActor": "",
+  "targetedSectors": [],
+  "mappedTechniques": [],
+  "recommendedActions": [],
+  "severityLevel": "Medium",
+  "alertTitle": ""
 }
 ''';
 
@@ -518,10 +511,11 @@ Return ONLY valid JSON with this exact structure:
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
-  // FEATURE 3: Coverage Advisor (Simplified API)
+  // FEATURE 3: Coverage Advisor
   // ═════════════════════════════════════════════════════════════════════════════
 
-  /// Generates personalized coverage recommendations based on technique IDs.
+  /// Generates personalized coverage recommendations based on org profile,
+  /// current coverage, and threat landscape.
   /// OPTIMIZATION: Cache by org context (30 day TTL)
   Future<CoverageAdvice> generateCoverageAdvice({
     required OrganizationProfile orgProfile,
@@ -541,9 +535,8 @@ Respond ONLY with valid JSON — no markdown, no additional text.
     final userMessage =
         '''
 Organization Profile:
-- Sector: ${orgProfile.sector.name}
-- Primary tech: ${orgProfile.techStackItems.map((e) => e.name).join(', ')}
-- Risk tolerance: ${orgProfile.orgSize.name}
+- Sector: ${orgProfile.sector}
+- Size: ${orgProfile.orgSize}
 
 Current Coverage: ${coveredTechniqueIds.length} techniques
 Critical Gaps: ${uncovered.length} techniques
@@ -584,7 +577,7 @@ Return ONLY valid JSON:
   }
 
   // ═════════════════════════════════════════════════════════════════════════════
-  // FEATURE 4: Simulation Debrief (Simplified API)
+  // FEATURE 4: Simulation Debrief
   // ═════════════════════════════════════════════════════════════════════════════
 
   /// Generates AI-written debrief after simulation exercise.
@@ -717,9 +710,11 @@ class UsageStats {
   int dailyCallsToday = 0;
   int totalCalls = 0;
   int cacheHits = 0;
-  String lastDate = DateTime.now().toString().split(' ')[0];
+  late String lastDate;
 
-  UsageStats();
+  UsageStats() {
+    lastDate = DateTime.now().toString().split(' ')[0];
+  }
 
   void incrementDaily() {
     dailyCallsToday++;

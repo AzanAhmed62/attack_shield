@@ -18,7 +18,12 @@
 
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get_storage/get_storage.dart';
+
+Map<String, dynamic> _decodeMitreBundle(String rawJson) {
+  return Map<String, dynamic>.from(jsonDecode(rawJson) as Map);
+}
 
 // ═══════════════════════════════════════════════════════════════
 // STIX DOMAIN MODELS
@@ -315,38 +320,57 @@ class MitreStixDataService {
   final Map<String, Set<String>> _techsByTactic = {};
 
   bool _initialized = false;
+  Future<void>? _initializationFuture;
 
   // ═══════════════════════════════════════════════════════════
   // INITIALIZATION
   // ═══════════════════════════════════════════════════════════
 
   Future<void> initialize() async {
-    if (_initialized) return;
-
-    final box = GetStorage();
-
-    // Try cache first — avoids 5-10s parse on every cold start
-    if (box.read<String>(_versionKey) == _version) {
-      final raw = box.read<String>(_cacheKey);
-      if (raw != null) {
-        _parseBundle(jsonDecode(raw) as Map<String, dynamic>);
-        _initialized = true;
-        print('✅ MITRE data loaded from cache\n${getStatistics()}');
-        return;
-      }
+    if (_initialized) {
+      return;
     }
 
-    print('⏳ First-time MITRE data load from asset…');
-    final jsonStr = await rootBundle.loadString(_assetPath);
-    final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
-    _parseBundle(decoded);
+    _initializationFuture ??= _initializeInternal();
+    return _initializationFuture!;
+  }
 
-    // Cache for subsequent launches
-    await box.write(_cacheKey, jsonStr);
-    await box.write(_versionKey, _version);
+  Future<void> _initializeInternal() async {
+    if (_initialized) {
+      return;
+    }
 
-    _initialized = true;
-    print('✅ MITRE data loaded & cached\n${getStatistics()}');
+    try {
+      final box = GetStorage();
+
+      // Try cache first — avoids 5-10s parse on every cold start
+      if (box.read<String>(_versionKey) == _version) {
+        final raw = box.read<String>(_cacheKey);
+        if (raw != null) {
+          _parseBundle(await compute(_decodeMitreBundle, raw));
+          _initialized = true;
+          if (kDebugMode) {
+            print('✅ MITRE data loaded from cache\n${getStatistics()}');
+          }
+          return;
+        }
+      }
+
+      if (kDebugMode) print('⏳ First-time MITRE data load from asset…');
+      final jsonStr = await rootBundle.loadString(_assetPath);
+      final decoded = await compute(_decodeMitreBundle, jsonStr);
+      _parseBundle(decoded);
+
+      // Cache for subsequent launches
+      await box.write(_cacheKey, jsonStr);
+      await box.write(_versionKey, _version);
+
+      _initialized = true;
+      if (kDebugMode) print('✅ MITRE data loaded & cached\n${getStatistics()}');
+    } catch (e) {
+      _initializationFuture = null;
+      rethrow;
+    }
   }
 
   // ═══════════════════════════════════════════════════════════

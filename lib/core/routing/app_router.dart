@@ -10,13 +10,14 @@ import 'package:attackshield/core/routing/shell_nav.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/attack_library/presentation/screens/attack_library_screen.dart';
 import '../../features/technique_detail/presentation/screens/technique_detail_screen.dart'
-    as TechniqueDetail;
+    as technique_detail_screen;
 import '../../features/technique_detail/presentation/screens/sub_technique_detail_screen.dart';
 import '../../features/threat_mapping/presentation/screens/threat_mapping_screen.dart';
 import '../../features/threat_intel/presentation/screens/threat_intel_mapper_screen.dart';
 import '../../features/simulations/presentation/screens/simulations_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/alerts/presentation/screens/alerts_screen.dart';
+import '../../features/detection/presentation/screens/detection_screens.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/organization/presentation/screens/organization_setup_wizard.dart';
@@ -77,9 +78,21 @@ final appRouter = GoRouter(
                   name: 'technique-detail',
                   pageBuilder: (context, state) {
                     final id = state.pathParameters['id']!;
+                    if (id.contains('.')) {
+                      final parentId = id.split('.').first;
+                      return _slide(
+                        state,
+                        SubTechniqueDetailScreen(
+                          parentTechniqueId: parentId,
+                          subTechniqueId: id,
+                        ),
+                      );
+                    }
                     return _slide(
                       state,
-                      TechniqueDetail.TechniqueDetailScreen(techniqueId: id),
+                      technique_detail_screen.TechniqueDetailScreen(
+                        techniqueId: id,
+                      ),
                     );
                   },
                   routes: [
@@ -184,6 +197,12 @@ final appRouter = GoRouter(
           _slide(state, const ThreatIntelMapperScreen()),
     ),
     GoRoute(
+      path: '/detection',
+      name: 'detection',
+      pageBuilder: (context, state) =>
+          _slide(state, const DetectionHomeScreen()),
+    ),
+    GoRoute(
       path: '/simulations',
       name: 'simulations',
       pageBuilder: (context, state) => _slide(state, const SimulationsScreen()),
@@ -214,9 +233,19 @@ final appRouter = GoRouter(
       name: 'technique-detail-global',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id']!;
+        if (id.contains('.')) {
+          final parentId = id.split('.').first;
+          return _slide(
+            state,
+            SubTechniqueDetailScreen(
+              parentTechniqueId: parentId,
+              subTechniqueId: id,
+            ),
+          );
+        }
         return _slide(
           state,
-          TechniqueDetail.TechniqueDetailScreen(techniqueId: id),
+          technique_detail_screen.TechniqueDetailScreen(techniqueId: id),
         );
       },
     ),

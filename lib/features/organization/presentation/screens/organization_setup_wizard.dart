@@ -22,6 +22,7 @@ class OrganizationSetupWizard extends ConsumerStatefulWidget {
 
 class _OrganizationSetupWizardState
     extends ConsumerState<OrganizationSetupWizard> {
+  late PageController _pageController;
   int currentStep = 0;
 
   // Step 1: Organization Details
@@ -44,12 +45,14 @@ class _OrganizationSetupWizardState
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     nameController = TextEditingController();
     descriptionController = TextEditingController();
   }
 
   @override
   void dispose() {
+    _pageController.dispose();
     nameController.dispose();
     descriptionController.dispose();
     super.dispose();
@@ -106,7 +109,7 @@ class _OrganizationSetupWizardState
             content: Text('Organization profile created successfully!'),
           ),
         );
-        context.go('/dashboard');
+        context.go('/');
       }
     } catch (e) {
       if (mounted) {
@@ -122,6 +125,23 @@ class _OrganizationSetupWizardState
     double risk = 50.0;
 
     // Sector risk adjustment
+    String? sectorKey;
+    if (selectedSector != null) {
+      final sectorMap = {
+        BusinessSector.healthcare: 'healthcare',
+        BusinessSector.finance: 'finance',
+        BusinessSector.government: 'government',
+        BusinessSector.retail: 'retail',
+        BusinessSector.manufacturing: 'manufacturing',
+        BusinessSector.education: 'education',
+        BusinessSector.nonprofit: 'nonprofit',
+        BusinessSector.technology: 'technology',
+        BusinessSector.hospitality: 'hospitality',
+        BusinessSector.other: 'other',
+      };
+      sectorKey = sectorMap[selectedSector];
+    }
+
     final sectorMultiplier =
         {
           'healthcare': 1.2,
@@ -134,7 +154,7 @@ class _OrganizationSetupWizardState
           'technology': 1.2,
           'hospitality': 0.9,
           'other': 0.7,
-        }[selectedSector?.name] ??
+        }[sectorKey] ??
         1.0;
     risk *= sectorMultiplier;
 
@@ -146,7 +166,7 @@ class _OrganizationSetupWizardState
           'medium': 1.0,
           'largesmall': 1.2,
           'large': 1.3,
-        }[selectedSize?.name] ??
+        }[selectedSize?.jsonValue] ??
         1.0;
     risk *= sizeMultiplier;
 
@@ -201,6 +221,7 @@ class _OrganizationSetupWizardState
           // Step content
           Expanded(
             child: PageView(
+              controller: _pageController,
               physics: const NeverScrollableScrollPhysics(),
               onPageChanged: (index) {
                 setState(() => currentStep = index);
@@ -222,7 +243,12 @@ class _OrganizationSetupWizardState
               children: [
                 ElevatedButton(
                   onPressed: currentStep > 0
-                      ? () => setState(() => currentStep = currentStep - 1)
+                      ? () {
+                          _pageController.previousPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
                       : null,
                   child: const Text('Back'),
                 ),
@@ -230,7 +256,6 @@ class _OrganizationSetupWizardState
                 ElevatedButton(
                   onPressed: currentStep < 4
                       ? () {
-                          // Navigate to next step
                           final isValid = currentStep == 0
                               ? _step1Valid
                               : currentStep == 1
@@ -242,7 +267,10 @@ class _OrganizationSetupWizardState
                               : _step5Valid;
 
                           if (isValid) {
-                            setState(() => currentStep = currentStep + 1);
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -294,7 +322,7 @@ class _OrganizationSetupWizardState
           const SizedBox(height: 24),
           TextField(
             controller: descriptionController,
-            maxLines: 3,
+            maxLines: 5,
             decoration: InputDecoration(
               labelText: 'Description (optional)',
               hintText: 'e.g., Small dental clinic in California',

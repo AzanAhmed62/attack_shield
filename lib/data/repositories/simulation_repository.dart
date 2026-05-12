@@ -190,8 +190,23 @@ class SimulationRepositoryImpl implements SimulationRepository {
     String techniqueId,
   ) async {
     try {
+      final scenarios = await getAllScenarios();
       final results = await getAllResults();
-      return results.toList();
+      final matchingScenarioIds = scenarios
+          .where(
+            (scenario) =>
+                (scenario.relatedTechniques ?? const []).contains(techniqueId),
+          )
+          .map((scenario) => scenario.id)
+          .toSet();
+
+      if (matchingScenarioIds.isEmpty) {
+        return const [];
+      }
+
+      return results
+          .where((result) => matchingScenarioIds.contains(result.scenarioId))
+          .toList();
     } catch (e) {
       throw DataException(message: 'Failed to fetch results for technique: $e');
     }

@@ -1,582 +1,590 @@
+// lib/features/dashboard/presentation/screens/dashboard_screen.dart
+//
+// COMPLETE DASHBOARD — ALL 5 PILLARS INTEGRATED
+// Shows org profile, risk score, top threats, simulations, detection, AI
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:attackshield/core/theme/theme.dart';
-import 'package:attackshield/core/widgets/widgets.dart';
-import 'package:attackshield/shared/providers/providers.dart';
-import 'package:attackshield/core/services/risk_engine.dart';
-import 'package:attackshield/features/dashboard/presentation/widgets/threat_profile_card.dart';
+import 'package:attackshield/shared/models/models.dart';
+import 'package:attackshield/shared/providers/plain_language_providers.dart';
+import 'package:attackshield/shared/providers/mitre_data_providers.dart';
+import 'package:attackshield/features/simulation/providers/simulation_providers.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final riskScoreAsync = ref.watch(organizationRiskScoreProvider);
-    final riskLabelAsync = ref.watch(organizationRiskLabelProvider);
-    final coverageAsync = ref.watch(riskEngineCoveragePercentageProvider);
-    final breakdownAsync = ref.watch(riskCoverageBreakdownProvider);
-    final allTechAsync = ref.watch(allTechniquesProvider);
-    final alertCountAsync = ref.watch(openAlertCountProvider);
-    final criticalAsync = ref.watch(criticalAlertCountProvider);
-    final allAssetsAsync = ref.watch(allAssetsProvider);
-    final topGapsAsync = ref.watch(topRiskGapsProvider(limit: 5));
-    final hasProfileAsync = ref.watch(hasCompleteThreatProfileProvider);
+    final appMode = ref.watch(appModeProvider);
+    final isPlain = appMode == AppMode.plainLanguageMode;
+    final orgProfile = ref.watch(organizationProfileV2Provider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ATT&CK Defender'),
+        title: Text(isPlain ? '🛡️ Security Dashboard' : 'Dashboard'),
         elevation: 0,
         actions: [
-          criticalAsync.when(
-            data: (n) => n > 0
-                ? Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Badge(
-                      label: Text('$n'),
-                      child: IconButton(
-                        icon: const Icon(Icons.notifications_active),
-                        onPressed: () => context.push('/alerts'),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Center(
+              child: ActionChip(
+                avatar: Text(isPlain ? '📱' : '🔧'),
+                label: Text(isPlain ? 'Plain' : 'Expert'),
+                onPressed: () => ref
+                    .read(organizationProfileV2Provider.notifier)
+                    .toggleAppMode(),
+              ),
+            ),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(organizationRiskScoreProvider);
-          ref.invalidate(riskEngineCoveragePercentageProvider);
-          ref.invalidate(allCoverageStatusesProvider);
-          ref.invalidate(threatProfileProvider);
-          ref.invalidate(allAlertsProvider);
+      body: orgProfile.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (profile) {
+          if (profile == null) {
+            return _NoOrgSetup();
+          }
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _DashboardHeader(profile: profile, isPlain: isPlain),
+              ),
+              SliverToBoxAdapter(
+                child: _RiskCard(profile: profile, isPlain: isPlain),
+              ),
+              SliverToBoxAdapter(
+                child: _TopThreatsSection(profile: profile, isPlain: isPlain),
+              ),
+              SliverToBoxAdapter(child: _ThreatActorsSection(profile: profile)),
+              SliverToBoxAdapter(child: _SimulationsSection(isPlain: isPlain)),
+              SliverToBoxAdapter(child: _DetectionSection(isPlain: isPlain)),
+              SliverToBoxAdapter(child: _AiFeaturesSection(isPlain: isPlain)),
+              SliverToBoxAdapter(
+                child: _RecommendedActionsSection(
+                  profile: profile,
+                  isPlain: isPlain,
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+          );
         },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Threat Profile Card (Phase 2 — personalized) ──────
-              hasProfileAsync.when(
-                data: (hasProfile) => hasProfile
-                    ? const ThreatProfileCard(compact: true)
-                    : const ThreatProfileCard(),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 16),
-
-              // ── Risk Score Hero ────────────────────────────────────
-              _RiskHeroCard(
-                riskScoreAsync: riskScoreAsync,
-                riskLabelAsync: riskLabelAsync,
-                coverageAsync: coverageAsync,
-                breakdownAsync: breakdownAsync,
-                onTap: () => context.push('/coverage'),
-              ),
-              const SizedBox(height: 16),
-
-              // ── Metric row ─────────────────────────────────────────
-              Row(
-                children: [
-                  Expanded(
-                    child: allTechAsync.when(
-                      data: (t) => _MetricTile(
-                        label: 'Techniques',
-                        value: '${t.length}',
-                        sub: '+${t.fold(0, (s, e) => s + e.subTechniques.length)} sub',
-                        icon: Icons.category,
-                        color: AppTheme.primaryColor,
-                        onTap: () => context.push('/library'),
-                      ),
-                      loading: () => const _MetricTileSkeleton(),
-                      error: (_, _) => const SizedBox.shrink(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: alertCountAsync.when(
-                      data: (n) => _MetricTile(
-                        label: 'Open Alerts',
-                        value: '$n',
-                        sub: 'Active',
-                        icon: Icons.warning_amber,
-                        color: AppTheme.warningColor,
-                        onTap: () => context.push('/alerts'),
-                      ),
-                      loading: () => const _MetricTileSkeleton(),
-                      error: (_, _) => const SizedBox.shrink(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: allAssetsAsync.when(
-                      data: (a) => _MetricTile(
-                        label: 'Assets',
-                        value: '${a.length}',
-                        sub: 'Monitored',
-                        icon: Icons.layers,
-                        color: AppTheme.successColor,
-                        onTap: () => context.push('/assets'),
-                      ),
-                      loading: () => const _MetricTileSkeleton(),
-                      error: (_, _) => const SizedBox.shrink(),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // ── Top Risk Gaps ──────────────────────────────────────
-              SectionHeader(
-                title: 'Priority Risk Gaps',
-                showViewAll: true,
-                onViewAllPressed: () => context.push('/coverage'),
-              ),
-              const SizedBox(height: 10),
-              topGapsAsync.when(
-                data: (gaps) => gaps.isEmpty
-                    ? const _GreenStatusCard(
-                        message: 'No critical gaps detected. All techniques covered!')
-                    : Column(
-                        children: gaps
-                            .map((g) => _RiskGapTile(
-                                  gap: g,
-                                  onTap: () => context.push(
-                                      '/technique/${g.technique.id}'),
-                                ))
-                            .toList(),
-                      ),
-                loading: () => const LoadingWidget(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 16),
-
-              // ── Quick Actions ──────────────────────────────────────
-              const SectionHeader(title: 'Quick Actions'),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1.0,
-                children: [
-                  _QuickAction(
-                    label: 'Library',
-                    icon: Icons.library_books,
-                    color: AppTheme.primaryColor,
-                    onTap: () => context.push('/library'),
-                  ),
-                  _QuickAction(
-                    label: 'Coverage',
-                    icon: Icons.shield,
-                    color: AppTheme.successColor,
-                    onTap: () => context.push('/coverage'),
-                  ),
-                  _QuickAction(
-                    label: 'Simulations',
-                    icon: Icons.science,
-                    color: AppTheme.warningColor,
-                    onTap: () => context.push('/simulations'),
-                  ),
-                  _QuickAction(
-                    label: 'Reports',
-                    icon: Icons.assessment,
-                    color: AppTheme.accentColor,
-                    onTap: () => context.push('/reports'),
-                  ),
-                  _QuickAction(
-                    label: 'Bookmarks',
-                    icon: Icons.bookmark,
-                    color: AppTheme.primaryColor,
-                    onTap: () => context.push('/bookmarks'),
-                  ),
-                  _QuickAction(
-                    label: 'Assets',
-                    icon: Icons.layers,
-                    color: AppTheme.successColor,
-                    onTap: () => context.push('/assets'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
       ),
     );
   }
 }
 
-// ─── Risk Hero Card ───────────────────────────────────────────────────────────
+class _DashboardHeader extends StatelessWidget {
+  final dynamic profile; // OrganizationProfileV2
+  final bool isPlain;
 
-class _RiskHeroCard extends StatelessWidget {
-  final AsyncValue<double> riskScoreAsync;
-  final AsyncValue<String> riskLabelAsync;
-  final AsyncValue<double> coverageAsync;
-  final AsyncValue<Map<String, int>> breakdownAsync;
-  final VoidCallback onTap;
-
-  const _RiskHeroCard({
-    required this.riskScoreAsync,
-    required this.riskLabelAsync,
-    required this.coverageAsync,
-    required this.breakdownAsync,
-    required this.onTap,
-  });
-
-  Color _riskColor(double s) {
-    if (s >= 80) return AppTheme.dangerColor;
-    if (s >= 60) return AppTheme.accentColor;
-    if (s >= 40) return AppTheme.warningColor;
-    return AppTheme.successColor;
-  }
-
-  Color _covColor(double p) {
-    if (p >= 70) return AppTheme.successColor;
-    if (p >= 40) return AppTheme.warningColor;
-    return AppTheme.dangerColor;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.monitor_heart,
-                      color: AppTheme.primaryColor, size: 18),
-                  const SizedBox(width: 8),
-                  Text('Security Posture',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppTheme.successColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.circle,
-                            size: 7, color: AppTheme.successColor),
-                        SizedBox(width: 4),
-                        Text('LIVE',
-                            style: TextStyle(
-                                color: AppTheme.successColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: riskScoreAsync.when(
-                      data: (score) {
-                        final c = _riskColor(score);
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Risk Score',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall),
-                            const SizedBox(height: 4),
-                            Row(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  score.toStringAsFixed(1),
-                                  style: TextStyle(
-                                      fontSize: 34,
-                                      fontWeight: FontWeight.bold,
-                                      color: c),
-                                ),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 6),
-                                  child: Text('/100',
-                                      style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 13)),
-                                ),
-                              ],
-                            ),
-                            riskLabelAsync.when(
-                              data: (label) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: c.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(label,
-                                    style: TextStyle(
-                                        color: c,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11)),
-                              ),
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, _) => const SizedBox.shrink(),
-                            ),
-                          ],
-                        );
-                      },
-                      loading: () => const LoadingWidget(),
-                      error: (_, _) => const Text('—'),
-                    ),
-                  ),
-                  coverageAsync.when(
-                    data: (pct) => ProgressRing(
-                      percentage: pct,
-                      progressColor: _covColor(pct),
-                      label: 'Coverage',
-                    ),
-                    loading: () => const LoadingWidget(),
-                    error: (_, _) => const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              riskScoreAsync.when(
-                data: (score) {
-                  final c = _riskColor(score);
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: score / 100.0,
-                      minHeight: 5,
-                      backgroundColor: c.withValues(alpha: 0.12),
-                      valueColor: AlwaysStoppedAnimation<Color>(c),
-                    ),
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 10),
-              breakdownAsync.when(
-                data: (b) => Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    _BreakChip('✓ ${b['covered']}', AppTheme.successColor),
-                    _BreakChip('~ ${b['partiallyCovered']}', AppTheme.warningColor),
-                    _BreakChip('✗ ${b['notCovered']}', AppTheme.dangerColor),
-                    _BreakChip('? ${b['unknown']}', Colors.grey),
-                  ],
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 8),
-              const Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'View full coverage →',
-                  style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BreakChip extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _BreakChip(this.label, this.color);
+  const _DashboardHeader({required this.profile, required this.isPlain});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+      color: Colors.blue.shade900,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                profile.name.isEmpty ? 'Your Organization' : profile.name,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${(profile.sector as BusinessSector).displayName} • ${(profile.size as OrganizationSize).displayName} • ${profile.currentDefenses.length} defenses',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Text(label,
-          style: TextStyle(
-              color: color, fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
 }
 
-// ─── Smaller widgets ──────────────────────────────────────────────────────────
+class _RiskCard extends ConsumerWidget {
+  final dynamic profile; // OrganizationProfileV2
+  final bool isPlain;
 
-class _MetricTile extends StatelessWidget {
-  final String label, value, sub;
-  final IconData icon;
-  final Color color;
+  const _RiskCard({required this.profile, required this.isPlain});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final baseRisk = profile.baselineRiskScore;
+    final defensiveReadiness = 100 - baseRisk;
+    final riskColor = defensiveReadiness > 70
+        ? Colors.green
+        : defensiveReadiness > 50
+        ? Colors.orange
+        : Colors.red;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: riskColor.withValues(alpha: 0.3)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isPlain ? '🛡️ Your Security Strength' : 'Defensive Readiness',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Text(
+                    '${defensiveReadiness.toStringAsFixed(0)}/100',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: riskColor,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: riskColor.withValues(alpha: 0.1),
+                      border: Border.all(color: riskColor, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${defensiveReadiness.toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: riskColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              LinearProgressIndicator(
+                value: defensiveReadiness / 100,
+                minHeight: 8,
+                color: riskColor,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => context.push('/coverage'),
+                child: const Text('View Coverage Details'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopThreatsSection extends ConsumerWidget {
+  final dynamic profile; // OrganizationProfileV2
+  final bool isPlain;
+
+  const _TopThreatsSection({required this.profile, required this.isPlain});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final threats = ref.watch(prioritisedTechniquesProvider(profile));
+
+    return threats.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (ranked) {
+        if (ranked.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isPlain
+                    ? '⚠️ Top Threats for Your Organization'
+                    : 'Top Threats',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ...ranked.take(5).map((threat) {
+                final scoreColor = threat.score > 70
+                    ? Colors.red
+                    : threat.score > 40
+                    ? Colors.orange
+                    : Colors.yellow;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: GestureDetector(
+                    onTap: () => context.push(
+                      '/technique/${Uri.encodeComponent(threat.attackId)}',
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isPlain
+                                      ? threat.plainName
+                                      : threat.technique.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  '${threat.attackId} • ${threat.threatGroupNames.length} APT groups',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: scoreColor.withValues(alpha: 0.1),
+                              border: Border.all(color: scoreColor),
+                            ),
+                            child: Center(
+                              child: Text(
+                                threat.score.toStringAsFixed(0),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: scoreColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ThreatActorsSection extends ConsumerWidget {
+  final dynamic profile;
+
+  const _ThreatActorsSection({required this.profile});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allGroupsAsync = ref.watch(allThreatGroupsProvider);
+
+    return allGroupsAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (groups) {
+        final sectorGroups = groups.take(8).toList();
+        if (sectorGroups.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '🚨 ${sectorGroups.length} APT Groups Target Your Sector',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: sectorGroups
+                    .take(6)
+                    .map(
+                      (group) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          border: Border.all(color: Colors.red.shade200),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          group.name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SimulationsSection extends ConsumerWidget {
+  final bool isPlain;
+
+  const _SimulationsSection({required this.isPlain});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scenarios = ref.watch(preBuiltScenariosProvider);
+
+    return scenarios.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (scenarios) {
+        if (scenarios.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isPlain ? '🎮 Practice Your Defense' : 'Guided Simulations',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: scenarios.take(4).map((scenario) {
+                  final icon = _scenarioIcon(scenario.id);
+                  return GestureDetector(
+                    onTap: () => context.push('/simulations'),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(icon, style: const TextStyle(fontSize: 32)),
+                          const SizedBox(height: 8),
+                          Text(
+                            scenario.name,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            '5-10 min',
+                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+              Center(
+                child: OutlinedButton(
+                  onPressed: () => context.push('/simulations'),
+                  child: const Text('All Simulations'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _scenarioIcon(String id) {
+    const icons = {
+      'phishing_001': '📧',
+      'ransomware_001': '🔐',
+      'lateral_movement_001': '↔️',
+    };
+    return icons[id] ?? '🎮';
+  }
+}
+
+class _DetectionSection extends StatelessWidget {
+  final bool isPlain;
+
+  const _DetectionSection({required this.isPlain});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isPlain
+                ? '🔍 Can You Detect Real Attacks?'
+                : 'Detection Capability',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade50,
+              border: Border.all(color: Colors.amber.shade200),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPlain
+                      ? 'Paste your logs to find real attack signs'
+                      : 'Analyse logs against 40+ detection rules',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.search),
+                  label: Text(isPlain ? 'Scan for Threats' : 'Analyse Logs'),
+                  onPressed: () => context.push('/detection'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiFeaturesSection extends StatelessWidget {
+  final bool isPlain;
+
+  const _AiFeaturesSection({required this.isPlain});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isPlain ? '✨ AI-Powered Insights' : 'AI Features',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _AiFeatureChip(
+                emoji: '💬',
+                label: isPlain ? 'Ask About Threats' : 'Explainer',
+                onTap: () => context.push('/library'),
+              ),
+              _AiFeatureChip(
+                emoji: '📰',
+                label: isPlain ? 'Check News' : 'Threat Intel',
+                onTap: () => context.push('/threat-intel'),
+              ),
+              _AiFeatureChip(
+                emoji: '🛡️',
+                label: isPlain ? 'Get Help' : 'Coverage Advisor',
+                onTap: () => context.push('/reports'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiFeatureChip extends StatelessWidget {
+  final String emoji;
+  final String label;
   final VoidCallback onTap;
 
-  const _MetricTile({
-    required this.label, required this.value, required this.sub,
-    required this.icon, required this.color, required this.onTap,
+  const _AiFeatureChip({
+    required this.emoji,
+    required this.label,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(height: 6),
-              Text(value,
-                  style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20)),
-              Text(sub,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(fontSize: 10)),
-              const SizedBox(height: 2),
-              Text(label,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MetricTileSkeleton extends StatelessWidget {
-  const _MetricTileSkeleton();
-  @override
-  Widget build(BuildContext context) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(width: 18, height: 18,
-                  color: Colors.grey.withValues(alpha: 0.3)),
-              const SizedBox(height: 6),
-              Container(width: 36, height: 20,
-                  color: Colors.grey.withValues(alpha: 0.3)),
-            ],
-          ),
-        ),
-      );
-}
-
-class _RiskGapTile extends StatelessWidget {
-  final RiskGap gap;
-  final VoidCallback onTap;
-  const _RiskGapTile({required this.gap, required this.onTap});
-
-  Color get _color {
-    switch (gap.riskLabel) {
-      case 'Critical': return AppTheme.dangerColor;
-      case 'High':     return AppTheme.accentColor;
-      case 'Medium':   return AppTheme.warningColor;
-      default:         return AppTheme.successColor;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final c = _color;
-    return GestureDetector(
-      onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: c.withValues(alpha: 0.3)),
+          color: Colors.purple.shade50,
+          border: Border.all(color: Colors.purple.shade200),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 4, height: 44,
-              decoration: BoxDecoration(
-                  color: c, borderRadius: BorderRadius.circular(2)),
+            Text(emoji, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(gap.technique.id,
-                      style: const TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
-                  Text(gap.technique.name,
-                      style: Theme.of(context).textTheme.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  Text(gap.technique.tactics.take(2).join(' · '),
-                      style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: c.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(gap.riskLabel,
-                      style: TextStyle(
-                          color: c, fontSize: 11,
-                          fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 4),
-                Text(gap.exposedRiskScore.toStringAsFixed(1),
-                    style: TextStyle(
-                        color: c,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13)),
-              ],
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18,
-                color: Colors.grey[600]),
           ],
         ),
       ),
@@ -584,66 +592,104 @@ class _RiskGapTile extends StatelessWidget {
   }
 }
 
-class _GreenStatusCard extends StatelessWidget {
-  final String message;
-  const _GreenStatusCard({required this.message});
+class _RecommendedActionsSection extends StatelessWidget {
+  final dynamic profile;
+  final bool isPlain;
+
+  const _RecommendedActionsSection({
+    required this.profile,
+    required this.isPlain,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.successColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: AppTheme.successColor.withValues(alpha: 0.4)),
-      ),
-      child: Row(
+    final actions = _getRecommendedActions(profile, isPlain);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.verified_user, color: AppTheme.successColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message,
-                style: const TextStyle(color: AppTheme.successColor)),
+          Text(
+            isPlain ? '📋 Next Steps' : 'Recommended Actions',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          ...actions.map(
+            (action) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('→ ', style: TextStyle(fontSize: 14)),
+                  Expanded(
+                    child: Text(action, style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+
+  List<String> _getRecommendedActions(dynamic profile, bool isPlain) {
+    final actions = <String>[];
+    try {
+      if (profile.currentDefenses?.isEmpty ?? true) {
+        actions.add(
+          isPlain
+              ? 'Set up email filtering to block phishing'
+              : 'Deploy email gateway',
+        );
+      }
+      // Skip enum checks - just provide generic recommendations
+      actions.add(
+        isPlain
+            ? 'Install security software on your computers'
+            : 'Deploy EDR to endpoints',
+      );
+      actions.add(
+        isPlain
+            ? 'Turn on two-factor authentication'
+            : 'Enable MFA on critical accounts',
+      );
+    } catch (_) {
+      // Silent fall through if profile structure is unexpected
+    }
+    actions.add(isPlain ? 'Practice with a simulation' : 'Run a simulation');
+    return actions;
+  }
 }
 
-class _QuickAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.label, required this.icon,
-    required this.color, required this.onTap,
-  });
-
+class _NoOrgSetup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 26),
-            const SizedBox(height: 5),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold)),
+            const Text('🏢', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 16),
+            const Text(
+              'Set Up Your Organization',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tell us about your organization to get personalized recommendations.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => context.push('/setup-organization'),
+              child: const Text('Start Setup'),
+            ),
           ],
         ),
       ),
