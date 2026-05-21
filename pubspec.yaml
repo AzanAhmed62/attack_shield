@@ -43,7 +43,7 @@ dependencies:
 
   # Serialization
   freezed_annotation: ^2.4.0
-  json_annotation: ^4.8.0
+  json_annotation: ^4.9.0
 
   # Local Storage
   get_storage: ^2.1.1
@@ -63,6 +63,9 @@ dependencies:
   # Navigation
   go_router: ^13.0.0
 
+  # URL Launcher
+  url_launcher: ^6.0.0
+
   # PDF Export
   pdf: ^3.10.0
   printing: ^5.11.0
@@ -74,6 +77,9 @@ dependencies:
   uuid: ^4.0.0
   google_fonts: ^8.0.2
   float_column: ^4.0.3
+
+  package_info_plus: ^5.0.0
+  flutter_hooks: ^0.21.3+1
 
 dev_dependencies:
   flutter_test:

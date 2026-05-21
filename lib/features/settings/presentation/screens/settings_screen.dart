@@ -1,917 +1,384 @@
-import 'dart:convert';
+// lib/features/settings/presentation/screens/settings_screen.dart
+// FULL REPLACEMENT — Gemini API key config, cache management, org info, about.
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:attackshield/core/theme/theme.dart';
-import 'package:attackshield/core/widgets/widgets.dart';
-import 'package:attackshield/shared/providers/providers.dart';
-import 'package:attackshield/shared/models/models.dart';
-import 'package:attackshield/core/constants/constants.dart';
-import 'package:attackshield/features/settings/presentation/widgets/ai_settings_section.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
+import 'package:get_storage/get_storage.dart';
 
-class SettingsScreen extends ConsumerWidget {
+import '../../../../data/services/gemini_service.dart';
+import '../../../../data/repositories/attack_technique_repository.dart';
+import '../../../../shared/providers/repository_providers.dart';
+
+class SettingsScreen extends HookConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final orgAsync = ref.watch(organizationProfileProvider);
-    final themeMode = ref.watch(appThemeModeProvider);
-    final riskScoreAsync = ref.watch(organizationRiskScoreProvider);
-    final coverageAsync = ref.watch(riskEngineCoveragePercentageProvider);
-    final allTechAsync = ref.watch(allTechniquesProvider);
+    final storage       = GetStorage();
+    final orgName       = useState(storage.read<String>('org_name') ?? '');
+    final sector        = useState(storage.read<String>('org_sector') ?? '');
+    final apiKeyCtrl    = useTextEditingController(text: GeminiService().apiKey ?? '');
+    final apiKeyVisible = useState(false);
+    final apiKeyStatus  = useState<String?>(null); // null | 'saved' | 'valid' | 'invalid'
+    final isTesting     = useState(false);
+    final cs            = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // ── Organization Profile ────────────────────────────────────
-          const _SectionTitle('Organization Profile'),
-          orgAsync.when(
-            data: (org) => org == null
-                ? _NoOrgCard(ref: ref)
-                : _OrgProfileCard(org: org, ref: ref),
-            loading: () => const LoadingWidget(message: 'Loading profile…'),
-            error: (_, _) => _NoOrgCard(ref: ref),
-          ),
-          const SizedBox(height: 24),
+    Future<void> saveApiKey() async {
+      final key = apiKeyCtrl.text.trim();
+      if (key.isEmpty) return;
+      await GeminiService().setApiKey(key);
+      apiKeyStatus.value = 'saved';
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('API key saved'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ));
+      }
+    }
 
-          // ── Current Posture Summary ─────────────────────────────────
-          const _SectionTitle('Security Posture Summary'),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: riskScoreAsync.when(
-                          data: (score) {
-                            final c = _riskColor(score);
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Risk Score',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                Text(
-                                  '${score.toStringAsFixed(1)} / 100',
-                                  style: TextStyle(
-                                    color: c,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 22,
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                          loading: () => const LoadingWidget(),
-                          error: (_, _) => const Text('—'),
-                        ),
-                      ),
-                      Expanded(
-                        child: coverageAsync.when(
-                          data: (pct) => Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Coverage',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              Text(
-                                '${pct.toStringAsFixed(1)}%',
-                                style: const TextStyle(
-                                  color: AppTheme.successColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 22,
-                                ),
-                              ),
-                            ],
-                          ),
-                          loading: () => const LoadingWidget(),
-                          error: (_, _) => const Text('—'),
-                        ),
-                      ),
-                      Expanded(
-                        child: allTechAsync.when(
-                          data: (t) => Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Techniques',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              Text(
-                                '${t.length}',
-                                style: const TextStyle(
-                                  color: AppTheme.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 22,
-                                ),
-                              ),
-                            ],
-                          ),
-                          loading: () => const LoadingWidget(),
-                          error: (_, _) => const Text('—'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
+    Future<void> testApiKey() async {
+      isTesting.value = true;
+      apiKeyStatus.value = null;
+      try {
+        final result = await GeminiService().generate(
+          prompt: 'Reply with only the word: OK',
+          maxTokens: 10,
+        );
+        apiKeyStatus.value = result.isSuccess ? 'valid' : 'invalid';
+      } finally {
+        isTesting.value = false;
+      }
+    }
 
-          // ── App Preferences ─────────────────────────────────────────
-          const _SectionTitle('App Preferences'),
-          Card(
-            child: Column(
-              children: [
-                // Dark mode — wired to real provider
-                SwitchListTile(
-                  title: const Text('Dark Mode'),
-                  subtitle: const Text('Cybersecurity-optimised dark theme'),
-                  secondary: const Icon(
-                    Icons.dark_mode,
-                    color: AppTheme.primaryColor,
-                  ),
-                  value: themeMode == ThemeMode.dark,
-                  activeThumbColor: AppTheme.primaryColor,
-                  onChanged: (value) {
-                    ref.read(appThemeModeProvider.notifier).toggle();
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.palette,
-                    color: AppTheme.primaryColor,
-                  ),
-                  title: const Text('Color Theme'),
-                  subtitle: Text(
-                    themeMode == ThemeMode.dark
-                        ? 'Cyber Dark (Active)'
-                        : 'Light Mode',
-                  ),
-                  trailing: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // ── ATT&CK Framework Info ────────────────────────────────────
-          const _SectionTitle('MITRE ATT&CK Framework'),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.security, color: AppTheme.primaryColor),
-                      const SizedBox(width: 8),
-                      Text(
-                        'ATT&CK Version',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const _InfoRow('Framework', 'MITRE ATT&CK® Enterprise'),
-                  const _InfoRow('Version', 'v14 (2023)'),
-                  const _InfoRow('Tactics', '14 (Recon → Impact)'),
-                  allTechAsync.when(
-                    data: (t) => _InfoRow(
-                      'Techniques',
-                      '${t.length} parent + '
-                          '${t.fold(0, (s, e) => s + e.subTechniques.length)} sub-techniques',
-                    ),
-                    loading: () => const _InfoRow('Techniques', 'Loading…'),
-                    error: (_, _) => const SizedBox.shrink(),
-                  ),
-                  const _InfoRow('Data Source', 'Embedded dataset (offline)'),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.open_in_new,
-                          size: 14,
-                          color: AppTheme.primaryColor,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          AppConstants.mitrAttackUrl,
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 12,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // ── Risk Engine Documentation ─────────────────────────────────
-          const _SectionTitle('Risk Engine'),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.calculate, color: AppTheme.warningColor),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Scoring Formula',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const _FormulaLine(
-                    'Exposure',
-                    'riskScore × coverageMultiplier',
-                  ),
-                  const _FormulaLine('Covered', '× 0.0  (no exposure)'),
-                  const _FormulaLine('Partial', '× 0.5  (50% exposure)'),
-                  const _FormulaLine('Unknown', '× 0.7  (assumed gap)'),
-                  const _FormulaLine('Not Covered', '× 1.0  (full exposure)'),
-                  const Divider(height: 20),
-                  const _FormulaLine(
-                    'Tactic Risk',
-                    'mean(Exposure) per tactic',
-                  ),
-                  const _FormulaLine(
-                    'Org Risk',
-                    'Σ(TacticRisk × weight) / Σ(weight) × 10',
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tactic weights: Impact 1.5 → Recon 0.8',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // ── Data Management ──────────────────────────────────────────
-          const _SectionTitle('Data Management'),
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    Icons.cloud_download,
-                    color: AppTheme.primaryColor,
-                  ),
-                  title: const Text('Export Coverage Data'),
-                  subtitle: const Text('Coverage statuses as JSON'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _exportCoverageData(context, ref),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.upload_file,
-                    color: AppTheme.successColor,
-                  ),
-                  title: const Text('Import Coverage'),
-                  subtitle: const Text('Paste exported coverage JSON'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _showImportDialog(context, ref),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.refresh,
-                    color: AppTheme.warningColor,
-                  ),
-                  title: const Text('Reset Coverage'),
-                  subtitle: const Text('Clear all coverage statuses'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _showResetCoverageDialog(context, ref),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: const Text('Clear All Data'),
-                  subtitle: const Text(
-                    'Delete all alerts, simulations, reports',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => _showClearAllDialog(context, ref),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // ── AI Settings ──────────────────────────────────────────────
-          const AISettingsSection(),
-          const SizedBox(height: 24),
-
-          // ── About ────────────────────────────────────────────────────
-          const _SectionTitle('About'),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.shield,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppConstants.appName,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          Text(
-                            'v${AppConstants.appVersion}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AppConstants.appDescription,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  Text(
-                    'This application is built as an academic final-year thesis project '
-                    'demonstrating defensive cybersecurity analysis using the MITRE ATT&CK '
-                    'framework. All ATT&CK data is attributed to The MITRE Corporation '
-                    '(CC BY 4.0).',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-        ],
-      ),
-    );
-  }
-
-  Color _riskColor(double s) {
-    if (s >= 80) return AppTheme.dangerColor;
-    if (s >= 60) return AppTheme.accentColor;
-    if (s >= 40) return AppTheme.warningColor;
-    return AppTheme.successColor;
-  }
-
-  Future<void> _exportCoverageData(BuildContext context, WidgetRef ref) async {
-    final statuses = await ref.read(allCoverageStatusesProvider.future);
-    final payload = jsonEncode({
-      'app': AppConstants.appName,
-      'version': AppConstants.appVersion,
-      'exportedAt': DateTime.now().toIso8601String(),
-      'coverageStatuses': statuses.map((status) => status.toJson()).toList(),
-    });
-
-    await Share.share(payload, subject: 'AttackShield Coverage Export');
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Exported ${statuses.length} coverage status'
-            '${statuses.length == 1 ? '' : 'es'}',
-          ),
-          backgroundColor: AppTheme.primaryColor,
+    Future<void> clearCache() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Clear STIX Cache?'),
+          content: const Text(
+            'MITRE ATT&CK data will be re-parsed on the next launch. '
+            'This takes a few seconds.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(context, true),
+                child: const Text('Clear')),
+          ],
         ),
       );
+      if (confirmed == true) {
+        final repo = ref.read(attackTechniqueRepositoryProvider)
+            as AttackTechniqueRepositoryImpl;
+        await repo.clearCache();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Cache cleared — re-parsing on next launch'),
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+      }
     }
-  }
 
-  void _showResetCoverageDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Reset Coverage?'),
-        content: const Text(
-          'This will clear all coverage statuses for all techniques. '
-          'Risk scores will reset. This cannot be undone.',
+    Future<void> resetOnboarding() async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Reset Onboarding?'),
+          content: const Text('You will be taken through the setup wizard again.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(context, true),
+                child: const Text('Reset')),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppTheme.warningColor),
-            onPressed: () async {
-              Navigator.pop(context);
-              final coverages = await ref.read(
-                allCoverageStatusesProvider.future,
-              );
-              for (final c in coverages) {
-                await ref.read(
-                  deleteCoverageStatusProvider(c.techniqueId).future,
-                );
-              }
-              ref.invalidate(allCoverageStatusesProvider);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Coverage reset'),
-                    backgroundColor: AppTheme.warningColor,
-                  ),
-                );
-              }
-            },
-            child: const Text('Reset'),
-          ),
-        ],
+      );
+      if (confirmed == true) {
+        await storage.write('hasCompletedOnboarding', false);
+        if (context.mounted) context.go('/onboarding');
+      }
+    }
+
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        title: Text('Settings',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600)),
       ),
-    );
-  }
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 60),
+        children: [
 
-  void _showImportDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Import Coverage'),
-        content: SizedBox(
-          width: 560,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Paste a previous AttackShield coverage export. Existing coverage entries with the same technique ID will be replaced.',
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                maxLines: 12,
-                decoration: const InputDecoration(
-                  hintText: '{"coverageStatuses":[...]}',
-                  alignLabelWithHint: true,
-                ),
-              ),
-            ],
+          // ── Organisation ───────────────────────────────────────────────
+          _SectionHeader('Organisation'),
+          _Card(children: [
+            _InfoTile(
+              icon: Icons.business_outlined, label: 'Organisation',
+              value: orgName.value.isEmpty ? 'Tap to set' : orgName.value,
+              onTap: () => _editDialog(context, 'Organisation Name',
+                  orgName.value, (v) async {
+                await storage.write('org_name', v);
+                orgName.value = v;
+              }),
+            ),
+            const Divider(height: 1, indent: 48),
+            _InfoTile(
+              icon: Icons.category_outlined, label: 'Industry Sector',
+              value: sector.value.isEmpty ? 'Tap to set' : sector.value,
+              onTap: () => _editDialog(context, 'Industry Sector',
+                  sector.value, (v) async {
+                await storage.write('org_sector', v);
+                sector.value = v;
+              }),
+            ),
+          ]),
+          const SizedBox(height: 20),
+
+          // ── AI / Gemini ─────────────────────────────────────────────────
+          _SectionHeader('AI Settings'),
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer.withOpacity(.35),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: cs.primary.withOpacity(.2)),
+            ),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(Icons.info_outline_rounded, size: 15, color: cs.primary),
+              const SizedBox(width: 8),
+              Expanded(child: Text(
+                'AI features (plain-English explanations, report narratives, '
+                'simulation analysis) require a Gemini API key. '
+                'Get one free at aistudio.google.com → Get API key.',
+                style: TextStyle(fontSize: 12, color: cs.onSurface, height: 1.4),
+              )),
+            ]),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final raw = controller.text.trim();
-              if (raw.isEmpty) return;
-
-              try {
-                final decoded = jsonDecode(raw);
-                final dynamic items = decoded is Map<String, dynamic>
-                    ? decoded['coverageStatuses']
-                    : decoded;
-
-                if (items is! List) {
-                  throw const FormatException(
-                    'Invalid coverage export payload',
-                  );
-                }
-
-                for (final item in items) {
-                  final status = CoverageStatus.fromJson(
-                    Map<String, dynamic>.from(item as Map),
-                  );
-                  await ref.read(updateCoverageStatusProvider(status).future);
-                }
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Imported ${items.length} coverage statuses',
-                      ),
-                      backgroundColor: AppTheme.successColor,
+          _Card(children: [
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Gemini API Key',
+                  style: TextStyle(fontSize: 12,
+                      fontWeight: FontWeight.w500, color: cs.onSurface)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller:  apiKeyCtrl,
+                  obscureText: !apiKeyVisible.value,
+                  style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
+                  decoration: InputDecoration(
+                    hintText: 'AIzaSy...',
+                    border:   const OutlineInputBorder(),
+                    isDense:  true,
+                    suffixIcon: IconButton(
+                      icon: Icon(apiKeyVisible.value
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined, size: 18),
+                      onPressed: () =>
+                          apiKeyVisible.value = !apiKeyVisible.value,
                     ),
-                  );
-                }
-              } catch (error) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Import failed: $error'),
-                      backgroundColor: AppTheme.dangerColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: isTesting.value
+                        ? const SizedBox(width: 14, height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.wifi_tethering_rounded, size: 15),
+                      label: const Text('Test'),
+                      onPressed: isTesting.value ? null : testApiKey,
                     ),
-                  );
-                }
-              }
-            },
-            child: const Text('Import'),
-          ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      icon:  const Icon(Icons.save_outlined, size: 15),
+                      label: const Text('Save'),
+                      onPressed: saveApiKey,
+                    ),
+                  ),
+                ]),
+                if (apiKeyStatus.value != null) ...[
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Icon(
+                      apiKeyStatus.value == 'valid'
+                        ? Icons.check_circle_outline_rounded
+                        : apiKeyStatus.value == 'saved'
+                          ? Icons.save_rounded
+                          : Icons.error_outline_rounded,
+                      size: 14,
+                      color: apiKeyStatus.value == 'invalid'
+                          ? cs.error : Colors.green.shade600,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text(
+                      apiKeyStatus.value == 'valid'
+                        ? 'API key is working ✓'
+                        : apiKeyStatus.value == 'saved'
+                          ? 'Saved. Tap Test to verify.'
+                          : 'Invalid key — check and retry.',
+                      style: TextStyle(fontSize: 12,
+                        color: apiKeyStatus.value == 'invalid'
+                            ? cs.error : Colors.green.shade600),
+                    )),
+                  ]),
+                ],
+              ]),
+            ),
+          ]),
+          const SizedBox(height: 20),
+
+          // ── Data ────────────────────────────────────────────────────────
+          _SectionHeader('Data & Cache'),
+          _Card(children: [
+            _ActionTile(
+              icon:     Icons.cleaning_services_outlined,
+              label:    'Clear STIX Cache',
+              subtitle: 'Force re-parse of ATT&CK data on next launch',
+              onTap:    clearCache,
+            ),
+            const Divider(height: 1, indent: 48),
+            _ActionTile(
+              icon:     Icons.refresh_rounded,
+              label:    'Reset Setup Wizard',
+              subtitle: 'Run onboarding again to update org profile',
+              onTap:    resetOnboarding,
+            ),
+          ]),
+          const SizedBox(height: 20),
+
+          // ── About ───────────────────────────────────────────────────────
+          _SectionHeader('About'),
+          _Card(children: [
+            _InfoTile(icon: Icons.shield_rounded,
+                label: 'App', value: 'ATT&CK Shield'),
+            const Divider(height: 1, indent: 48),
+            _InfoTile(icon: Icons.dataset_outlined,
+                label: 'MITRE Data', value: 'Enterprise ATT&CK v14.5'),
+            const Divider(height: 1, indent: 48),
+            _InfoTile(icon: Icons.auto_awesome_rounded,
+                label: 'AI Engine', value: 'Gemini 1.5 Flash'),
+            const Divider(height: 1, indent: 48),
+            _InfoTile(icon: Icons.code_rounded,
+                label: 'Framework', value: 'Flutter + Riverpod'),
+          ]),
         ],
       ),
     );
   }
 
-  void _showClearAllDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+  Future<void> _editDialog(
+    BuildContext context, String label, String current,
+    Future<void> Function(String) onSave,
+  ) async {
+    final ctrl   = TextEditingController(text: current);
+    final result = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Clear All Data?'),
-        content: const Text(
-          'This will permanently delete all alerts, simulation results, '
-          'reports, bookmarks, and coverage data. This cannot be undone.',
+        title: Text('Edit $label'),
+        content: TextField(
+          controller: ctrl, autofocus: true,
+          decoration: InputDecoration(
+              labelText: label, border: const OutlineInputBorder()),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref.read(clearAllAlertsProvider.future);
-              await ref.read(clearAllSimulationDataProvider.future);
-              await ref.read(clearAllReportsProvider.future);
-              await ref.read(clearAllBookmarksProvider.future);
-              await ref.read(clearAllCoverageStatusesProvider.future);
-              await ref.read(clearAllAssetsProvider.future);
-              ref.invalidate(openAlertCountProvider);
-              ref.invalidate(criticalAlertCountProvider);
-              ref.invalidate(latestReportProvider);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('All operational data cleared'),
-                    backgroundColor: AppTheme.dangerColor,
-                  ),
-                );
-              }
-            },
-            child: const Text('Clear All'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, ctrl.text),
+              child: const Text('Save')),
         ],
       ),
     );
+    if (result != null && result.trim().isNotEmpty) await onSave(result.trim());
   }
 }
 
-// ─── Org cards ────────────────────────────────────────────────────────────────
-
-class _NoOrgCard extends StatelessWidget {
-  final WidgetRef ref;
-  const _NoOrgCard({required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'No Organization Set',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Set up your organization profile to personalize coverage tracking.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add_business),
-              label: const Text('Set Up Organization'),
-              onPressed: () => _showEditDialog(context, ref, null),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showEditDialog(
-    BuildContext context,
-    WidgetRef ref,
-    OrganizationProfile? existing,
-  ) {
-    _showOrgEditDialog(context, ref, existing);
-  }
-}
-
-class _OrgProfileCard extends StatelessWidget {
-  final OrganizationProfile org;
-  final WidgetRef ref;
-  const _OrgProfileCard({required this.org, required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.business,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        org.name,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        _contextLabel(AppContextX.fromString(org.context)),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit, color: AppTheme.primaryColor),
-                  onPressed: () => _showOrgEditDialog(context, ref, org),
-                ),
-              ],
-            ),
-            if (org.description.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                org.description,
-                style: Theme.of(context).textTheme.bodySmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            if (org.preferredSectors.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: org.preferredSectors
-                    .map(
-                      (s) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          s,
-                          style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-void _showOrgEditDialog(
-  BuildContext context,
-  WidgetRef ref,
-  OrganizationProfile? existing,
-) {
-  final nameCtrl = TextEditingController(text: existing?.name ?? '');
-  final ctxCtrl = TextEditingController(
-    text: existing != null
-        ? _contextLabel(AppContextX.fromString(existing.context))
-        : '',
-  );
-  final descCtrl = TextEditingController(text: existing?.description ?? '');
-
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: Text(
-        existing == null ? 'Set Up Organization' : 'Edit Organization',
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Organization Name *',
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: ctxCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Context',
-                hintText: 'e.g. Organization, Lab, Personal',
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Description'),
-              maxLines: 3,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            if (nameCtrl.text.trim().isEmpty) return;
-            final profile = OrganizationProfile(
-              id:
-                  existing?.id ??
-                  DateTime.now().millisecondsSinceEpoch.toString(),
-              name: nameCtrl.text.trim(),
-              context: _contextFromLabel(ctxCtrl.text.trim()).value,
-              description: descCtrl.text.trim(),
-              sector: existing?.sector ?? OrgSector.sme,
-              orgSize: existing?.orgSize ?? OrgSize.small,
-              techStack: existing?.techStack ?? const [],
-              currentControls: existing?.currentControls ?? const [],
-              preferredSectors: existing?.preferredSectors ?? [],
-              preferredPlatforms: existing?.preferredPlatforms ?? [],
-              createdAt: existing?.createdAt ?? DateTime.now(),
-              lastModified: DateTime.now(),
-            );
-            await ref.read(updateOrganizationProfileProvider(profile).future);
-            ref.invalidate(organizationProfileProvider);
-            if (context.mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Organization saved'),
-                  backgroundColor: AppTheme.successColor,
-                ),
-              );
-            }
-          },
-          child: const Text('Save'),
-        ),
-      ],
-    ),
-  );
-}
-
-// ─── Helper widgets ───────────────────────────────────────────────────────────
-
-class _SectionTitle extends StatelessWidget {
+class _SectionHeader extends StatelessWidget {
   final String title;
-  const _SectionTitle(this.title);
+  const _SectionHeader(this.title);
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(title,
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.primary, letterSpacing: 0.4)),
+  );
+}
 
+class _Card extends StatelessWidget {
+  final List<Widget> children;
+  const _Card({required this.children});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant, width: 0.5),
+      ),
+      child: Column(children: children),
     );
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _InfoRow(this.label, this.value);
-
+class _InfoTile extends StatelessWidget {
+  final IconData icon; final String label, value; final VoidCallback? onTap;
+  const _InfoTile({required this.icon, required this.label,
+      required this.value, this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-            ),
-          ),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodySmall),
-          ),
-        ],
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap, borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Icon(icon, size: 18, color: cs.primary),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
+          Text(value, style: TextStyle(fontSize: 13, color: cs.outline)),
+          if (onTap != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right_rounded, size: 16, color: cs.outline),
+          ],
+        ]),
       ),
     );
   }
 }
 
-class _FormulaLine extends StatelessWidget {
-  final String label;
-  final String formula;
-  const _FormulaLine(this.label, this.formula);
-
+class _ActionTile extends StatelessWidget {
+  final IconData icon; final String label, subtitle; final VoidCallback onTap;
+  const _ActionTile({required this.icon, required this.label,
+      required this.subtitle, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.primaryColor,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              formula,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
-            ),
-          ),
-        ],
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap, borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(children: [
+          Icon(icon, size: 18, color: cs.primary),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 14)),
+              Text(subtitle, style: TextStyle(fontSize: 11, color: cs.outline)),
+            ])),
+          Icon(Icons.chevron_right_rounded, size: 16, color: cs.outline),
+        ]),
       ),
     );
   }
 }
-
-// ─── Helper functions for AppContext conversion ────────────────────────────────
-
-String _contextLabel(AppContext context) => context.label;
-
-AppContext _contextFromLabel(String label) => AppContextX.fromLabel(label);

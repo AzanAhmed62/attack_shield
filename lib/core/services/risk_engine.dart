@@ -1,3 +1,4 @@
+import 'package:attackshield/shared/models/attack_technique.dart';
 import 'package:attackshield/shared/models/models.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────

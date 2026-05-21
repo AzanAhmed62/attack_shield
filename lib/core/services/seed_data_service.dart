@@ -18,10 +18,10 @@ class SeedDataService {
     required AlertRepository alertRepo,
     required SimulationRepository simRepo,
     required AssetRepository assetRepo,
-  })  : _storage = storage,
-        _alertRepo = alertRepo,
-        _simRepo = simRepo,
-        _assetRepo = assetRepo;
+  }) : _storage = storage,
+       _alertRepo = alertRepo,
+       _simRepo = simRepo,
+       _assetRepo = assetRepo;
 
   Future<void> seedIfNeeded() async {
     final alreadySeeded = _storage.read<bool>(_seedKey) ?? false;
@@ -30,7 +30,7 @@ class SeedDataService {
     if (alreadySeeded || !onboardingComplete) return;
 
     await _seedAlerts();
-    await _seedScenarios();
+    // Simulations are created from the UI directly — no seeding needed
     await _seedAssets();
 
     await _storage.write(_seedKey, true);
@@ -64,7 +64,8 @@ class SeedDataService {
         relatedTechniqueId: 'T1110.004',
         createdAt: DateTime.now().subtract(const Duration(hours: 6)),
         updatedAt: DateTime.now().subtract(const Duration(hours: 4)),
-        notes: 'Account lockout policy triggered. Monitoring for further attempts.',
+        notes:
+            'Account lockout policy triggered. Monitoring for further attempts.',
       ),
       AlertItem(
         id: 'seed-alert-003',
@@ -83,41 +84,6 @@ class SeedDataService {
 
     for (final alert in alerts) {
       await _alertRepo.createAlert(alert);
-    }
-  }
-
-  Future<void> _seedScenarios() async {
-    final scenarios = [
-      SimulationScenario(
-        id: 'seed-sim-001',
-        name: 'Phishing Email Detection',
-        description:
-            'Send a simulated spearphishing email to a test mailbox and verify '
-            'that email security gateway flags it within 5 minutes.',
-        relatedTechniques: ['T1566', 'T1566.001', 'T1566.002'],
-        objectives:
-            'Verify email filtering, sandboxing of attachments, and user reporting process.',
-        expectedOutcomes:
-            'Email quarantined or flagged. SOC notified. User reports within 10 minutes.',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      ),
-      SimulationScenario(
-        id: 'seed-sim-002',
-        name: 'Lateral Movement Detection via RDP',
-        description:
-            'Simulate a lateral movement attempt using valid credentials over RDP '
-            'from a non-standard workstation to a server.',
-        relatedTechniques: ['T1021.001', 'T1078.002'],
-        objectives:
-            'Verify network segmentation, RDP session logging, and anomalous login alerting.',
-        expectedOutcomes:
-            'SIEM alert generated within 3 minutes. RDP session blocked from untrusted segment.',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-    ];
-
-    for (final scenario in scenarios) {
-      await _simRepo.createScenario(scenario);
     }
   }
 

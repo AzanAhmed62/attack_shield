@@ -38,6 +38,7 @@ extension CoverageLevelX on CoverageLevel {
 @freezed
 class CoverageStatus with _$CoverageStatus {
   const factory CoverageStatus({
+    String? id,
     required String techniqueId,
     required CoverageLevel level,
     String? notes,
@@ -52,6 +53,5 @@ class CoverageStatus with _$CoverageStatus {
 /// Helper — get the string status from a nullable CoverageStatus.
 /// This is what RiskEngine uses.
 extension CoverageStatusX on CoverageStatus? {
-  String get statusString =>
-      this?.level.statusString ?? 'notCovered';
+  String get statusString => this?.level.statusString ?? 'notCovered';
 }

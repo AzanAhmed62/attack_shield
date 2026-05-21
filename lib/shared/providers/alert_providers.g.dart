@@ -6,95 +6,24 @@ part of 'alert_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$allAlertsHash() => r'2852fa59f8d5387b30a583b549c7152007b3202d';
+String _$alertsHash() => r'e0711c7999eed772334ac15e2e584b20e2ddf75a';
 
-/// See also [allAlerts].
-@ProviderFor(allAlerts)
-final allAlertsProvider = AutoDisposeFutureProvider<List<AlertItem>>.internal(
-  allAlerts,
-  name: r'allAlertsProvider',
+/// See also [alerts].
+@ProviderFor(alerts)
+final alertsProvider = AutoDisposeFutureProvider<List<AlertItem>>.internal(
+  alerts,
+  name: r'alertsProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$allAlertsHash,
+      : _$alertsHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AllAlertsRef = AutoDisposeFutureProviderRef<List<AlertItem>>;
-String _$filteredAlertsHash() => r'd2e367027a0a4995fa78dcf7c0e5cab7842f78e8';
-
-/// See also [filteredAlerts].
-@ProviderFor(filteredAlerts)
-final filteredAlertsProvider =
-    AutoDisposeFutureProvider<List<AlertItem>>.internal(
-      filteredAlerts,
-      name: r'filteredAlertsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$filteredAlertsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef FilteredAlertsRef = AutoDisposeFutureProviderRef<List<AlertItem>>;
-String _$alertCountProviderHash() =>
-    r'a708b469e9f1dfa8d6dfaf3befb99ce640d1a318';
-
-/// See also [alertCountProvider].
-@ProviderFor(alertCountProvider)
-final alertCountProviderProvider = AutoDisposeFutureProvider<int>.internal(
-  alertCountProvider,
-  name: r'alertCountProviderProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$alertCountProviderHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef AlertCountProviderRef = AutoDisposeFutureProviderRef<int>;
-String _$openAlertCountHash() => r'0c388a7f5bd721994e96653a7bdf4055a05f228e';
-
-/// See also [openAlertCount].
-@ProviderFor(openAlertCount)
-final openAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
-  openAlertCount,
-  name: r'openAlertCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$openAlertCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef OpenAlertCountRef = AutoDisposeFutureProviderRef<int>;
-String _$criticalAlertCountHash() =>
-    r'e7ce79c52c6313b2b245eaf2ead31d3fb400c665';
-
-/// See also [criticalAlertCount].
-@ProviderFor(criticalAlertCount)
-final criticalAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
-  criticalAlertCount,
-  name: r'criticalAlertCountProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$criticalAlertCountHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef CriticalAlertCountRef = AutoDisposeFutureProviderRef<int>;
-String _$createAlertHash() => r'959ff0b2cbffe3b93b25af33ceb42e2c5fc0b959';
+typedef AlertsRef = AutoDisposeFutureProviderRef<List<AlertItem>>;
+String _$createAlertHash() => r'dc097459198965433724ba71be3bf7fe4879908f';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -233,27 +162,27 @@ class _CreateAlertProviderElement extends AutoDisposeFutureProviderElement<void>
   AlertItem get alert => (origin as CreateAlertProvider).alert;
 }
 
-String _$updateAlertHash() => r'e4398bea65efaa43e2023b2925ba80c3d229bcc6';
+String _$updateAlertStatusHash() => r'08106b5911ef027820a69d50909746b7b96b86bc';
 
-/// See also [updateAlert].
-@ProviderFor(updateAlert)
-const updateAlertProvider = UpdateAlertFamily();
+/// See also [updateAlertStatus].
+@ProviderFor(updateAlertStatus)
+const updateAlertStatusProvider = UpdateAlertStatusFamily();
 
-/// See also [updateAlert].
-class UpdateAlertFamily extends Family<AsyncValue<void>> {
-  /// See also [updateAlert].
-  const UpdateAlertFamily();
+/// See also [updateAlertStatus].
+class UpdateAlertStatusFamily extends Family<AsyncValue<void>> {
+  /// See also [updateAlertStatus].
+  const UpdateAlertStatusFamily();
 
-  /// See also [updateAlert].
-  UpdateAlertProvider call(AlertItem alert) {
-    return UpdateAlertProvider(alert);
+  /// See also [updateAlertStatus].
+  UpdateAlertStatusProvider call(String id, AlertStatus status) {
+    return UpdateAlertStatusProvider(id, status);
   }
 
   @override
-  UpdateAlertProvider getProviderOverride(
-    covariant UpdateAlertProvider provider,
+  UpdateAlertStatusProvider getProviderOverride(
+    covariant UpdateAlertStatusProvider provider,
   ) {
-    return call(provider.alert);
+    return call(provider.id, provider.status);
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -268,69 +197,77 @@ class UpdateAlertFamily extends Family<AsyncValue<void>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'updateAlertProvider';
+  String? get name => r'updateAlertStatusProvider';
 }
 
-/// See also [updateAlert].
-class UpdateAlertProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [updateAlert].
-  UpdateAlertProvider(AlertItem alert)
+/// See also [updateAlertStatus].
+class UpdateAlertStatusProvider extends AutoDisposeFutureProvider<void> {
+  /// See also [updateAlertStatus].
+  UpdateAlertStatusProvider(String id, AlertStatus status)
     : this._internal(
-        (ref) => updateAlert(ref as UpdateAlertRef, alert),
-        from: updateAlertProvider,
-        name: r'updateAlertProvider',
+        (ref) => updateAlertStatus(ref as UpdateAlertStatusRef, id, status),
+        from: updateAlertStatusProvider,
+        name: r'updateAlertStatusProvider',
         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
             ? null
-            : _$updateAlertHash,
-        dependencies: UpdateAlertFamily._dependencies,
-        allTransitiveDependencies: UpdateAlertFamily._allTransitiveDependencies,
-        alert: alert,
+            : _$updateAlertStatusHash,
+        dependencies: UpdateAlertStatusFamily._dependencies,
+        allTransitiveDependencies:
+            UpdateAlertStatusFamily._allTransitiveDependencies,
+        id: id,
+        status: status,
       );
 
-  UpdateAlertProvider._internal(
+  UpdateAlertStatusProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
     required super.allTransitiveDependencies,
     required super.debugGetCreateSourceHash,
     required super.from,
-    required this.alert,
+    required this.id,
+    required this.status,
   }) : super.internal();
 
-  final AlertItem alert;
+  final String id;
+  final AlertStatus status;
 
   @override
   Override overrideWith(
-    FutureOr<void> Function(UpdateAlertRef provider) create,
+    FutureOr<void> Function(UpdateAlertStatusRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: UpdateAlertProvider._internal(
-        (ref) => create(ref as UpdateAlertRef),
+      override: UpdateAlertStatusProvider._internal(
+        (ref) => create(ref as UpdateAlertStatusRef),
         from: from,
         name: null,
         dependencies: null,
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
-        alert: alert,
+        id: id,
+        status: status,
       ),
     );
   }
 
   @override
   AutoDisposeFutureProviderElement<void> createElement() {
-    return _UpdateAlertProviderElement(this);
+    return _UpdateAlertStatusProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is UpdateAlertProvider && other.alert == alert;
+    return other is UpdateAlertStatusProvider &&
+        other.id == id &&
+        other.status == status;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, alert.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+    hash = _SystemHash.combine(hash, status.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -338,20 +275,266 @@ class UpdateAlertProvider extends AutoDisposeFutureProvider<void> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin UpdateAlertRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `alert` of this provider.
-  AlertItem get alert;
+mixin UpdateAlertStatusRef on AutoDisposeFutureProviderRef<void> {
+  /// The parameter `id` of this provider.
+  String get id;
+
+  /// The parameter `status` of this provider.
+  AlertStatus get status;
 }
 
-class _UpdateAlertProviderElement extends AutoDisposeFutureProviderElement<void>
-    with UpdateAlertRef {
-  _UpdateAlertProviderElement(super.provider);
+class _UpdateAlertStatusProviderElement
+    extends AutoDisposeFutureProviderElement<void>
+    with UpdateAlertStatusRef {
+  _UpdateAlertStatusProviderElement(super.provider);
 
   @override
-  AlertItem get alert => (origin as UpdateAlertProvider).alert;
+  String get id => (origin as UpdateAlertStatusProvider).id;
+  @override
+  AlertStatus get status => (origin as UpdateAlertStatusProvider).status;
 }
 
-String _$deleteAlertHash() => r'c610af8e829f970c1c359f0019e5353156d0e939';
+String _$resolveAlertHash() => r'0918c780dfc813c36af4b8ef33a4a198a412059e';
+
+/// See also [resolveAlert].
+@ProviderFor(resolveAlert)
+const resolveAlertProvider = ResolveAlertFamily();
+
+/// See also [resolveAlert].
+class ResolveAlertFamily extends Family<AsyncValue<void>> {
+  /// See also [resolveAlert].
+  const ResolveAlertFamily();
+
+  /// See also [resolveAlert].
+  ResolveAlertProvider call(String id) {
+    return ResolveAlertProvider(id);
+  }
+
+  @override
+  ResolveAlertProvider getProviderOverride(
+    covariant ResolveAlertProvider provider,
+  ) {
+    return call(provider.id);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'resolveAlertProvider';
+}
+
+/// See also [resolveAlert].
+class ResolveAlertProvider extends AutoDisposeFutureProvider<void> {
+  /// See also [resolveAlert].
+  ResolveAlertProvider(String id)
+    : this._internal(
+        (ref) => resolveAlert(ref as ResolveAlertRef, id),
+        from: resolveAlertProvider,
+        name: r'resolveAlertProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$resolveAlertHash,
+        dependencies: ResolveAlertFamily._dependencies,
+        allTransitiveDependencies:
+            ResolveAlertFamily._allTransitiveDependencies,
+        id: id,
+      );
+
+  ResolveAlertProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<void> Function(ResolveAlertRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: ResolveAlertProvider._internal(
+        (ref) => create(ref as ResolveAlertRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<void> createElement() {
+    return _ResolveAlertProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ResolveAlertProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin ResolveAlertRef on AutoDisposeFutureProviderRef<void> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _ResolveAlertProviderElement
+    extends AutoDisposeFutureProviderElement<void>
+    with ResolveAlertRef {
+  _ResolveAlertProviderElement(super.provider);
+
+  @override
+  String get id => (origin as ResolveAlertProvider).id;
+}
+
+String _$acknowledgeAlertHash() => r'8b0733334cb68e7ef53531a8c72409ba5c5531f4';
+
+/// See also [acknowledgeAlert].
+@ProviderFor(acknowledgeAlert)
+const acknowledgeAlertProvider = AcknowledgeAlertFamily();
+
+/// See also [acknowledgeAlert].
+class AcknowledgeAlertFamily extends Family<AsyncValue<void>> {
+  /// See also [acknowledgeAlert].
+  const AcknowledgeAlertFamily();
+
+  /// See also [acknowledgeAlert].
+  AcknowledgeAlertProvider call(String id) {
+    return AcknowledgeAlertProvider(id);
+  }
+
+  @override
+  AcknowledgeAlertProvider getProviderOverride(
+    covariant AcknowledgeAlertProvider provider,
+  ) {
+    return call(provider.id);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'acknowledgeAlertProvider';
+}
+
+/// See also [acknowledgeAlert].
+class AcknowledgeAlertProvider extends AutoDisposeFutureProvider<void> {
+  /// See also [acknowledgeAlert].
+  AcknowledgeAlertProvider(String id)
+    : this._internal(
+        (ref) => acknowledgeAlert(ref as AcknowledgeAlertRef, id),
+        from: acknowledgeAlertProvider,
+        name: r'acknowledgeAlertProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$acknowledgeAlertHash,
+        dependencies: AcknowledgeAlertFamily._dependencies,
+        allTransitiveDependencies:
+            AcknowledgeAlertFamily._allTransitiveDependencies,
+        id: id,
+      );
+
+  AcknowledgeAlertProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.id,
+  }) : super.internal();
+
+  final String id;
+
+  @override
+  Override overrideWith(
+    FutureOr<void> Function(AcknowledgeAlertRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AcknowledgeAlertProvider._internal(
+        (ref) => create(ref as AcknowledgeAlertRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        id: id,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<void> createElement() {
+    return _AcknowledgeAlertProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AcknowledgeAlertProvider && other.id == id;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, id.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin AcknowledgeAlertRef on AutoDisposeFutureProviderRef<void> {
+  /// The parameter `id` of this provider.
+  String get id;
+}
+
+class _AcknowledgeAlertProviderElement
+    extends AutoDisposeFutureProviderElement<void>
+    with AcknowledgeAlertRef {
+  _AcknowledgeAlertProviderElement(super.provider);
+
+  @override
+  String get id => (origin as AcknowledgeAlertProvider).id;
+}
+
+String _$deleteAlertHash() => r'5a6278249e6998205ec638da478a7d5747f76041';
 
 /// See also [deleteAlert].
 @ProviderFor(deleteAlert)
@@ -469,78 +652,404 @@ class _DeleteAlertProviderElement extends AutoDisposeFutureProviderElement<void>
   String get id => (origin as DeleteAlertProvider).id;
 }
 
-String _$clearAllAlertsHash() => r'9befc6e2cf62cb3e214c27cd11c2c96ddad439c8';
+String _$alertsByStatusHash() => r'5d00e87d57d8923d8cda0e1919ac765488e01f93';
 
-/// See also [clearAllAlerts].
-@ProviderFor(clearAllAlerts)
-final clearAllAlertsProvider = AutoDisposeFutureProvider<void>.internal(
-  clearAllAlerts,
-  name: r'clearAllAlertsProvider',
+/// See also [alertsByStatus].
+@ProviderFor(alertsByStatus)
+const alertsByStatusProvider = AlertsByStatusFamily();
+
+/// See also [alertsByStatus].
+class AlertsByStatusFamily extends Family<AsyncValue<List<AlertItem>>> {
+  /// See also [alertsByStatus].
+  const AlertsByStatusFamily();
+
+  /// See also [alertsByStatus].
+  AlertsByStatusProvider call(AlertStatus status) {
+    return AlertsByStatusProvider(status);
+  }
+
+  @override
+  AlertsByStatusProvider getProviderOverride(
+    covariant AlertsByStatusProvider provider,
+  ) {
+    return call(provider.status);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'alertsByStatusProvider';
+}
+
+/// See also [alertsByStatus].
+class AlertsByStatusProvider
+    extends AutoDisposeFutureProvider<List<AlertItem>> {
+  /// See also [alertsByStatus].
+  AlertsByStatusProvider(AlertStatus status)
+    : this._internal(
+        (ref) => alertsByStatus(ref as AlertsByStatusRef, status),
+        from: alertsByStatusProvider,
+        name: r'alertsByStatusProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$alertsByStatusHash,
+        dependencies: AlertsByStatusFamily._dependencies,
+        allTransitiveDependencies:
+            AlertsByStatusFamily._allTransitiveDependencies,
+        status: status,
+      );
+
+  AlertsByStatusProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.status,
+  }) : super.internal();
+
+  final AlertStatus status;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<AlertItem>> Function(AlertsByStatusRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlertsByStatusProvider._internal(
+        (ref) => create(ref as AlertsByStatusRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        status: status,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<AlertItem>> createElement() {
+    return _AlertsByStatusProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AlertsByStatusProvider && other.status == status;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, status.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin AlertsByStatusRef on AutoDisposeFutureProviderRef<List<AlertItem>> {
+  /// The parameter `status` of this provider.
+  AlertStatus get status;
+}
+
+class _AlertsByStatusProviderElement
+    extends AutoDisposeFutureProviderElement<List<AlertItem>>
+    with AlertsByStatusRef {
+  _AlertsByStatusProviderElement(super.provider);
+
+  @override
+  AlertStatus get status => (origin as AlertsByStatusProvider).status;
+}
+
+String _$alertsByPriorityHash() => r'0a53c1a7b8a4a9d575e3a9db86af0572e2df32a2';
+
+/// See also [alertsByPriority].
+@ProviderFor(alertsByPriority)
+const alertsByPriorityProvider = AlertsByPriorityFamily();
+
+/// See also [alertsByPriority].
+class AlertsByPriorityFamily extends Family<AsyncValue<List<AlertItem>>> {
+  /// See also [alertsByPriority].
+  const AlertsByPriorityFamily();
+
+  /// See also [alertsByPriority].
+  AlertsByPriorityProvider call(AlertPriority priority) {
+    return AlertsByPriorityProvider(priority);
+  }
+
+  @override
+  AlertsByPriorityProvider getProviderOverride(
+    covariant AlertsByPriorityProvider provider,
+  ) {
+    return call(provider.priority);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'alertsByPriorityProvider';
+}
+
+/// See also [alertsByPriority].
+class AlertsByPriorityProvider
+    extends AutoDisposeFutureProvider<List<AlertItem>> {
+  /// See also [alertsByPriority].
+  AlertsByPriorityProvider(AlertPriority priority)
+    : this._internal(
+        (ref) => alertsByPriority(ref as AlertsByPriorityRef, priority),
+        from: alertsByPriorityProvider,
+        name: r'alertsByPriorityProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$alertsByPriorityHash,
+        dependencies: AlertsByPriorityFamily._dependencies,
+        allTransitiveDependencies:
+            AlertsByPriorityFamily._allTransitiveDependencies,
+        priority: priority,
+      );
+
+  AlertsByPriorityProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.priority,
+  }) : super.internal();
+
+  final AlertPriority priority;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<AlertItem>> Function(AlertsByPriorityRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlertsByPriorityProvider._internal(
+        (ref) => create(ref as AlertsByPriorityRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        priority: priority,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<AlertItem>> createElement() {
+    return _AlertsByPriorityProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AlertsByPriorityProvider && other.priority == priority;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, priority.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin AlertsByPriorityRef on AutoDisposeFutureProviderRef<List<AlertItem>> {
+  /// The parameter `priority` of this provider.
+  AlertPriority get priority;
+}
+
+class _AlertsByPriorityProviderElement
+    extends AutoDisposeFutureProviderElement<List<AlertItem>>
+    with AlertsByPriorityRef {
+  _AlertsByPriorityProviderElement(super.provider);
+
+  @override
+  AlertPriority get priority => (origin as AlertsByPriorityProvider).priority;
+}
+
+String _$alertsByTechniqueHash() => r'd12b4106aa79f36e34d6089c8f38295a623ec485';
+
+/// See also [alertsByTechnique].
+@ProviderFor(alertsByTechnique)
+const alertsByTechniqueProvider = AlertsByTechniqueFamily();
+
+/// See also [alertsByTechnique].
+class AlertsByTechniqueFamily extends Family<AsyncValue<List<AlertItem>>> {
+  /// See also [alertsByTechnique].
+  const AlertsByTechniqueFamily();
+
+  /// See also [alertsByTechnique].
+  AlertsByTechniqueProvider call(String techniqueId) {
+    return AlertsByTechniqueProvider(techniqueId);
+  }
+
+  @override
+  AlertsByTechniqueProvider getProviderOverride(
+    covariant AlertsByTechniqueProvider provider,
+  ) {
+    return call(provider.techniqueId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'alertsByTechniqueProvider';
+}
+
+/// See also [alertsByTechnique].
+class AlertsByTechniqueProvider
+    extends AutoDisposeFutureProvider<List<AlertItem>> {
+  /// See also [alertsByTechnique].
+  AlertsByTechniqueProvider(String techniqueId)
+    : this._internal(
+        (ref) => alertsByTechnique(ref as AlertsByTechniqueRef, techniqueId),
+        from: alertsByTechniqueProvider,
+        name: r'alertsByTechniqueProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$alertsByTechniqueHash,
+        dependencies: AlertsByTechniqueFamily._dependencies,
+        allTransitiveDependencies:
+            AlertsByTechniqueFamily._allTransitiveDependencies,
+        techniqueId: techniqueId,
+      );
+
+  AlertsByTechniqueProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.techniqueId,
+  }) : super.internal();
+
+  final String techniqueId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<AlertItem>> Function(AlertsByTechniqueRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: AlertsByTechniqueProvider._internal(
+        (ref) => create(ref as AlertsByTechniqueRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        techniqueId: techniqueId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<AlertItem>> createElement() {
+    return _AlertsByTechniqueProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AlertsByTechniqueProvider &&
+        other.techniqueId == techniqueId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, techniqueId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin AlertsByTechniqueRef on AutoDisposeFutureProviderRef<List<AlertItem>> {
+  /// The parameter `techniqueId` of this provider.
+  String get techniqueId;
+}
+
+class _AlertsByTechniqueProviderElement
+    extends AutoDisposeFutureProviderElement<List<AlertItem>>
+    with AlertsByTechniqueRef {
+  _AlertsByTechniqueProviderElement(super.provider);
+
+  @override
+  String get techniqueId => (origin as AlertsByTechniqueProvider).techniqueId;
+}
+
+String _$openAlertCountHash() => r'28071dc57bae1c5da75df028c6f097dd8072c84c';
+
+/// See also [openAlertCount].
+@ProviderFor(openAlertCount)
+final openAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
+  openAlertCount,
+  name: r'openAlertCountProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$clearAllAlertsHash,
+      : _$openAlertCountHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef ClearAllAlertsRef = AutoDisposeFutureProviderRef<void>;
-String _$alertSearchQueryHash() => r'8833276897fb2da32e8c5a06f5f71467434c7b34';
+typedef OpenAlertCountRef = AutoDisposeFutureProviderRef<int>;
+String _$criticalAlertCountHash() =>
+    r'4958f18e334c7e5a4ec9d74abbdd74400975b98f';
 
-/// Search query for the alerts screen.
-///
-/// Copied from [AlertSearchQuery].
-@ProviderFor(AlertSearchQuery)
-final alertSearchQueryProvider =
-    AutoDisposeNotifierProvider<AlertSearchQuery, String>.internal(
-      AlertSearchQuery.new,
-      name: r'alertSearchQueryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$alertSearchQueryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+/// See also [criticalAlertCount].
+@ProviderFor(criticalAlertCount)
+final criticalAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
+  criticalAlertCount,
+  name: r'criticalAlertCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$criticalAlertCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-typedef _$AlertSearchQuery = AutoDisposeNotifier<String>;
-String _$selectedAlertStatusHash() =>
-    r'898629df601c5700f03ee24df238795fe09fae1b';
-
-/// Selected alert status filter (empty = all).
-///
-/// Copied from [SelectedAlertStatus].
-@ProviderFor(SelectedAlertStatus)
-final selectedAlertStatusProvider =
-    AutoDisposeNotifierProvider<SelectedAlertStatus, String>.internal(
-      SelectedAlertStatus.new,
-      name: r'selectedAlertStatusProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$selectedAlertStatusHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$SelectedAlertStatus = AutoDisposeNotifier<String>;
-String _$selectedAlertPriorityHash() =>
-    r'9d9c155b22ac327dfd39a6f527b5f84f443cb20f';
-
-/// Selected alert priority filter (null = all).
-///
-/// Copied from [SelectedAlertPriority].
-@ProviderFor(SelectedAlertPriority)
-final selectedAlertPriorityProvider =
-    AutoDisposeNotifierProvider<SelectedAlertPriority, AlertPriority?>.internal(
-      SelectedAlertPriority.new,
-      name: r'selectedAlertPriorityProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$selectedAlertPriorityHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$SelectedAlertPriority = AutoDisposeNotifier<AlertPriority?>;
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CriticalAlertCountRef = AutoDisposeFutureProviderRef<int>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

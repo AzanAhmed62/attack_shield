@@ -1,249 +1,68 @@
-import 'package:attackshield/shared/models/models.dart';
-import '../../core/errors/errors.dart';
-import '../services/services.dart';
+// lib/data/repositories/simulation_repository.dart
+// FULL REPLACEMENT — persists simulation history in GetStorage,
+// exposes getSimulationHistory() used by the history tab.
+
+import 'dart:convert';
+import 'package:get_storage/get_storage.dart';
+
+import '../../features/simulations/presentation/screens/simulations_screen.dart';
+import '../services/local_storage_service.dart';
+
+const _kHistoryKey = 'simulation_history_v1';
 
 abstract class SimulationRepository {
-  Future<List<SimulationScenario>> getAllScenarios();
-  Future<SimulationScenario?> getScenarioById(String id);
-  Future<void> createScenario(SimulationScenario scenario);
-  Future<void> updateScenario(SimulationScenario scenario);
-  Future<void> deleteScenario(String id);
-  Future<void> clearAllScenarios();
-
-  Future<List<SimulationResult>> getAllResults();
-  Future<SimulationResult?> getResultById(String id);
-  Future<void> createResult(SimulationResult result);
-  Future<void> updateResult(SimulationResult result);
-  Future<void> clearAllResults();
-  Future<List<SimulationResult>> getResultsByScenario(String scenarioId);
-  Future<List<SimulationResult>> getResultsByTechnique(String techniqueId);
-
-  Future<int> scenarioPassRate(String scenarioId);
-  Future<Map<String, int>> overallReadiness();
+  Future<List<SimulationHistoryEntry>> getSimulationHistory();
+  Future<void> saveSimulationResult(SimulationHistoryEntry entry);
+  Future<void> clearHistory();
 }
 
 class SimulationRepositoryImpl implements SimulationRepository {
-  final LocalStorageService _storageService;
-  static const String _scenariosKey = 'simulation_scenarios';
-  static const String _resultsKey = 'simulation_results';
+  final LocalStorageService _storage;
+  SimulationRepositoryImpl(this._storage);
 
-  SimulationRepositoryImpl(this._storageService);
+  final _box = GetStorage();
 
   @override
-  Future<List<SimulationScenario>> getAllScenarios() async {
+  Future<List<SimulationHistoryEntry>> getSimulationHistory() async {
     try {
-      final scenariosJson = _storageService.read<List>(_scenariosKey) ?? [];
-      return scenariosJson
-          .map((e) => SimulationScenario.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch scenarios: $e');
+      final raw = _box.read<String>(_kHistoryKey);
+      if (raw == null) return [];
+      final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+      return list.map(_fromJson).toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    } catch (_) {
+      return [];
     }
   }
 
   @override
-  Future<SimulationScenario?> getScenarioById(String id) async {
-    try {
-      final scenarios = await getAllScenarios();
-      try {
-        return scenarios.firstWhere((s) => s.id == id);
-      } catch (e) {
-        return null;
-      }
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch scenario: $e');
-    }
+  Future<void> saveSimulationResult(SimulationHistoryEntry entry) async {
+    final existing = await getSimulationHistory();
+    existing.insert(0, entry);
+    // Keep last 50 results
+    final trimmed = existing.take(50).toList();
+    await _box.write(_kHistoryKey, jsonEncode(trimmed.map(_toJson).toList()));
   }
 
   @override
-  Future<void> createScenario(SimulationScenario scenario) async {
-    try {
-      final scenarios = await getAllScenarios();
-      scenarios.add(scenario);
-      await _storageService.write(
-        _scenariosKey,
-        scenarios.map((s) => s.toJson()).toList(),
-      );
-    } catch (e) {
-      throw DataException(message: 'Failed to create scenario: $e');
-    }
+  Future<void> clearHistory() async {
+    await _box.remove(_kHistoryKey);
   }
 
-  @override
-  Future<void> updateScenario(SimulationScenario scenario) async {
-    try {
-      final scenarios = await getAllScenarios();
-      final index = scenarios.indexWhere((s) => s.id == scenario.id);
-      if (index != -1) {
-        scenarios[index] = scenario;
-        await _storageService.write(
-          _scenariosKey,
-          scenarios.map((s) => s.toJson()).toList(),
-        );
-      }
-    } catch (e) {
-      throw DataException(message: 'Failed to update scenario: $e');
-    }
-  }
+  Map<String, dynamic> _toJson(SimulationHistoryEntry e) => {
+    'scenarioName':     e.scenarioName,
+    'scenarioIcon':     e.scenarioIcon,
+    'totalTechniques':  e.totalTechniques,
+    'readiness':        e.readiness,
+    'timestamp':        e.timestamp.toIso8601String(),
+  };
 
-  @override
-  Future<void> deleteScenario(String id) async {
-    try {
-      final scenarios = await getAllScenarios();
-      scenarios.removeWhere((s) => s.id == id);
-      await _storageService.write(
-        _scenariosKey,
-        scenarios.map((s) => s.toJson()).toList(),
-      );
-    } catch (e) {
-      throw DataException(message: 'Failed to delete scenario: $e');
-    }
-  }
-
-  @override
-  Future<void> clearAllScenarios() async {
-    try {
-      await _storageService.remove(_scenariosKey);
-    } catch (e) {
-      throw DataException(message: 'Failed to clear scenarios: $e');
-    }
-  }
-
-  @override
-  Future<List<SimulationResult>> getAllResults() async {
-    try {
-      final resultsJson = _storageService.read<List>(_resultsKey) ?? [];
-      return resultsJson
-          .map((e) => SimulationResult.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch results: $e');
-    }
-  }
-
-  @override
-  Future<SimulationResult?> getResultById(String id) async {
-    try {
-      final results = await getAllResults();
-      try {
-        return results.firstWhere((r) => r.id == id);
-      } catch (e) {
-        return null;
-      }
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch result: $e');
-    }
-  }
-
-  @override
-  Future<void> createResult(SimulationResult result) async {
-    try {
-      final results = await getAllResults();
-      results.add(result);
-      await _storageService.write(
-        _resultsKey,
-        results.map((r) => r.toJson()).toList(),
-      );
-    } catch (e) {
-      throw DataException(message: 'Failed to create result: $e');
-    }
-  }
-
-  @override
-  Future<void> updateResult(SimulationResult result) async {
-    try {
-      final results = await getAllResults();
-      final index = results.indexWhere((r) => r.id == result.id);
-      if (index != -1) {
-        results[index] = result;
-        await _storageService.write(
-          _resultsKey,
-          results.map((r) => r.toJson()).toList(),
-        );
-      }
-    } catch (e) {
-      throw DataException(message: 'Failed to update result: $e');
-    }
-  }
-
-  @override
-  Future<void> clearAllResults() async {
-    try {
-      await _storageService.remove(_resultsKey);
-    } catch (e) {
-      throw DataException(message: 'Failed to clear simulation results: $e');
-    }
-  }
-
-  @override
-  Future<List<SimulationResult>> getResultsByScenario(String scenarioId) async {
-    try {
-      final results = await getAllResults();
-      return results.where((r) => r.scenarioId == scenarioId).toList();
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch results for scenario: $e');
-    }
-  }
-
-  @override
-  Future<List<SimulationResult>> getResultsByTechnique(
-    String techniqueId,
-  ) async {
-    try {
-      final scenarios = await getAllScenarios();
-      final results = await getAllResults();
-      final matchingScenarioIds = scenarios
-          .where(
-            (scenario) =>
-                (scenario.relatedTechniques ?? const []).contains(techniqueId),
-          )
-          .map((scenario) => scenario.id)
-          .toSet();
-
-      if (matchingScenarioIds.isEmpty) {
-        return const [];
-      }
-
-      return results
-          .where((result) => matchingScenarioIds.contains(result.scenarioId))
-          .toList();
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch results for technique: $e');
-    }
-  }
-
-  @override
-  Future<int> scenarioPassRate(String scenarioId) async {
-    try {
-      final results = await getResultsByScenario(scenarioId);
-      if (results.isEmpty) return 0;
-      final passed = results.where((r) => r.result == TestResult.passed).length;
-      return ((passed / results.length) * 100).toInt();
-    } catch (e) {
-      throw DataException(message: 'Failed to calculate pass rate: $e');
-    }
-  }
-
-  @override
-  Future<Map<String, int>> overallReadiness() async {
-    try {
-      final results = await getAllResults();
-      if (results.isEmpty) {
-        return {'notTested': 0, 'passed': 0, 'failed': 0, 'partiallyPassed': 0};
-      }
-
-      return {
-        'notTested': results
-            .where((r) => r.result == TestResult.notTested)
-            .length,
-        'passed': results.where((r) => r.result == TestResult.passed).length,
-        'failed': results.where((r) => r.result == TestResult.failed).length,
-        'partiallyPassed': results
-            .where((r) => r.result == TestResult.partiallyPassed)
-            .length,
-      };
-    } catch (e) {
-      throw DataException(message: 'Failed to calculate readiness: $e');
-    }
-  }
+  SimulationHistoryEntry _fromJson(Map<String, dynamic> m) =>
+    SimulationHistoryEntry(
+      scenarioName:    m['scenarioName'] as String,
+      scenarioIcon:    m['scenarioIcon'] as String,
+      totalTechniques: m['totalTechniques'] as int,
+      readiness:       (m['readiness'] as num).toDouble(),
+      timestamp:       DateTime.parse(m['timestamp'] as String),
+    );
 }

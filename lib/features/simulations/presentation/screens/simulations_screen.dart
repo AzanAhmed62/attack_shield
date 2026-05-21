@@ -1,1198 +1,1126 @@
+// lib/features/simulations/presentation/screens/simulations_screen.dart
+// FULL REPLACEMENT — ATT&CK Navigator-style tactic matrix heatmap,
+// scenario builder, Gemini narrative, simulation history chart.
+
+import 'dart:math';
+import 'package:attackshield/features/simulation/providers/simulation_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
-import 'package:attackshield/core/theme/theme.dart';
-import 'package:attackshield/core/widgets/widgets.dart';
-import 'package:attackshield/core/widgets/ai_debrief_sheet.dart';
-import 'package:attackshield/shared/providers/providers.dart';
-import 'package:attackshield/shared/models/models.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class SimulationsScreen extends ConsumerWidget {
+import '../../../../shared/models/attack_technique.dart';
+import '../../../../shared/models/coverage_status.dart';
+import '../../../../shared/providers/technique_providers.dart';
+import '../../../../shared/providers/coverage_providers.dart';
+import '../../../../shared/providers/repository_providers.dart';
+import '../../../../shared/widgets/shimmer_loader.dart';
+import '../../../../core/engine/risk_engine.dart';
+import '../../../../data/services/gemini_service.dart';
+
+part 'simulations_screen.g.dart';
+
+// ─── Built-in scenarios ───────────────────────────────────────────────────────
+class _Scenario {
+  final String id, name, description, icon;
+  final List<String> tacticFocus; // shortNames to highlight
+  final List<String> techniques; // T-IDs included in scenario
+  final String threatActor;
+
+  const _Scenario({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.tacticFocus,
+    required this.techniques,
+    required this.threatActor,
+  });
+}
+
+const _scenarios = [
+  _Scenario(
+    id: 'ransomware',
+    name: 'Ransomware Attack',
+    description:
+        'Simulates a modern ransomware intrusion chain from phishing to encryption.',
+    icon: '🔒',
+    threatActor: 'Conti / LockBit TTPs',
+    tacticFocus: [
+      'initial-access',
+      'execution',
+      'persistence',
+      'lateral-movement',
+      'impact',
+    ],
+    techniques: [
+      'T1566',
+      'T1059',
+      'T1547',
+      'T1486',
+      'T1490',
+      'T1027',
+      'T1083',
+      'T1021',
+    ],
+  ),
+  _Scenario(
+    id: 'apt29',
+    name: 'APT29 (Cozy Bear)',
+    description:
+        'Nation-state espionage campaign targeting credentials and sensitive data.',
+    icon: '🕵️',
+    threatActor: 'APT29 / SVR',
+    tacticFocus: [
+      'initial-access',
+      'credential-access',
+      'collection',
+      'exfiltration',
+      'command-and-control',
+    ],
+    techniques: [
+      'T1566',
+      'T1078',
+      'T1003',
+      'T1056',
+      'T1041',
+      'T1071',
+      'T1105',
+      'T1560',
+    ],
+  ),
+  _Scenario(
+    id: 'supply_chain',
+    name: 'Supply Chain Compromise',
+    description:
+        'Attacker compromises a trusted software vendor to reach targets.',
+    icon: '📦',
+    threatActor: 'SolarWinds-style TTP',
+    tacticFocus: [
+      'initial-access',
+      'persistence',
+      'defense-evasion',
+      'lateral-movement',
+    ],
+    techniques: ['T1195', 'T1059', 'T1036', 'T1055', 'T1078', 'T1021', 'T1070'],
+  ),
+  _Scenario(
+    id: 'insider_threat',
+    name: 'Insider Threat',
+    description: 'Malicious or negligent insider abusing legitimate access.',
+    icon: '👤',
+    threatActor: 'Insider / Compromised Account',
+    tacticFocus: [
+      'collection',
+      'exfiltration',
+      'discovery',
+      'credential-access',
+    ],
+    techniques: ['T1078', 'T1083', 'T1005', 'T1041', 'T1114', 'T1087', 'T1213'],
+  ),
+  _Scenario(
+    id: 'cloud_attack',
+    name: 'Cloud Infrastructure Attack',
+    description:
+        'Targets cloud-hosted resources through misconfiguration and credential abuse.',
+    icon: '☁️',
+    threatActor: 'Cloud-native adversary',
+    tacticFocus: [
+      'initial-access',
+      'privilege-escalation',
+      'collection',
+      'exfiltration',
+    ],
+    techniques: ['T1078', 'T1190', 'T1098', 'T1530', 'T1619', 'T1552', 'T1537'],
+  ),
+];
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+class SimulationsScreen extends HookConsumerWidget {
   const SimulationsScreen({super.key});
+
+  static const _tabs = ['Matrix', 'Scenarios', 'History'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scenariosAsync = ref.watch(allSimulationScenariosProvider);
-    final readinessAsync = ref.watch(readinessPercentageProvider);
-    final readinessMapAsync = ref.watch(simulationReadinessProvider);
-    final allResultsAsync = ref.watch(allSimulationResultsProvider);
+    final tabIndex = useState(0);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Readiness Simulations')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ReadinessCard(
-              readinessAsync: readinessAsync,
-              readinessMapAsync: readinessMapAsync,
-            ),
-            const SizedBox(height: 24),
-            allResultsAsync.when(
-              data: (results) => _SimulationTrendCard(results: results),
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 24),
-            _SuggestedScenariosCard(ref: ref),
-            const SizedBox(height: 24),
-            const SectionHeader(title: 'Test Scenarios'),
-            const SizedBox(height: 12),
-            scenariosAsync.when(
-              data: (scenarios) => scenarios.isEmpty
-                  ? EmptyStateWidget(
-                      title: 'No Scenarios Yet',
-                      subtitle:
-                          'Create defensive exercises linked to ATT&CK techniques to track readiness.',
-                      icon: Icons.science_outlined,
-                      actionLabel: 'Create Scenario',
-                      onActionPressed: () => _showCreateSheet(context, ref),
-                    )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: scenarios.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) => _ScenarioCard(
-                        scenario: scenarios[i],
-                        ref: ref,
-                        onDelete: () async {
-                          await ref.read(
-                            deleteSimulationScenarioProvider(
-                              scenarios[i].id,
-                            ).future,
-                          );
-                        },
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        title: Text(
+          'Simulations',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(44),
+          child: Row(
+            children: _tabs.asMap().entries.map((e) {
+              final selected = e.key == tabIndex.value;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => tabIndex.value = e.key,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: selected ? cs.primary : Colors.transparent,
+                          width: 2,
+                        ),
                       ),
                     ),
-              loading: () => const LoadingWidget(message: 'Loading scenarios…'),
-              error: (e, _) => EmptyStateWidget(
-                title: 'Error',
-                subtitle: e.toString(),
-                icon: Icons.error_outline,
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateSheet(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('New Scenario'),
-      ),
-    );
-  }
-
-  void _showCreateSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _CreateScenarioSheet(ref: ref),
-    );
-  }
-}
-
-// ─── Readiness overview card ──────────────────────────────────────────────────
-
-class _ReadinessCard extends StatelessWidget {
-  final AsyncValue<double> readinessAsync;
-  final AsyncValue<Map<String, int>> readinessMapAsync;
-  const _ReadinessCard({
-    required this.readinessAsync,
-    required this.readinessMapAsync,
-  });
-
-  Color _color(double p) {
-    if (p >= 70) return AppTheme.successColor;
-    if (p >= 40) return AppTheme.warningColor;
-    return AppTheme.dangerColor;
-  }
-
-  String _label(double p) {
-    if (p >= 70) return 'Well-prepared';
-    if (p >= 40) return 'Partially ready';
-    return 'Needs improvement';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.verified_user, color: AppTheme.primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  'Overall Readiness',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            readinessAsync.when(
-              data: (pct) => Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${pct.toStringAsFixed(1)}%',
-                          style: Theme.of(context).textTheme.displaySmall
-                              ?.copyWith(
-                                color: _color(pct),
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        Text(
-                          _label(pct),
-                          style: TextStyle(color: _color(pct), fontSize: 13),
-                        ),
-                        const SizedBox(height: 10),
-                        readinessMapAsync.when(
-                          data: (m) => Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _StatusChip(
-                                'Passed',
-                                m['passed'] ?? 0,
-                                AppTheme.successColor,
-                              ),
-                              _StatusChip(
-                                'Partial',
-                                m['partiallyPassed'] ?? 0,
-                                AppTheme.warningColor,
-                              ),
-                              _StatusChip(
-                                'Failed',
-                                m['failed'] ?? 0,
-                                AppTheme.dangerColor,
-                              ),
-                              _StatusChip(
-                                'Not Tested',
-                                m['notTested'] ?? 0,
-                                Colors.grey,
-                              ),
-                            ],
-                          ),
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, _) => const SizedBox.shrink(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ProgressRing(
-                    percentage: pct,
-                    progressColor: _color(pct),
-                    label: 'Ready',
-                  ),
-                ],
-              ),
-              loading: () => const LoadingWidget(),
-              error: (_, _) => const Text('No data yet'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color;
-  const _StatusChip(this.label, this.count, this.color);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        '$label: $count',
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-// ─── ATT&CK-linked suggested scenarios ───────────────────────────────────────
-
-class _SuggestedScenariosCard extends StatelessWidget {
-  final WidgetRef ref;
-  const _SuggestedScenariosCard({required this.ref});
-
-  static const _suggestions = [
-    (
-      name: 'Phishing Awareness Test',
-      desc:
-          'Simulate a spearphishing campaign and measure detection/response time.',
-      techniques: ['T1566', 'T1566.001', 'T1566.002'],
-      obj:
-          'Verify email filtering, user reporting, and incident response to phishing.',
-      expected:
-          'Email blocked or flagged within 5 min. User reports suspicious email.',
-    ),
-    (
-      name: 'Credential Dumping Detection',
-      desc:
-          'Test whether LSASS access and credential dumping triggers EDR alerts.',
-      techniques: ['T1003', 'T1003.001', 'T1558'],
-      obj:
-          'Verify Credential Guard, LSASS audit policies, and EDR behavioral detection.',
-      expected:
-          'Alert generated within 2 minutes. LSASS access blocked or logged.',
-    ),
-    (
-      name: 'Lateral Movement via RDP',
-      desc: 'Test detection of lateral movement using Remote Desktop Protocol.',
-      techniques: ['T1021', 'T1021.001', 'T1550.002'],
-      obj:
-          'Verify network segmentation, RDP logging, and anomalous login detection.',
-      expected:
-          'Unusual RDP connection flagged. Pass-the-hash attempt blocked.',
-    ),
-    (
-      name: 'Ransomware Readiness Check',
-      desc:
-          'Validate backup integrity and recovery against ransomware simulation.',
-      techniques: ['T1486', 'T1490', 'T1562.001'],
-      obj:
-          'Test backup restoration, shadow copy protection, and AV/EDR ransomware detection.',
-      expected:
-          'Encryption attempt blocked. Backup restore completes in under 4 hours.',
-    ),
-    (
-      name: 'Defense Evasion Detection',
-      desc:
-          'Test detection of log clearing, UAC bypass, and obfuscated scripts.',
-      techniques: ['T1070.001', 'T1548.002', 'T1027'],
-      obj:
-          'Verify SIEM alerting on log tampering and EDR detection of UAC bypass.',
-      expected: 'Log clear event triggers alert. UAC bypass attempt detected.',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.lightbulb_outline,
-                  color: AppTheme.warningColor,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'ATT&CK Scenario Templates',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Pre-built defensive exercises. Tap + to add.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            ..._suggestions.map(
-              (s) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  s.name,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                subtitle: Text(
-                  s.techniques.join(', '),
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: 11,
-                  ),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(
-                    Icons.add_circle_outline,
-                    color: AppTheme.primaryColor,
-                  ),
-                  onPressed: () async {
-                    final scenario = SimulationScenario(
-                      id: const Uuid().v4(),
-                      name: s.name,
-                      description: s.desc,
-                      relatedTechniques: List<String>.from(s.techniques),
-                      objectives: s.obj,
-                      expectedOutcomes: s.expected,
-                      createdAt: DateTime.now(),
-                    );
-                    await ref.read(
-                      createSimulationScenarioProvider(scenario).future,
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Added: ${s.name}'),
-                          backgroundColor: AppTheme.successColor,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Scenario card ────────────────────────────────────────────────────────────
-
-class _ScenarioCard extends ConsumerWidget {
-  final SimulationScenario scenario;
-  final WidgetRef ref;
-  final VoidCallback onDelete;
-
-  const _ScenarioCard({
-    required this.scenario,
-    required this.ref,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef watchRef) {
-    final resultsAsync = watchRef.watch(resultsByScenarioProvider(scenario.id));
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    scenario.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    size: 20,
-                    color: Colors.grey,
-                  ),
-                  onPressed: () => _confirmDelete(context),
-                ),
-              ],
-            ),
-            Text(
-              scenario.description,
-              style: Theme.of(context).textTheme.bodySmall,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            if ((scenario.relatedTechniques ?? []).isNotEmpty)
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: (scenario.relatedTechniques ?? [])
-                    .map(
-                      (t) => GestureDetector(
-                        onTap: () => context.push('/technique/$t'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            t,
-                            style: const TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                    child: Text(
+                      e.value,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                        color: selected ? cs.primary : cs.outline,
                       ),
-                    )
-                    .toList(),
-              ),
-            const SizedBox(height: 8),
-
-            // Results history
-            resultsAsync.when(
-              data: (results) => results.isEmpty
-                  ? Text(
-                      'No test results yet.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'History',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        const SizedBox(height: 4),
-                        ...results.reversed
-                            .take(3)
-                            .map((r) => _ResultRow(result: r)),
-                        if (results.length > 3)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () =>
-                                  _showHistorySheet(context, results),
-                              child: const Text('View Full History'),
-                            ),
-                          ),
-                      ],
                     ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
-            ),
-            const SizedBox(height: 10),
-
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.play_circle_outline, size: 16),
-                label: const Text('Record Test Result'),
-                onPressed: () => _showRecordSheet(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Scenario?'),
-        content: Text('Delete "${scenario.name}"? This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onDelete();
-            },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: AppTheme.dangerColor),
-            ),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-
-  void _showRecordSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _RecordResultSheet(scenario: scenario, ref: ref),
-    );
-  }
-
-  void _showHistorySheet(BuildContext context, List<SimulationResult> results) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) =>
-          _ScenarioHistorySheet(scenario: scenario, results: results),
+      body: [
+        const _MatrixTab(),
+        const _ScenariosTab(),
+        const _HistoryTab(),
+      ][tabIndex.value],
     );
   }
 }
 
-class _SimulationTrendCard extends StatelessWidget {
-  final List<SimulationResult> results;
-
-  const _SimulationTrendCard({required this.results});
+// ─── Tab 1: Matrix Heatmap ────────────────────────────────────────────────────
+class _MatrixTab extends HookConsumerWidget {
+  const _MatrixTab();
 
   @override
-  Widget build(BuildContext context) {
-    if (results.length < 2) {
-      return const SizedBox.shrink();
-    }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tacticsAsync = ref.watch(allTacticsProvider);
+    final byTacticAsync = ref.watch(techniquesByTacticProvider);
+    final coverageMap = ref.watch(coverageMapProvider);
+    final cs = Theme.of(context).colorScheme;
 
-    final ordered = [...results]
-      ..sort((a, b) => a.testedAt.compareTo(b.testedAt));
-    var passed = 0;
-    var partial = 0;
-    final trendSpots = <FlSpot>[];
-    final labels = <String>[];
-
-    for (var i = 0; i < ordered.length; i++) {
-      final result = ordered[i];
-      if (result.result == TestResult.passed) {
-        passed += 1;
-      } else if (result.result == TestResult.partiallyPassed) {
-        partial += 1;
-      }
-
-      final readiness = ((passed * 2) + partial) / ((i + 1) * 2) * 100;
-      trendSpots.add(FlSpot(i.toDouble(), readiness));
-      labels.add(DateFormat('MMM d').format(result.testedAt));
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Readiness Trend',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Cumulative readiness across all simulation runs',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 180,
-              child: LineChart(
-                LineChartData(
-                  minY: 0,
-                  maxY: 100,
-                  gridData: FlGridData(
-                    show: true,
-                    horizontalInterval: 25,
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) =>
-                        FlLine(color: Colors.grey.withValues(alpha: 0.15)),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+    return tacticsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (tactics) => byTacticAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (byTactic) {
+          final covMap = coverageMap.value ?? {};
+          return Column(
+            children: [
+              // Legend
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Row(
+                  children: [
+                    _LegendDot(color: Colors.green.shade500, label: 'Covered'),
+                    const SizedBox(width: 12),
+                    _LegendDot(color: Colors.amber.shade500, label: 'Partial'),
+                    const SizedBox(width: 12),
+                    _LegendDot(
+                      color: Colors.red.shade400,
+                      label: 'Not Covered',
                     ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        interval: 25,
-                        reservedSize: 34,
-                        getTitlesWidget: (value, _) => Text(
-                          '${value.toInt()}%',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 24,
-                        getTitlesWidget: (value, _) {
-                          final index = value.toInt();
-                          if (index < 0 || index >= labels.length) {
-                            return const SizedBox.shrink();
-                          }
-                          if (index != 0 &&
-                              index != labels.length ~/ 2 &&
-                              index != labels.length - 1) {
-                            return const SizedBox.shrink();
-                          }
-                          return Text(
-                            labels[index],
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: trendSpots,
-                      color: AppTheme.successColor,
-                      isCurved: true,
-                      barWidth: 3,
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: AppTheme.successColor.withValues(alpha: 0.1),
-                      ),
-                      dotData: FlDotData(
-                        getDotPainter: (spot, x, bar, index) =>
-                            FlDotCirclePainter(
-                              radius: 3.5,
-                              color: AppTheme.successColor,
-                              strokeWidth: 2,
-                              strokeColor: AppTheme.backgroundColor,
-                            ),
-                      ),
+                    const SizedBox(width: 12),
+                    _LegendDot(color: cs.outlineVariant, label: 'Unknown'),
+                    const Spacer(),
+                    Text(
+                      'Tap a cell to view technique',
+                      style: TextStyle(fontSize: 10, color: cs.outline),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
+              // Matrix
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: tactics.map((tactic) {
+                      final techs = byTactic[tactic.shortName] ?? [];
+                      return _TacticColumn(
+                        tactic: tactic,
+                        techniques: techs,
+                        covMap: covMap,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _ScenarioHistorySheet extends StatelessWidget {
-  final SimulationScenario scenario;
-  final List<SimulationResult> results;
-
-  const _ScenarioHistorySheet({required this.scenario, required this.results});
+class _TacticColumn extends StatelessWidget {
+  final AttackTactic tactic;
+  final List<AttackTechnique> techniques;
+  final Map<String, CoverageLevel> covMap;
+  const _TacticColumn({
+    required this.tactic,
+    required this.techniques,
+    required this.covMap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final ordered = [...results]
-      ..sort((a, b) => b.testedAt.compareTo(a.testedAt));
+    final cs = Theme.of(context).colorScheme;
+    final total = techniques.length;
+    final covered = techniques
+        .where((t) => covMap[t.id] == CoverageLevel.covered)
+        .length;
+    final pct = total > 0 ? covered / total : 0.0;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.72,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (_, controller) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          controller: controller,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey,
+    return Container(
+      width: 108,
+      margin: const EdgeInsets.only(right: 6),
+      child: Column(
+        children: [
+          // Tactic header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  tactic.name,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onPrimaryContainer,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
                   borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: pct,
+                    minHeight: 3,
+                    backgroundColor: cs.primaryContainer,
+                    valueColor: AlwaysStoppedAnimation(Colors.green.shade500),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$covered/$total',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: cs.onPrimaryContainer.withOpacity(.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Technique cells
+          ...techniques.map((t) {
+            final cov = covMap[t.id] ?? CoverageLevel.unknown;
+            final color = _cellColor(cov, t.riskScore);
+            return GestureDetector(
+              onTap: () => context.push('/library/${t.id}'),
+              child: Tooltip(
+                message: '${t.id}: ${t.name}',
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 3),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 5,
+                    horizontal: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    t.id,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Color _cellColor(CoverageLevel cov, double riskScore) {
+    switch (cov) {
+      case CoverageLevel.covered:
+        return Colors.green.shade600;
+      case CoverageLevel.partiallyCovered:
+        return Colors.amber.shade600;
+      case CoverageLevel.notCovered:
+        // Shade red by risk score — higher risk = darker red
+        final intensity = (riskScore / 10.0).clamp(0.3, 1.0);
+        return Color.lerp(Colors.red.shade300, Colors.red.shade800, intensity)!;
+      case CoverageLevel.unknown:
+        return Colors.grey.shade400;
+    }
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Tab 2: Scenarios ─────────────────────────────────────────────────────────
+class _ScenariosTab extends HookConsumerWidget {
+  const _ScenariosTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final running = useState(false);
+    final selectedScenario = useState<_Scenario?>(null);
+    final result = useState<_SimResult?>(null);
+    final narrative = useState<String?>(null);
+    final narrativeLoading = useState(false);
+
+    final allTechsAsync = ref.watch(allTechniquesProvider);
+    final coverageMap = ref.watch(coverageMapProvider);
+    final cs = Theme.of(context).colorScheme;
+
+    Future<void> runScenario(_Scenario scenario) async {
+      running.value = true;
+      selectedScenario.value = scenario;
+      result.value = null;
+      narrative.value = null;
+
+      await Future.delayed(const Duration(milliseconds: 600));
+
+      final allTechs = allTechsAsync.value ?? [];
+      final covMap = coverageMap.value ?? {};
+
+      final scenTechs = allTechs
+          .where((t) => scenario.techniques.contains(t.id))
+          .toList();
+
+      int passed = 0, failed = 0;
+      final gaps = <String>[];
+      for (final t in scenTechs) {
+        final cov = covMap[t.id] ?? CoverageLevel.unknown;
+        if (cov == CoverageLevel.covered) {
+          passed++;
+        } else {
+          failed++;
+          gaps.add(t.id);
+        }
+      }
+
+      final total = scenTechs.length;
+      final readiness = total > 0 ? (passed / total) * 100.0 : 0.0;
+
+      result.value = _SimResult(
+        scenario: scenario,
+        total: total,
+        passed: passed,
+        failed: failed,
+        gaps: gaps,
+        readiness: readiness,
+        timestamp: DateTime.now(),
+      );
+      running.value = false;
+
+      // Fetch Gemini narrative
+      narrativeLoading.value = true;
+      try {
+        final gemini = ref.read(geminiServiceProvider);
+        final r = await gemini.generateSimulationNarrative(
+          scenarioName: scenario.name,
+          uncoveredTechniques: gaps,
+          readinessScore: readiness,
+        );
+        if (r.isSuccess) narrative.value = r.text;
+      } finally {
+        narrativeLoading.value = false;
+      }
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (result.value == null) ...[
             Text(
-              scenario.name,
-              style: Theme.of(context).textTheme.headlineSmall,
+              'Select a Scenario',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             Text(
-              '${ordered.length} recorded test runs',
-              style: Theme.of(context).textTheme.bodySmall,
+              'Run a simulation to see how your coverage holds up against real attack patterns.',
+              style: TextStyle(fontSize: 12, color: cs.outline),
             ),
-            const SizedBox(height: 16),
-            ...ordered.map((result) => _ResultRow(result: result)),
+            const SizedBox(height: 14),
+
+            ..._scenarios.map(
+              (s) => _ScenarioCard(
+                scenario: s,
+                isRunning: running.value && selectedScenario.value?.id == s.id,
+                onRun: () => runScenario(s),
+              ),
+            ),
+          ] else ...[
+            // Result view
+            _SimResultCard(
+              result: result.value!,
+              narrative: narrative.value,
+              narrativeLoading: narrativeLoading.value,
+              onReset: () {
+                result.value = null;
+                narrative.value = null;
+              },
+            ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Result row ───────────────────────────────────────────────────────────────
-
-class _ResultRow extends StatelessWidget {
-  final SimulationResult result;
-  const _ResultRow({required this.result});
-
-  Color get _color {
-    switch (result.result) {
-      case TestResult.passed:
-        return AppTheme.successColor;
-      case TestResult.failed:
-        return AppTheme.dangerColor;
-      case TestResult.partiallyPassed:
-        return AppTheme.warningColor;
-      case TestResult.notTested:
-        return Colors.grey;
-    }
-  }
-
-  String get _label {
-    switch (result.result) {
-      case TestResult.passed:
-        return '✓ Passed';
-      case TestResult.failed:
-        return '✗ Failed';
-      case TestResult.partiallyPassed:
-        return '~ Partial';
-      case TestResult.notTested:
-        return '○ Not Tested';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: _color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _label,
-            style: TextStyle(
-              color: _color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            DateFormat('MMM d, yyyy').format(result.testedAt),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
         ],
       ),
     );
   }
 }
 
-// ─── Record result sheet ──────────────────────────────────────────────────────
-
-class _RecordResultSheet extends StatefulWidget {
-  final SimulationScenario scenario;
-  final WidgetRef ref;
-  const _RecordResultSheet({required this.scenario, required this.ref});
-
-  @override
-  State<_RecordResultSheet> createState() => _RecordResultSheetState();
-}
-
-class _RecordResultSheetState extends State<_RecordResultSheet> {
-  TestResult _result = TestResult.notTested;
-  final _obsCtrl = TextEditingController();
-  final _recCtrl = TextEditingController();
-  final _testerCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _obsCtrl.dispose();
-    _recCtrl.dispose();
-    _testerCtrl.dispose();
-    super.dispose();
-  }
-
-  static const _resultColors = {
-    TestResult.passed: AppTheme.successColor,
-    TestResult.failed: AppTheme.dangerColor,
-    TestResult.partiallyPassed: AppTheme.warningColor,
-    TestResult.notTested: Colors.grey,
-  };
-
-  static const _resultLabels = {
-    TestResult.passed: '✓ Pass',
-    TestResult.failed: '✗ Fail',
-    TestResult.partiallyPassed: '~ Partial',
-    TestResult.notTested: '○ Not Tested',
-  };
+class _ScenarioCard extends StatelessWidget {
+  final _Scenario scenario;
+  final bool isRunning;
+  final VoidCallback onRun;
+  const _ScenarioCard({
+    required this.scenario,
+    required this.isRunning,
+    required this.onRun,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant, width: 0.5),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey,
-                  borderRadius: BorderRadius.circular(2),
+      child: Row(
+        children: [
+          Text(scenario.icon, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  scenario.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 3),
+                Text(
+                  scenario.description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: cs.outline,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline_rounded,
+                      size: 12,
+                      color: cs.outline,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      scenario.threatActor,
+                      style: TextStyle(fontSize: 11, color: cs.outline),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(Icons.layers_outlined, size: 12, color: cs.outline),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${scenario.techniques.length} techniques',
+                      style: TextStyle(fontSize: 11, color: cs.outline),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Record Test Result',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            Text(
-              widget.scenario.name,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
+          ),
+          const SizedBox(width: 10),
+          isRunning
+              ? const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : FilledButton.tonal(
+                  onPressed: onRun,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    minimumSize: Size.zero,
+                  ),
+                  child: const Text('Run', style: TextStyle(fontSize: 12)),
+                ),
+        ],
+      ),
+    );
+  }
+}
 
-            if (widget.scenario.objectives?.isNotEmpty == true) ...[
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+class _SimResultCard extends StatelessWidget {
+  final _SimResult result;
+  final String? narrative;
+  final bool narrativeLoading;
+  final VoidCallback onReset;
+  const _SimResultCard({
+    required this.result,
+    required this.narrative,
+    required this.narrativeLoading,
+    required this.onReset,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final readiness = result.readiness;
+    final color = readiness >= 75
+        ? Colors.green.shade600
+        : readiness >= 50
+        ? Colors.amber.shade600
+        : Colors.red.shade600;
+    final label = readiness >= 75
+        ? 'Well Protected'
+        : readiness >= 50
+        ? 'Partially Ready'
+        : 'High Exposure';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Simulation Result',
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: onReset,
+              icon: const Icon(Icons.arrow_back_rounded, size: 14),
+              label: const Text('Back'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Score card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.outlineVariant, width: 0.5),
+          ),
+          child: Row(
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: CircularProgressIndicator(
+                      value: readiness / 100,
+                      strokeWidth: 7,
+                      backgroundColor: cs.outlineVariant,
+                      color: color,
+                      strokeCap: StrokeCap.round,
+                    ),
+                  ),
+                  Text(
+                    '${readiness.toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 20),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Objectives',
-                      style: Theme.of(context).textTheme.labelLarge,
+                      result.scenario.icon + '  ' + result.scenario.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      widget.scenario.objectives!,
-                      style: Theme.of(context).textTheme.bodySmall,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.check_rounded,
+                          size: 14,
+                          color: Colors.green.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${result.passed} covered',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green.shade600,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.close_rounded,
+                          size: 14,
+                          color: Colors.red.shade500,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${result.failed} exposed',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.red.shade500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
             ],
-
-            Text('Test Outcome', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Row(
-              children: TestResult.values.map((r) {
-                final isSelected = _result == r;
-                final c = _resultColors[r]!;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _result = r),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? c.withValues(alpha: 0.2)
-                            : c.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected ? c : c.withValues(alpha: 0.3),
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Text(
-                        _resultLabels[r]!,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: c,
-                          fontSize: 10,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-
-            TextField(
-              controller: _testerCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Tester / Team',
-                prefixIcon: Icon(Icons.person),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _obsCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Observations',
-                prefixIcon: Icon(Icons.notes),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _recCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Recommendations',
-                prefixIcon: Icon(Icons.lightbulb_outline),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.check),
-                label: const Text('Save Result'),
-                onPressed: () async {
-                  final simResult = SimulationResult(
-                    id: const Uuid().v4(),
-                    scenarioId: widget.scenario.id,
-                    result: _result,
-                    observations: _obsCtrl.text.isEmpty
-                        ? 'No observations recorded.'
-                        : _obsCtrl.text,
-                    recommendations: _recCtrl.text.isEmpty
-                        ? 'No recommendations recorded.'
-                        : _recCtrl.text,
-                    testedAt: DateTime.now(),
-                    testedBy: _testerCtrl.text.isEmpty
-                        ? 'Security Team'
-                        : _testerCtrl.text,
-                  );
-                  await widget.ref.read(
-                    createSimulationResultProvider(simResult).future,
-                  );
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Result recorded'),
-                        backgroundColor: AppTheme.successColor,
-                      ),
-                    );
-                    // Ask user if they want an AI debrief
-                    if (context.mounted) {
-                      final wantsDebrief = await showDialog<bool>(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text('AI Debrief Available'),
-                          content: const Text(
-                            'Generate an AI-powered exercise debrief?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Skip'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Generate Debrief'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (wantsDebrief == true && context.mounted) {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          builder: (_) => AIDebriefSheet(
-                            scenario: widget.scenario,
-                            result: simResult,
-                          ),
-                        );
-                      }
-                    }
-                  }
-                },
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-}
+        const SizedBox(height: 12),
 
-// ─── Create scenario sheet ────────────────────────────────────────────────────
-
-class _CreateScenarioSheet extends StatefulWidget {
-  final WidgetRef ref;
-  const _CreateScenarioSheet({required this.ref});
-
-  @override
-  State<_CreateScenarioSheet> createState() => _CreateScenarioSheetState();
-}
-
-class _CreateScenarioSheetState extends State<_CreateScenarioSheet> {
-  final _nameCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  final _objCtrl = TextEditingController();
-  final _techCtrl = TextEditingController();
-  final List<String> _techniques = [];
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _descCtrl.dispose();
-    _objCtrl.dispose();
-    _techCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+        // Exposed techniques
+        if (result.gaps.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200, width: 0.5),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Create Test Scenario',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _nameCtrl,
-              decoration: const InputDecoration(labelText: 'Scenario Name *'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _descCtrl,
-              decoration: const InputDecoration(labelText: 'Description'),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _objCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Objectives',
-                hintText: 'What defensive controls are you testing?',
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 10),
-
-            Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _techCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'ATT&CK Technique ID',
-                      hintText: 'e.g. T1566',
+                Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 16,
+                      color: Colors.red.shade600,
                     ),
-                    textCapitalization: TextCapitalization.characters,
-                  ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Exposed Techniques (${result.gaps.length})',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(
-                    Icons.add_circle,
-                    color: AppTheme.primaryColor,
-                  ),
-                  onPressed: () {
-                    final id = _techCtrl.text.trim().toUpperCase();
-                    if (id.isNotEmpty && !_techniques.contains(id)) {
-                      setState(() => _techniques.add(id));
-                      _techCtrl.clear();
-                    }
-                  },
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: result.gaps
+                      .map(
+                        (id) => ActionChip(
+                          label: Text(id, style: const TextStyle(fontSize: 11)),
+                          backgroundColor: Colors.red.shade100,
+                          side: BorderSide(
+                            color: Colors.red.shade300,
+                            width: 0.5,
+                          ),
+                          onPressed: () => context.push('/library/$id'),
+                          avatar: const Icon(
+                            Icons.open_in_new_rounded,
+                            size: 11,
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
             ),
-            if (_techniques.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: _techniques
-                    .map(
-                      (t) => Chip(
-                        label: Text(
-                          t,
-                          style: const TextStyle(color: AppTheme.primaryColor),
-                        ),
-                        deleteIconColor: AppTheme.primaryColor,
-                        onDeleted: () => setState(() => _techniques.remove(t)),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-            const SizedBox(height: 20),
+          ),
+          const SizedBox(height: 12),
+        ],
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.save),
-                label: const Text('Create Scenario'),
-                onPressed: () async {
-                  if (_nameCtrl.text.trim().isEmpty) return;
-                  final scenario = SimulationScenario(
-                    id: const Uuid().v4(),
-                    name: _nameCtrl.text.trim(),
-                    description: _descCtrl.text.trim(),
-                    relatedTechniques: List.from(_techniques),
-                    objectives: _objCtrl.text.trim(),
-                    expectedOutcomes: '',
-                    createdAt: DateTime.now(),
-                  );
-                  await widget.ref.read(
-                    createSimulationScenarioProvider(scenario).future,
-                  );
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Scenario created'),
-                        backgroundColor: AppTheme.successColor,
-                      ),
-                    );
-                  }
-                },
+        // AI narrative
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outlineVariant, width: 0.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome_rounded, size: 15, color: cs.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'AI Attack Narrative',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              narrativeLoading
+                  ? const ShimmerLoader(height: 60)
+                  : narrative == null
+                  ? Text(
+                      'AI service unavailable. Configure your Gemini API key in Settings.',
+                      style: TextStyle(fontSize: 12, color: cs.outline),
+                    )
+                  : Text(
+                      narrative!,
+                      style: const TextStyle(fontSize: 13, height: 1.5),
+                    ),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+
+        // Action button
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            icon: const Icon(Icons.map_outlined, size: 16),
+            label: const Text('Fix these gaps in Coverage Map'),
+            onPressed: () => context.push('/coverage'),
+          ),
+        ),
+      ],
     );
   }
+}
+
+// ─── Tab 3: History ───────────────────────────────────────────────────────────
+class _HistoryTab extends ConsumerWidget {
+  const _HistoryTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Simulation history from repository
+    final historyAsync = ref.watch(simulationHistoryProvider);
+    final cs = Theme.of(context).colorScheme;
+
+    return historyAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('$e')),
+      data: (history) {
+        if (history.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.history_rounded, size: 48, color: cs.outlineVariant),
+                const SizedBox(height: 12),
+                Text(
+                  'No simulations run yet.',
+                  style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Run a scenario from the Scenarios tab.',
+                  style: TextStyle(fontSize: 12, color: cs.outline),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final spots = history
+            .asMap()
+            .entries
+            .map((e) => FlSpot(e.key.toDouble(), e.value.readiness))
+            .toList();
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Readiness Trend',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Simulation readiness scores over time',
+                style: TextStyle(fontSize: 12, color: cs.outline),
+              ),
+              const SizedBox(height: 16),
+
+              // Line chart
+              SizedBox(
+                height: 180,
+                child: LineChart(
+                  LineChartData(
+                    minY: 0,
+                    maxY: 100,
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (_) =>
+                          FlLine(color: cs.outlineVariant, strokeWidth: 0.5),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 36,
+                          getTitlesWidget: (v, _) => Text(
+                            '${v.toInt()}%',
+                            style: TextStyle(fontSize: 10, color: cs.outline),
+                          ),
+                        ),
+                      ),
+                      bottomTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots,
+                        isCurved: true,
+                        color: cs.primary,
+                        barWidth: 2.5,
+                        dotData: FlDotData(
+                          getDotPainter: (spot, _, __, ___) =>
+                              FlDotCirclePainter(
+                                radius: 4,
+                                color: cs.primary,
+                                strokeWidth: 2,
+                                strokeColor: cs.surface,
+                              ),
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: cs.primary.withOpacity(.08),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // History list
+              ...history.reversed.map((h) {
+                final color = h.readiness >= 75
+                    ? Colors.green.shade600
+                    : h.readiness >= 50
+                    ? Colors.amber.shade600
+                    : Colors.red.shade600;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cs.outlineVariant, width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        h.scenarioIcon,
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              h.scenarioName,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              '${h.timestamp.day}/${h.timestamp.month}/${h.timestamp.year}  '
+                              '· ${h.totalTechniques} techniques assessed',
+                              style: TextStyle(fontSize: 11, color: cs.outline),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '${h.readiness.toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Internal result model ────────────────────────────────────────────────────
+class _SimResult {
+  final _Scenario scenario;
+  final int total, passed, failed;
+  final List<String> gaps;
+  final double readiness;
+  final DateTime timestamp;
+
+  const _SimResult({
+    required this.scenario,
+    required this.total,
+    required this.passed,
+    required this.failed,
+    required this.gaps,
+    required this.readiness,
+    required this.timestamp,
+  });
+}
+
+// ─── Simulation history provider (stub — wire to SimulationRepository) ────────
+// Replace this with your real simulationRepository data once the repo is set up.
+@riverpod
+Future<List<SimulationHistoryEntry>> simulationHistory(Ref ref) async {
+  final repo = ref.watch(simulationRepositoryProvider);
+  return repo.getSimulationHistory();
+}
+
+class SimulationHistoryEntry {
+  final String scenarioName, scenarioIcon;
+  final int totalTechniques;
+  final double readiness;
+  final DateTime timestamp;
+
+  const SimulationHistoryEntry({
+    required this.scenarioName,
+    required this.scenarioIcon,
+    required this.totalTechniques,
+    required this.readiness,
+    required this.timestamp,
+  });
 }

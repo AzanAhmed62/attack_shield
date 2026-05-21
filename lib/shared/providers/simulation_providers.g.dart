@@ -6,84 +6,29 @@ part of 'simulation_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$allSimulationScenariosHash() =>
-    r'6164f8d33f7d6c608123c30bbefdce992aeecc20';
+String _$simulationHistoryHash() => r'962c5116630bac2c9d1e0d24fa6a4708372ae03c';
 
-/// See also [allSimulationScenarios].
-@ProviderFor(allSimulationScenarios)
-final allSimulationScenariosProvider =
-    AutoDisposeFutureProvider<List<SimulationScenario>>.internal(
-      allSimulationScenarios,
-      name: r'allSimulationScenariosProvider',
+/// Get simulation history (past executed simulations)
+///
+/// Copied from [simulationHistory].
+@ProviderFor(simulationHistory)
+final simulationHistoryProvider =
+    AutoDisposeFutureProvider<List<SimulationHistoryEntry>>.internal(
+      simulationHistory,
+      name: r'simulationHistoryProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$allSimulationScenariosHash,
+          : _$simulationHistoryHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AllSimulationScenariosRef =
-    AutoDisposeFutureProviderRef<List<SimulationScenario>>;
-String _$allSimulationResultsHash() =>
-    r'06399fb30ba4bd3001e0d33f00c397c487cd9681';
-
-/// See also [allSimulationResults].
-@ProviderFor(allSimulationResults)
-final allSimulationResultsProvider =
-    AutoDisposeFutureProvider<List<SimulationResult>>.internal(
-      allSimulationResults,
-      name: r'allSimulationResultsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$allSimulationResultsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef AllSimulationResultsRef =
-    AutoDisposeFutureProviderRef<List<SimulationResult>>;
-String _$simulationReadinessHash() =>
-    r'70cb0b43687e2a041dfa5aef5d588e9b29dba4fe';
-
-/// See also [simulationReadiness].
-@ProviderFor(simulationReadiness)
-final simulationReadinessProvider =
-    AutoDisposeFutureProvider<Map<String, int>>.internal(
-      simulationReadiness,
-      name: r'simulationReadinessProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$simulationReadinessHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef SimulationReadinessRef = AutoDisposeFutureProviderRef<Map<String, int>>;
-String _$readinessPercentageHash() =>
-    r'5b2d8c6f9f34a36de76338d3878128f925f45f71';
-
-/// See also [readinessPercentage].
-@ProviderFor(readinessPercentage)
-final readinessPercentageProvider = AutoDisposeFutureProvider<double>.internal(
-  readinessPercentage,
-  name: r'readinessPercentageProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$readinessPercentageHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ReadinessPercentageRef = AutoDisposeFutureProviderRef<double>;
-String _$resultsByScenarioHash() => r'18cb1d01bd6deca0e836d00b44128f8db2dd2d7a';
+typedef SimulationHistoryRef =
+    AutoDisposeFutureProviderRef<List<SimulationHistoryEntry>>;
+String _$saveSimulationResultHash() =>
+    r'2efe30c5292bd9ab4b229ec6aeb86cdac9c5a637';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -106,26 +51,33 @@ class _SystemHash {
   }
 }
 
-/// See also [resultsByScenario].
-@ProviderFor(resultsByScenario)
-const resultsByScenarioProvider = ResultsByScenarioFamily();
+/// Save a simulation result to history
+///
+/// Copied from [saveSimulationResult].
+@ProviderFor(saveSimulationResult)
+const saveSimulationResultProvider = SaveSimulationResultFamily();
 
-/// See also [resultsByScenario].
-class ResultsByScenarioFamily
-    extends Family<AsyncValue<List<SimulationResult>>> {
-  /// See also [resultsByScenario].
-  const ResultsByScenarioFamily();
+/// Save a simulation result to history
+///
+/// Copied from [saveSimulationResult].
+class SaveSimulationResultFamily extends Family<AsyncValue<void>> {
+  /// Save a simulation result to history
+  ///
+  /// Copied from [saveSimulationResult].
+  const SaveSimulationResultFamily();
 
-  /// See also [resultsByScenario].
-  ResultsByScenarioProvider call(String scenarioId) {
-    return ResultsByScenarioProvider(scenarioId);
+  /// Save a simulation result to history
+  ///
+  /// Copied from [saveSimulationResult].
+  SaveSimulationResultProvider call(SimulationHistoryEntry entry) {
+    return SaveSimulationResultProvider(entry);
   }
 
   @override
-  ResultsByScenarioProvider getProviderOverride(
-    covariant ResultsByScenarioProvider provider,
+  SaveSimulationResultProvider getProviderOverride(
+    covariant SaveSimulationResultProvider provider,
   ) {
-    return call(provider.scenarioId);
+    return call(provider.entry);
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -140,198 +92,74 @@ class ResultsByScenarioFamily
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'resultsByScenarioProvider';
+  String? get name => r'saveSimulationResultProvider';
 }
 
-/// See also [resultsByScenario].
-class ResultsByScenarioProvider
-    extends AutoDisposeFutureProvider<List<SimulationResult>> {
-  /// See also [resultsByScenario].
-  ResultsByScenarioProvider(String scenarioId)
+/// Save a simulation result to history
+///
+/// Copied from [saveSimulationResult].
+class SaveSimulationResultProvider extends AutoDisposeFutureProvider<void> {
+  /// Save a simulation result to history
+  ///
+  /// Copied from [saveSimulationResult].
+  SaveSimulationResultProvider(SimulationHistoryEntry entry)
     : this._internal(
-        (ref) => resultsByScenario(ref as ResultsByScenarioRef, scenarioId),
-        from: resultsByScenarioProvider,
-        name: r'resultsByScenarioProvider',
+        (ref) => saveSimulationResult(ref as SaveSimulationResultRef, entry),
+        from: saveSimulationResultProvider,
+        name: r'saveSimulationResultProvider',
         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
             ? null
-            : _$resultsByScenarioHash,
-        dependencies: ResultsByScenarioFamily._dependencies,
+            : _$saveSimulationResultHash,
+        dependencies: SaveSimulationResultFamily._dependencies,
         allTransitiveDependencies:
-            ResultsByScenarioFamily._allTransitiveDependencies,
-        scenarioId: scenarioId,
+            SaveSimulationResultFamily._allTransitiveDependencies,
+        entry: entry,
       );
 
-  ResultsByScenarioProvider._internal(
+  SaveSimulationResultProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
     required super.allTransitiveDependencies,
     required super.debugGetCreateSourceHash,
     required super.from,
-    required this.scenarioId,
+    required this.entry,
   }) : super.internal();
 
-  final String scenarioId;
+  final SimulationHistoryEntry entry;
 
   @override
   Override overrideWith(
-    FutureOr<List<SimulationResult>> Function(ResultsByScenarioRef provider)
-    create,
+    FutureOr<void> Function(SaveSimulationResultRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: ResultsByScenarioProvider._internal(
-        (ref) => create(ref as ResultsByScenarioRef),
+      override: SaveSimulationResultProvider._internal(
+        (ref) => create(ref as SaveSimulationResultRef),
         from: from,
         name: null,
         dependencies: null,
         allTransitiveDependencies: null,
         debugGetCreateSourceHash: null,
-        scenarioId: scenarioId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<List<SimulationResult>> createElement() {
-    return _ResultsByScenarioProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ResultsByScenarioProvider && other.scenarioId == scenarioId;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, scenarioId.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ResultsByScenarioRef
-    on AutoDisposeFutureProviderRef<List<SimulationResult>> {
-  /// The parameter `scenarioId` of this provider.
-  String get scenarioId;
-}
-
-class _ResultsByScenarioProviderElement
-    extends AutoDisposeFutureProviderElement<List<SimulationResult>>
-    with ResultsByScenarioRef {
-  _ResultsByScenarioProviderElement(super.provider);
-
-  @override
-  String get scenarioId => (origin as ResultsByScenarioProvider).scenarioId;
-}
-
-String _$createSimulationScenarioHash() =>
-    r'44fcb0542b9f02a7ea210962a85c67540f3849f7';
-
-/// See also [createSimulationScenario].
-@ProviderFor(createSimulationScenario)
-const createSimulationScenarioProvider = CreateSimulationScenarioFamily();
-
-/// See also [createSimulationScenario].
-class CreateSimulationScenarioFamily extends Family<AsyncValue<void>> {
-  /// See also [createSimulationScenario].
-  const CreateSimulationScenarioFamily();
-
-  /// See also [createSimulationScenario].
-  CreateSimulationScenarioProvider call(SimulationScenario scenario) {
-    return CreateSimulationScenarioProvider(scenario);
-  }
-
-  @override
-  CreateSimulationScenarioProvider getProviderOverride(
-    covariant CreateSimulationScenarioProvider provider,
-  ) {
-    return call(provider.scenario);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'createSimulationScenarioProvider';
-}
-
-/// See also [createSimulationScenario].
-class CreateSimulationScenarioProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [createSimulationScenario].
-  CreateSimulationScenarioProvider(SimulationScenario scenario)
-    : this._internal(
-        (ref) => createSimulationScenario(
-          ref as CreateSimulationScenarioRef,
-          scenario,
-        ),
-        from: createSimulationScenarioProvider,
-        name: r'createSimulationScenarioProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$createSimulationScenarioHash,
-        dependencies: CreateSimulationScenarioFamily._dependencies,
-        allTransitiveDependencies:
-            CreateSimulationScenarioFamily._allTransitiveDependencies,
-        scenario: scenario,
-      );
-
-  CreateSimulationScenarioProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.scenario,
-  }) : super.internal();
-
-  final SimulationScenario scenario;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(CreateSimulationScenarioRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CreateSimulationScenarioProvider._internal(
-        (ref) => create(ref as CreateSimulationScenarioRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        scenario: scenario,
+        entry: entry,
       ),
     );
   }
 
   @override
   AutoDisposeFutureProviderElement<void> createElement() {
-    return _CreateSimulationScenarioProviderElement(this);
+    return _SaveSimulationResultProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is CreateSimulationScenarioProvider &&
-        other.scenario == scenario;
+    return other is SaveSimulationResultProvider && other.entry == entry;
   }
 
   @override
   int get hashCode {
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, scenario.hashCode);
+    hash = _SystemHash.combine(hash, entry.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -339,283 +167,81 @@ class CreateSimulationScenarioProvider extends AutoDisposeFutureProvider<void> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin CreateSimulationScenarioRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `scenario` of this provider.
-  SimulationScenario get scenario;
+mixin SaveSimulationResultRef on AutoDisposeFutureProviderRef<void> {
+  /// The parameter `entry` of this provider.
+  SimulationHistoryEntry get entry;
 }
 
-class _CreateSimulationScenarioProviderElement
+class _SaveSimulationResultProviderElement
     extends AutoDisposeFutureProviderElement<void>
-    with CreateSimulationScenarioRef {
-  _CreateSimulationScenarioProviderElement(super.provider);
+    with SaveSimulationResultRef {
+  _SaveSimulationResultProviderElement(super.provider);
 
   @override
-  SimulationScenario get scenario =>
-      (origin as CreateSimulationScenarioProvider).scenario;
+  SimulationHistoryEntry get entry =>
+      (origin as SaveSimulationResultProvider).entry;
 }
 
-String _$createSimulationResultHash() =>
-    r'5b3b2e6a666c0ae6ed8f5bc8042f14b4ff053e89';
+String _$clearSimulationHistoryHash() =>
+    r'537c7a9ab1cac88215510f0bb4162d3991a06007';
 
-/// See also [createSimulationResult].
-@ProviderFor(createSimulationResult)
-const createSimulationResultProvider = CreateSimulationResultFamily();
-
-/// See also [createSimulationResult].
-class CreateSimulationResultFamily extends Family<AsyncValue<void>> {
-  /// See also [createSimulationResult].
-  const CreateSimulationResultFamily();
-
-  /// See also [createSimulationResult].
-  CreateSimulationResultProvider call(SimulationResult result) {
-    return CreateSimulationResultProvider(result);
-  }
-
-  @override
-  CreateSimulationResultProvider getProviderOverride(
-    covariant CreateSimulationResultProvider provider,
-  ) {
-    return call(provider.result);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'createSimulationResultProvider';
-}
-
-/// See also [createSimulationResult].
-class CreateSimulationResultProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [createSimulationResult].
-  CreateSimulationResultProvider(SimulationResult result)
-    : this._internal(
-        (ref) =>
-            createSimulationResult(ref as CreateSimulationResultRef, result),
-        from: createSimulationResultProvider,
-        name: r'createSimulationResultProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$createSimulationResultHash,
-        dependencies: CreateSimulationResultFamily._dependencies,
-        allTransitiveDependencies:
-            CreateSimulationResultFamily._allTransitiveDependencies,
-        result: result,
-      );
-
-  CreateSimulationResultProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.result,
-  }) : super.internal();
-
-  final SimulationResult result;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(CreateSimulationResultRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CreateSimulationResultProvider._internal(
-        (ref) => create(ref as CreateSimulationResultRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        result: result,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _CreateSimulationResultProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is CreateSimulationResultProvider && other.result == result;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, result.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin CreateSimulationResultRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `result` of this provider.
-  SimulationResult get result;
-}
-
-class _CreateSimulationResultProviderElement
-    extends AutoDisposeFutureProviderElement<void>
-    with CreateSimulationResultRef {
-  _CreateSimulationResultProviderElement(super.provider);
-
-  @override
-  SimulationResult get result =>
-      (origin as CreateSimulationResultProvider).result;
-}
-
-String _$deleteSimulationScenarioHash() =>
-    r'f58c8a0e4860ce6540d1b393029179681dfbea73';
-
-/// See also [deleteSimulationScenario].
-@ProviderFor(deleteSimulationScenario)
-const deleteSimulationScenarioProvider = DeleteSimulationScenarioFamily();
-
-/// See also [deleteSimulationScenario].
-class DeleteSimulationScenarioFamily extends Family<AsyncValue<void>> {
-  /// See also [deleteSimulationScenario].
-  const DeleteSimulationScenarioFamily();
-
-  /// See also [deleteSimulationScenario].
-  DeleteSimulationScenarioProvider call(String id) {
-    return DeleteSimulationScenarioProvider(id);
-  }
-
-  @override
-  DeleteSimulationScenarioProvider getProviderOverride(
-    covariant DeleteSimulationScenarioProvider provider,
-  ) {
-    return call(provider.id);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'deleteSimulationScenarioProvider';
-}
-
-/// See also [deleteSimulationScenario].
-class DeleteSimulationScenarioProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [deleteSimulationScenario].
-  DeleteSimulationScenarioProvider(String id)
-    : this._internal(
-        (ref) =>
-            deleteSimulationScenario(ref as DeleteSimulationScenarioRef, id),
-        from: deleteSimulationScenarioProvider,
-        name: r'deleteSimulationScenarioProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$deleteSimulationScenarioHash,
-        dependencies: DeleteSimulationScenarioFamily._dependencies,
-        allTransitiveDependencies:
-            DeleteSimulationScenarioFamily._allTransitiveDependencies,
-        id: id,
-      );
-
-  DeleteSimulationScenarioProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final String id;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(DeleteSimulationScenarioRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: DeleteSimulationScenarioProvider._internal(
-        (ref) => create(ref as DeleteSimulationScenarioRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _DeleteSimulationScenarioProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is DeleteSimulationScenarioProvider && other.id == id;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin DeleteSimulationScenarioRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `id` of this provider.
-  String get id;
-}
-
-class _DeleteSimulationScenarioProviderElement
-    extends AutoDisposeFutureProviderElement<void>
-    with DeleteSimulationScenarioRef {
-  _DeleteSimulationScenarioProviderElement(super.provider);
-
-  @override
-  String get id => (origin as DeleteSimulationScenarioProvider).id;
-}
-
-String _$clearAllSimulationDataHash() =>
-    r'df97048c6cee63d1bf317da225c89367950c67bb';
-
-/// See also [clearAllSimulationData].
-@ProviderFor(clearAllSimulationData)
-final clearAllSimulationDataProvider = AutoDisposeFutureProvider<void>.internal(
-  clearAllSimulationData,
-  name: r'clearAllSimulationDataProvider',
+/// Clear all simulation history
+///
+/// Copied from [clearSimulationHistory].
+@ProviderFor(clearSimulationHistory)
+final clearSimulationHistoryProvider = AutoDisposeFutureProvider<void>.internal(
+  clearSimulationHistory,
+  name: r'clearSimulationHistoryProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$clearAllSimulationDataHash,
+      : _$clearSimulationHistoryHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef ClearAllSimulationDataRef = AutoDisposeFutureProviderRef<void>;
+typedef ClearSimulationHistoryRef = AutoDisposeFutureProviderRef<void>;
+String _$totalSimulationsRunHash() =>
+    r'44c0c8c8ace64df339498140a3cc3e849a761979';
+
+/// Total number of past simulations
+///
+/// Copied from [totalSimulationsRun].
+@ProviderFor(totalSimulationsRun)
+final totalSimulationsRunProvider = AutoDisposeFutureProvider<int>.internal(
+  totalSimulationsRun,
+  name: r'totalSimulationsRunProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$totalSimulationsRunHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef TotalSimulationsRunRef = AutoDisposeFutureProviderRef<int>;
+String _$averageReadinessFromHistoryHash() =>
+    r'05c2f93b431da0ccb9e33f26536816638e41c5b2';
+
+/// Average readiness from all past simulations
+///
+/// Copied from [averageReadinessFromHistory].
+@ProviderFor(averageReadinessFromHistory)
+final averageReadinessFromHistoryProvider =
+    AutoDisposeFutureProvider<double>.internal(
+      averageReadinessFromHistory,
+      name: r'averageReadinessFromHistoryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$averageReadinessFromHistoryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AverageReadinessFromHistoryRef = AutoDisposeFutureProviderRef<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -1,986 +1,371 @@
+// lib/features/alerts/presentation/screens/alerts_screen.dart
+// Real persisted alerts, FAB to create, resolve/dismiss,
+// priority filtering, linked technique navigation.
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
-import 'package:attackshield/core/theme/theme.dart';
-import 'package:attackshield/core/widgets/widgets.dart';
-import 'package:attackshield/shared/providers/providers.dart';
-import 'package:attackshield/shared/models/models.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
-class AlertsScreen extends ConsumerWidget {
+import '../../../../shared/models/alert_item.dart';
+import '../../../../shared/providers/alert_providers.dart';
+
+class AlertsScreen extends HookConsumerWidget {
   const AlertsScreen({super.key});
+
+  static const _priorities = ['all', 'critical', 'high', 'medium', 'low'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filteredAlertsAsync = ref.watch(filteredAlertsProvider);
-    final criticalCountAsync = ref.watch(criticalAlertCountProvider);
-    final selectedPriority = ref.watch(selectedAlertPriorityProvider);
+    final filter = useState('all');
+    final alertsAsync = ref.watch(alertsProvider);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: cs.surface,
       appBar: AppBar(
-        title: const Text('Security Alerts'),
+        backgroundColor: cs.surface,
+        title: Text(
+          'Alerts',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
         actions: [
-          criticalCountAsync.when(
-            data: (n) => n > 0
-                ? Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Badge(
-                      label: Text('$n'),
-                      child: const Icon(Icons.notifications_active),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+          alertsAsync.when(
+            data: (alerts) => Text(
+              '${alerts.length} total',
+              style: TextStyle(fontSize: 12, color: cs.onSurface),
+            ),
             loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
         ],
-      ),
-      body: Column(
-        children: [
-          // ── Search ───────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: SearchField(
-              hintText: 'Search alerts…',
-              onChanged: (v) =>
-                  ref.read(alertSearchQueryProvider.notifier).update(v),
-            ),
-          ),
-
-          // ── Priority filter chips ─────────────────────────────────────
-          SizedBox(
-            height: 44,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: SizedBox(
+            height: 48,
+            child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              children: [
-                _PriorityChip(
-                  label: 'All',
-                  selected: selectedPriority == null,
-                  color: AppTheme.primaryColor,
-                  onTap: () =>
-                      ref.read(selectedAlertPriorityProvider.notifier).clear(),
-                ),
-                const SizedBox(width: 8),
-                _PriorityChip(
-                  label: 'Critical',
-                  selected: selectedPriority == AlertPriority.critical,
-                  color: AppTheme.dangerColor,
-                  onTap: () => ref
-                      .read(selectedAlertPriorityProvider.notifier)
-                      .select(AlertPriority.critical),
-                ),
-                const SizedBox(width: 8),
-                _PriorityChip(
-                  label: 'High',
-                  selected: selectedPriority == AlertPriority.high,
-                  color: AppTheme.accentColor,
-                  onTap: () => ref
-                      .read(selectedAlertPriorityProvider.notifier)
-                      .select(AlertPriority.high),
-                ),
-                const SizedBox(width: 8),
-                _PriorityChip(
-                  label: 'Medium',
-                  selected: selectedPriority == AlertPriority.medium,
-                  color: AppTheme.warningColor,
-                  onTap: () => ref
-                      .read(selectedAlertPriorityProvider.notifier)
-                      .select(AlertPriority.medium),
-                ),
-                const SizedBox(width: 8),
-                _PriorityChip(
-                  label: 'Low',
-                  selected: selectedPriority == AlertPriority.low,
-                  color: AppTheme.successColor,
-                  onTap: () => ref
-                      .read(selectedAlertPriorityProvider.notifier)
-                      .select(AlertPriority.low),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Status tabs ───────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Row(
-              children:
-                  AlertStatus.values.map((s) {
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _StatusTab(
-                          label: _statusLabel(s),
-                          selected:
-                              ref.watch(selectedAlertStatusProvider) == s.name,
-                          onTap: () => ref
-                              .read(selectedAlertStatusProvider.notifier)
-                              .select(s.name),
-                        ),
-                      ),
-                    );
-                  }).toList()..insert(
-                    0,
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _StatusTab(
-                          label: 'All',
-                          selected:
-                              ref.watch(selectedAlertStatusProvider) == '',
-                          onTap: () => ref
-                              .read(selectedAlertStatusProvider.notifier)
-                              .clear(),
-                        ),
-                      ),
-                    ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _priorities.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (_, i) {
+                final p = _priorities[i];
+                final selected = filter.value == p;
+                final color = _priorityColor(p);
+                return FilterChip(
+                  label: Text(
+                    p == 'all' ? 'All' : p[0].toUpperCase() + p.substring(1),
                   ),
+                  selected: selected,
+                  selectedColor: color.withOpacity(.15),
+                  side: BorderSide(
+                    color: selected ? color : cs.outlineVariant,
+                    width: selected ? 1.5 : 0.5,
+                  ),
+                  labelStyle: TextStyle(
+                    fontSize: 12,
+                    color: selected ? color : cs.onSurface,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  onSelected: (_) => filter.value = p,
+                );
+              },
             ),
           ),
-
-          // ── Alert list ────────────────────────────────────────────────
-          Expanded(
-            child: filteredAlertsAsync.when(
-              data: (alerts) => alerts.isEmpty
-                  ? EmptyStateWidget(
-                      title: 'No Alerts',
-                      subtitle: 'Your security feed is clear',
-                      icon: Icons.notifications_none,
-                      actionLabel: 'Create Alert',
-                      onActionPressed: () => _showCreateSheet(context, ref),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      itemCount: alerts.length,
-                      itemBuilder: (_, i) => _AlertCard(
-                        alert: alerts[i],
-                        onTap: () => _showDetail(context, ref, alerts[i]),
-                        onStatusChanged: (s) =>
-                            _updateStatus(ref, alerts[i], s),
-                      ),
-                    ),
-              loading: () => const LoadingWidget(message: 'Loading alerts…'),
-              error: (e, _) => EmptyStateWidget(
-                title: 'Error',
-                subtitle: e.toString(),
-                icon: Icons.error_outline,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateSheet(context, ref),
-        icon: const Icon(Icons.add_alert),
+        onPressed: () => context.push('/alerts/create'),
+        icon: const Icon(Icons.add_alert_rounded),
         label: const Text('New Alert'),
       ),
-    );
-  }
+      body: alertsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (alerts) {
+          final filtered = filter.value == 'all'
+              ? alerts
+              : alerts.where((a) => a.priority.name == filter.value).toList();
 
-  String _statusLabel(AlertStatus s) {
-    switch (s) {
-      case AlertStatus.open:
-        return 'Open';
-      case AlertStatus.acknowledged:
-        return 'Ack\'d';
-      case AlertStatus.resolved:
-        return 'Resolved';
-    }
-  }
+          if (filtered.isEmpty) return _EmptyState(filter: filter.value);
 
-  Future<void> _updateStatus(
-    WidgetRef ref,
-    AlertItem alert,
-    AlertStatus newStatus,
-  ) async {
-    final updated = alert.copyWith(
-      status: newStatus,
-      updatedAt: DateTime.now(),
-    );
-    await ref.read(updateAlertProvider(updated).future);
-  }
-
-  void _showDetail(BuildContext context, WidgetRef ref, AlertItem alert) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _AlertDetailSheet(alert: alert, ref: ref),
-    );
-  }
-
-  void _showCreateSheet(
-    BuildContext context,
-    WidgetRef ref, {
-    AlertItem? existing,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _CreateAlertSheet(ref: ref, existing: existing),
-    );
-  }
-}
-
-// ─── Alert card ───────────────────────────────────────────────────────────────
-
-class _AlertCard extends StatelessWidget {
-  final AlertItem alert;
-  final VoidCallback onTap;
-  final Function(AlertStatus) onStatusChanged;
-
-  const _AlertCard({
-    required this.alert,
-    required this.onTap,
-    required this.onStatusChanged,
-  });
-
-  Color get _priorityColor {
-    switch (alert.priority) {
-      case AlertPriority.critical:
-        return AppTheme.dangerColor;
-      case AlertPriority.high:
-        return AppTheme.accentColor;
-      case AlertPriority.medium:
-        return AppTheme.warningColor;
-      case AlertPriority.low:
-        return AppTheme.successColor;
-    }
-  }
-
-  String get _priorityLabel {
-    switch (alert.priority) {
-      case AlertPriority.critical:
-        return 'CRITICAL';
-      case AlertPriority.high:
-        return 'HIGH';
-      case AlertPriority.medium:
-        return 'MEDIUM';
-      case AlertPriority.low:
-        return 'LOW';
-    }
-  }
-
-  Color get _statusColor {
-    switch (alert.status) {
-      case AlertStatus.open:
-        return AppTheme.dangerColor;
-      case AlertStatus.acknowledged:
-        return AppTheme.warningColor;
-      case AlertStatus.resolved:
-        return AppTheme.successColor;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final pc = _priorityColor;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Priority bar
-              Container(
-                width: 4,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: pc,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: pc.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _priorityLabel,
-                            style: TextStyle(
-                              color: pc,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        if (alert.relatedTechniqueId != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              alert.relatedTechniqueId!,
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        const Spacer(),
-                        Text(
-                          DateFormat('MMM d').format(alert.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      alert.title,
-                      style: Theme.of(context).textTheme.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      alert.description,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Status chip
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  alert.status.name,
-                  style: TextStyle(
-                    color: _statusColor,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
+            itemCount: filtered.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, i) => _AlertCard(
+              alert: filtered[i],
+              onResolve: () =>
+                  ref.read(resolveAlertProvider(filtered[i].id).future),
+              onDismiss: () =>
+                  ref.read(deleteAlertProvider(filtered[i].id).future),
+              onTechniqueOpen: filtered[i].relatedTechniqueId != null
+                  ? () => context.push(
+                      '/library/${filtered[i].relatedTechniqueId}',
+                    )
+                  : null,
+            ),
+          );
+        },
       ),
     );
   }
-}
 
-// ─── Alert detail sheet ───────────────────────────────────────────────────────
-
-class _AlertDetailSheet extends StatelessWidget {
-  final AlertItem alert;
-  final WidgetRef ref;
-
-  const _AlertDetailSheet({required this.alert, required this.ref});
-
-  Color get _priorityColor {
-    switch (alert.priority) {
-      case AlertPriority.critical:
-        return AppTheme.dangerColor;
-      case AlertPriority.high:
-        return AppTheme.accentColor;
-      case AlertPriority.medium:
-        return AppTheme.warningColor;
-      case AlertPriority.low:
-        return AppTheme.successColor;
+  Color _priorityColor(String p) {
+    switch (p) {
+      case 'critical':
+        return Colors.red.shade600;
+      case 'high':
+        return Colors.orange.shade600;
+      case 'medium':
+        return Colors.amber.shade600;
+      case 'low':
+        return Colors.blue.shade600;
+      default:
+        return Colors.grey.shade600;
     }
   }
+}
+
+// ─── Alert Card ───────────────────────────────────────────────────────────────
+class _AlertCard extends StatelessWidget {
+  final AlertItem alert;
+  final VoidCallback onResolve;
+  final VoidCallback onDismiss;
+  final VoidCallback? onTechniqueOpen;
+  const _AlertCard({
+    required this.alert,
+    required this.onResolve,
+    required this.onDismiss,
+    this.onTechniqueOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.65,
-      minChildSize: 0.4,
-      maxChildSize: 0.92,
-      expand: false,
-      builder: (_, controller) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: ListView(
-          controller: controller,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+    final cs = Theme.of(context).colorScheme;
+    final color = _color(alert.priority);
+    final isResolved = alert.status == AlertStatus.resolved;
 
-            // Priority badge
+    return Dismissible(
+      key: Key(alert.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: Colors.red.shade100,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade600),
+      ),
+      onDismissed: (_) => onDismiss(),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isResolved
+              ? cs.surfaceContainerLowest
+              : cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isResolved ? cs.outlineVariant : color.withOpacity(.3),
+            width: isResolved ? 0.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  width: 8,
+                  height: 8,
                   decoration: BoxDecoration(
-                    color: _priorityColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    alert.priority.name.toUpperCase(),
-                    style: TextStyle(
-                      color: _priorityColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    color: isResolved ? cs.outline : color,
+                    shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    alert.title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isResolved ? cs.outline : cs.onSurface,
+                      decoration: isResolved
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+                    horizontal: 7,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.15),
+                    color: isResolved
+                        ? cs.surfaceContainerHighest
+                        : color.withOpacity(.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    alert.status.name,
-                    style: const TextStyle(color: Colors.grey),
+                    isResolved ? 'Resolved' : alert.priority.name,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isResolved ? cs.outline : color,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(alert.title, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 4),
-            Text(
-              'Source: ${alert.source}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Created: ${DateFormat('MMM d, yyyy – HH:mm').format(alert.createdAt)}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            Text('Description', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(
-              alert.description,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
 
-            // ATT&CK link
-            if (alert.relatedTechniqueId != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Related ATT&CK Technique',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/technique/${alert.relatedTechniqueId}');
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.open_in_new,
-                        size: 16,
-                        color: AppTheme.primaryColor,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'View ${alert.relatedTechniqueId} →',
-                        style: const TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
-            if (alert.notes != null && alert.notes!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text('Notes', style: Theme.of(context).textTheme.titleMedium),
+            if (alert.description.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(alert.notes!, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                alert.description,
+                style: TextStyle(fontSize: 12, color: cs.outline, height: 1.3),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
 
-            const SizedBox(height: 20),
-            Text(
-              'Update Status',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
             const SizedBox(height: 8),
-            Row(
-              children: AlertStatus.values.map((s) {
-                final c = _statusColor(s);
-                final isCurrent = alert.status == s;
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: c,
-                        side: BorderSide(
-                          color: isCurrent ? c : c.withValues(alpha: 0.4),
-                        ),
-                        backgroundColor: isCurrent
-                            ? c.withValues(alpha: 0.12)
-                            : null,
-                      ),
-                      onPressed: isCurrent
-                          ? null
-                          : () {
-                              final updated = alert.copyWith(
-                                status: s,
-                                updatedAt: DateTime.now(),
-                              );
-                              ref
-                                  .read(updateAlertProvider(updated).future)
-                                  .then((_) {
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                }
-                              });
-                            },
-                      child: Text(s.name, style: const TextStyle(fontSize: 12)),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (_) => _CreateAlertSheet(
-                          ref: ref,
-                          existing: alert,
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit Alert'),
-                  ),
+                Icon(Icons.access_time_rounded, size: 12, color: cs.outline),
+                const SizedBox(width: 4),
+                Text(
+                  timeago.format(alert.createdAt),
+                  style: TextStyle(fontSize: 11, color: cs.outline),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _confirmDelete(context),
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Delete'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.dangerColor,
+                const SizedBox(width: 10),
+                Icon(Icons.dns_outlined, size: 12, color: cs.outline),
+                const SizedBox(width: 4),
+                Text(
+                  alert.source,
+                  style: TextStyle(fontSize: 11, color: cs.outline),
+                ),
+                const Spacer(),
+
+                // Linked technique badge
+                if (alert.relatedTechniqueId != null)
+                  GestureDetector(
+                    onTap: onTechniqueOpen,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.primaryContainer,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.link_rounded, size: 10, color: cs.primary),
+                          const SizedBox(width: 3),
+                          Text(
+                            alert.relatedTechniqueId!,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: cs.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Color _statusColor(AlertStatus s) {
-    switch (s) {
-      case AlertStatus.open:
-        return AppTheme.dangerColor;
-      case AlertStatus.acknowledged:
-        return AppTheme.warningColor;
-      case AlertStatus.resolved:
-        return AppTheme.successColor;
-    }
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete Alert?'),
-        content: Text('Delete "${alert.title}"? This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref.read(deleteAlertProvider(alert.id).future);
-              if (context.mounted) {
-                Navigator.pop(context);
-              }
-            },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: AppTheme.dangerColor),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Create alert sheet ───────────────────────────────────────────────────────
-
-class _CreateAlertSheet extends StatefulWidget {
-  final WidgetRef ref;
-  final AlertItem? existing;
-
-  const _CreateAlertSheet({required this.ref, this.existing});
-
-  @override
-  State<_CreateAlertSheet> createState() => _CreateAlertSheetState();
-}
-
-class _CreateAlertSheetState extends State<_CreateAlertSheet> {
-  final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  final _sourceCtrl = TextEditingController();
-  final _techCtrl = TextEditingController();
-  final _notesCtrl = TextEditingController();
-  AlertPriority _priority = AlertPriority.medium;
-
-  @override
-  void initState() {
-    super.initState();
-    final existing = widget.existing;
-    if (existing != null) {
-      _titleCtrl.text = existing.title;
-      _descCtrl.text = existing.description;
-      _sourceCtrl.text = existing.source;
-      _techCtrl.text = existing.relatedTechniqueId ?? '';
-      _notesCtrl.text = existing.notes ?? '';
-      _priority = existing.priority;
-    }
-  }
-
-  @override
-  void dispose() {
-    _titleCtrl.dispose();
-    _descCtrl.dispose();
-    _sourceCtrl.dispose();
-    _techCtrl.dispose();
-    _notesCtrl.dispose();
-    super.dispose();
-  }
-
-  static const _priorityColors = {
-    AlertPriority.critical: AppTheme.dangerColor,
-    AlertPriority.high: AppTheme.accentColor,
-    AlertPriority.medium: AppTheme.warningColor,
-    AlertPriority.low: AppTheme.successColor,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final isEdit = widget.existing != null;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isEdit ? 'Edit Security Alert' : 'Create Security Alert',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-
-            TextField(
-              controller: _titleCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Alert Title *',
-                prefixIcon: Icon(Icons.warning_amber),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _descCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                prefixIcon: Icon(Icons.description),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _sourceCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Source',
-                hintText: 'e.g. SIEM, SOC, External',
-                prefixIcon: Icon(Icons.source),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _techCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Related ATT&CK Technique ID',
-                hintText: 'e.g. T1566',
-                prefixIcon: Icon(Icons.link),
-              ),
-              textCapitalization: TextCapitalization.characters,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _notesCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Notes',
-                prefixIcon: Icon(Icons.notes),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-
-            Text('Priority', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Row(
-              children: AlertPriority.values.map((p) {
-                final isSelected = _priority == p;
-                final c = _priorityColors[p]!;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _priority = p),
+                const SizedBox(width: 6),
+                if (!isResolved)
+                  GestureDetector(
+                    onTap: onResolve,
                     child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? c.withValues(alpha: 0.2)
-                            : c.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: isSelected ? c : c.withValues(alpha: 0.3),
-                          width: isSelected ? 2 : 1,
+                          color: Colors.green.shade300,
+                          width: 0.5,
                         ),
                       ),
                       child: Text(
-                        p.name[0].toUpperCase() + p.name.substring(1),
-                        textAlign: TextAlign.center,
+                        'Resolve',
                         style: TextStyle(
-                          color: c,
                           fontSize: 11,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(isEdit ? Icons.save_outlined : Icons.add_alert),
-                label: Text(isEdit ? 'Save Changes' : 'Create Alert'),
-                onPressed: () async {
-                  if (_titleCtrl.text.trim().isEmpty) return;
-                  final alert = AlertItem(
-                    id: widget.existing?.id ?? const Uuid().v4(),
-                    title: _titleCtrl.text.trim(),
-                    description: _descCtrl.text.trim(),
-                    priority: _priority,
-                    status: widget.existing?.status ?? AlertStatus.open,
-                    source: _sourceCtrl.text.trim().isEmpty
-                        ? 'Manual Entry'
-                        : _sourceCtrl.text.trim(),
-                    relatedTechniqueId: _techCtrl.text.trim().isEmpty
-                        ? null
-                        : _techCtrl.text.trim().toUpperCase(),
-                    createdAt: widget.existing?.createdAt ?? DateTime.now(),
-                    updatedAt: DateTime.now(),
-                    notes: _notesCtrl.text.trim().isEmpty
-                        ? null
-                        : _notesCtrl.text.trim(),
-                  );
-                  if (isEdit) {
-                    await widget.ref.read(updateAlertProvider(alert).future);
-                  } else {
-                    await widget.ref.read(createAlertProvider(alert).future);
-                  }
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isEdit
-                              ? 'Alert "${alert.title}" updated'
-                              : 'Alert "${alert.title}" created',
-                        ),
-                        backgroundColor: AppTheme.successColor,
-                      ),
-                    );
-                  }
-                },
-              ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-}
 
-// ─── Filter chips ─────────────────────────────────────────────────────────────
-
-class _PriorityChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _PriorityChip({
-    required this.label,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.2)
-              : color.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? color : color.withValues(alpha: 0.4),
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
+  Color _color(AlertPriority priority) {
+    switch (priority) {
+      case AlertPriority.critical:
+        return Colors.red.shade600;
+      case AlertPriority.high:
+        return Colors.orange.shade600;
+      case AlertPriority.medium:
+        return Colors.amber.shade600;
+      case AlertPriority.low:
+        return Colors.blue.shade600;
+    }
   }
 }
 
-class _StatusTab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _StatusTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
+class _EmptyState extends StatelessWidget {
+  final String filter;
+  const _EmptyState({required this.filter});
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppTheme.primaryColor.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected
-                ? AppTheme.primaryColor
-                : Colors.grey.withValues(alpha: 0.3),
+    final cs = Theme.of(context).colorScheme;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            filter == 'all'
+                ? Icons.check_circle_outline_rounded
+                : Icons.filter_list_off_rounded,
+            size: 52,
+            color: cs.outlineVariant,
           ),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? AppTheme.primaryColor : Colors.grey,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          const SizedBox(height: 12),
+          Text(
+            filter == 'all' ? 'No alerts yet' : 'No $filter alerts',
+            style: TextStyle(
+              fontSize: 15,
+              color: cs.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            filter == 'all'
+                ? 'Tap + New Alert to log a security event.'
+                : 'Try a different severity filter.',
+            style: TextStyle(fontSize: 12, color: cs.outline),
+          ),
+        ],
       ),
     );
   }

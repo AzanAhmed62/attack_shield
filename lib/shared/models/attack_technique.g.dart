@@ -6,57 +6,56 @@ part of 'attack_technique.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$AttackSubTechniqueImpl _$$AttackSubTechniqueImplFromJson(
-  Map<String, dynamic> json,
-) => _$AttackSubTechniqueImpl(
-  id: json['id'] as String,
-  name: json['name'] as String,
-  description: json['description'] as String,
-  platforms:
-      (json['platforms'] as List<dynamic>?)?.map((e) => e as String).toList() ??
-      const [],
-  detectionIds:
-      (json['detectionIds'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
-  mitigationIds:
-      (json['mitigationIds'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
-  riskScore: (json['riskScore'] as num?)?.toDouble() ?? 5.0,
-);
+_$AttackTacticImpl _$$AttackTacticImplFromJson(Map<String, dynamic> json) =>
+    _$AttackTacticImpl(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      shortName: json['shortName'] as String,
+      description: json['description'] as String,
+      techniqueIds:
+          (json['techniqueIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+    );
 
-Map<String, dynamic> _$$AttackSubTechniqueImplToJson(
-  _$AttackSubTechniqueImpl instance,
-) => <String, dynamic>{
-  'id': instance.id,
-  'name': instance.name,
-  'description': instance.description,
-  'platforms': instance.platforms,
-  'detectionIds': instance.detectionIds,
-  'mitigationIds': instance.mitigationIds,
-  'riskScore': instance.riskScore,
-};
+Map<String, dynamic> _$$AttackTacticImplToJson(_$AttackTacticImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'shortName': instance.shortName,
+      'description': instance.description,
+      'techniqueIds': instance.techniqueIds,
+    };
 
 _$AttackTechniqueImpl _$$AttackTechniqueImplFromJson(
   Map<String, dynamic> json,
 ) => _$AttackTechniqueImpl(
   id: json['id'] as String,
+  stixId: json['stixId'] as String,
   name: json['name'] as String,
   description: json['description'] as String,
-  tactics: (json['tactics'] as List<dynamic>).map((e) => e as String).toList(),
+  tactics:
+      (json['tactics'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  tacticIds:
+      (json['tacticIds'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
   platforms:
       (json['platforms'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
-  detectionIds:
-      (json['detectionIds'] as List<dynamic>?)
+  dataSources:
+      (json['dataSources'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
       const [],
   mitigationIds:
       (json['mitigationIds'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  detectionIds:
+      (json['detectionIds'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
       const [],
@@ -65,47 +64,50 @@ _$AttackTechniqueImpl _$$AttackTechniqueImplFromJson(
           ?.map((e) => e as String)
           .toList() ??
       const [],
-  subTechniques:
-      (json['subTechniques'] as List<dynamic>?)
-          ?.map((e) => AttackSubTechnique.fromJson(e as Map<String, dynamic>))
+  isSubTechnique: json['isSubTechnique'] as bool? ?? false,
+  parentTechniqueId: json['parentTechniqueId'] as String?,
+  subTechniqueIds:
+      (json['subTechniqueIds'] as List<dynamic>?)
+          ?.map((e) => e as String)
           .toList() ??
       const [],
   riskScore: (json['riskScore'] as num?)?.toDouble() ?? 5.0,
-  source: json['source'] as String?,
-  lastModified: json['lastModified'] == null
-      ? null
-      : DateTime.parse(json['lastModified'] as String),
-  externalUrl: json['externalUrl'] as String?,
-  detectionNotes:
-      (json['detectionNotes'] as List<dynamic>?)
+  url: json['url'] as String?,
+  created: json['created'] as String?,
+  modified: json['modified'] as String?,
+  plainTitle: json['plainTitle'] as String?,
+  plainSummary: json['plainSummary'] as String?,
+  businessRisk: json['businessRisk'] as String?,
+  remediationSteps:
+      (json['remediationSteps'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList() ??
       const [],
-  mitigationNotes:
-      (json['mitigationNotes'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
-  dataSource: json['dataSource'] as String?,
 );
 
 Map<String, dynamic> _$$AttackTechniqueImplToJson(
   _$AttackTechniqueImpl instance,
 ) => <String, dynamic>{
   'id': instance.id,
+  'stixId': instance.stixId,
   'name': instance.name,
   'description': instance.description,
   'tactics': instance.tactics,
+  'tacticIds': instance.tacticIds,
   'platforms': instance.platforms,
-  'detectionIds': instance.detectionIds,
+  'dataSources': instance.dataSources,
   'mitigationIds': instance.mitigationIds,
+  'detectionIds': instance.detectionIds,
   'relatedTechniqueIds': instance.relatedTechniqueIds,
-  'subTechniques': instance.subTechniques,
+  'isSubTechnique': instance.isSubTechnique,
+  'parentTechniqueId': instance.parentTechniqueId,
+  'subTechniqueIds': instance.subTechniqueIds,
   'riskScore': instance.riskScore,
-  'source': instance.source,
-  'lastModified': instance.lastModified?.toIso8601String(),
-  'externalUrl': instance.externalUrl,
-  'detectionNotes': instance.detectionNotes,
-  'mitigationNotes': instance.mitigationNotes,
-  'dataSource': instance.dataSource,
+  'url': instance.url,
+  'created': instance.created,
+  'modified': instance.modified,
+  'plainTitle': instance.plainTitle,
+  'plainSummary': instance.plainSummary,
+  'businessRisk': instance.businessRisk,
+  'remediationSteps': instance.remediationSteps,
 };

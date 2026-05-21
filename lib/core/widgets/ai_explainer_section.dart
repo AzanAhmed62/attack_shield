@@ -1,8 +1,8 @@
+import 'package:attackshield/shared/models/attack_technique.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:attackshield/core/theme/theme.dart';
 import 'package:attackshield/shared/providers/providers.dart';
-import 'package:attackshield/shared/models/models.dart';
 import 'package:attackshield/core/services/ai_service.dart';
 
 /// Drop-in AI explainer section for technique_detail_screen.

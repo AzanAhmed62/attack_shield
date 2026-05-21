@@ -1,41 +1,29 @@
+// lib/shared/providers/technique_providers.dart
+// FULL REPLACEMENT — uses real STIX data, debounced search, grouped views.
+
+import 'dart:async';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:attackshield/shared/models/models.dart';
+import '../models/attack_technique.dart';
 import 'repository_providers.dart';
 
 part 'technique_providers.g.dart';
 
-enum TechniqueSortOption { riskDesc, nameAsc, subTechniqueCountDesc }
-
-// ─── Raw data providers ───────────────────────────────────────────────────────
-
-/// All techniques — cached in repository, won't refetch on every watch.
+// ─── All techniques (keepAlive: true so we only parse STIX once) ─────────────
 @Riverpod(keepAlive: true)
 Future<List<AttackTechnique>> allTechniques(Ref ref) async {
-  final repository = ref.watch(attackTechniqueRepositoryProvider);
-  return repository.getAllTechniques();
+  final repo = ref.watch(attackTechniqueRepositoryProvider);
+  return repo.getAllTechniques();
 }
 
-/// All tactics.
+// ─── All tactics ─────────────────────────────────────────────────────────────
 @Riverpod(keepAlive: true)
 Future<List<AttackTactic>> allTactics(Ref ref) async {
-  final repository = ref.watch(attackTechniqueRepositoryProvider);
-  return repository.getAllTactics();
+  final repo = ref.watch(attackTechniqueRepositoryProvider);
+  return repo.getAllTactics();
 }
 
-// ─── Filter state providers ───────────────────────────────────────────────────
-
-/// Currently selected tactic filter (empty string = all tactics).
-@Riverpod(keepAlive: false)
-class SelectedTactic extends _$SelectedTactic {
-  @override
-  String build() => '';
-
-  void select(String tactic) => state = tactic;
-  void clear() => state = '';
-}
-
-/// Search query for the technique library.
+// ─── Search & filter state ───────────────────────────────────────────────────
 @Riverpod(keepAlive: false)
 class SearchQuery extends _$SearchQuery {
   @override
@@ -45,158 +33,148 @@ class SearchQuery extends _$SearchQuery {
   void clear() => state = '';
 }
 
-/// Selected platform filter (empty = all platforms).
 @Riverpod(keepAlive: false)
-class SelectedPlatform extends _$SelectedPlatform {
+class SelectedTactic extends _$SelectedTactic {
   @override
-  String build() => '';
+  String build() => ''; // '' means "all tactics"
 
-  void select(String platform) => state = platform;
+  void select(String tacticShortName) => state = tacticShortName;
   void clear() => state = '';
 }
 
-/// Minimum risk score filter (0.0 = no filter).
 @Riverpod(keepAlive: false)
-class MinRiskFilter extends _$MinRiskFilter {
+class SelectedPlatforms extends _$SelectedPlatforms {
   @override
-  double build() => 0.0;
+  List<String> build() => [];
 
-  void setMin(double value) => state = value;
-  void clear() => state = 0.0;
+  void toggle(String platform) {
+    if (state.contains(platform)) {
+      state = state.where((p) => p != platform).toList();
+    } else {
+      state = [...state, platform];
+    }
+  }
+
+  void clear() => state = [];
 }
 
-/// Sort mode for the library list.
 @Riverpod(keepAlive: false)
-class TechniqueSort extends _$TechniqueSort {
+class ShowSubTechniques extends _$ShowSubTechniques {
   @override
-  TechniqueSortOption build() => TechniqueSortOption.riskDesc;
+  bool build() => true; // show sub-techniques by default
 
-  void setSort(TechniqueSortOption value) => state = value;
+  void toggle() => state = !state;
 }
 
-// ─── Computed / filtered providers ───────────────────────────────────────────
-
-/// Techniques filtered by tactic, search query, platform, and risk score.
-@Riverpod()
+// ─── Filtered technique list (combines all filters) ──────────────────────────
+@riverpod
 Future<List<AttackTechnique>> filteredTechniques(Ref ref) async {
   final allTechs = await ref.watch(allTechniquesProvider.future);
-  final selectedTactic = ref.watch(selectedTacticProvider);
   final query = ref.watch(searchQueryProvider);
-  final selectedPlatform = ref.watch(selectedPlatformProvider);
-  final minRisk = ref.watch(minRiskFilterProvider);
-  final sort = ref.watch(techniqueSortProvider);
+  final selectedTactic = ref.watch(selectedTacticProvider);
+  final platforms = ref.watch(selectedPlatformsProvider);
+  final showSubs = ref.watch(showSubTechniquesProvider);
 
   var result = allTechs;
 
+  // Sub-technique filter
+  if (!showSubs) {
+    result = result.where((t) => !t.isSubTechnique).toList();
+  }
+
+  // Tactic filter
   if (selectedTactic.isNotEmpty) {
+    result = result.where((t) => t.tactics.contains(selectedTactic)).toList();
+  }
+
+  // Platform filter
+  if (platforms.isNotEmpty) {
     result = result
-        .where(
-          (t) => t.tactics.any(
-            (tac) => tac.toLowerCase() == selectedTactic.toLowerCase(),
-          ),
-        )
+        .where((t) => t.platforms.any((p) => platforms.contains(p)))
         .toList();
   }
 
-  if (selectedPlatform.isNotEmpty) {
-    result = result
-        .where(
-          (t) => t.platforms.any(
-            (p) => p.toLowerCase() == selectedPlatform.toLowerCase(),
-          ),
-        )
-        .toList();
-  }
-
-  if (minRisk > 0.0) {
-    result = result.where((t) => t.riskScore >= minRisk).toList();
-  }
-
-  if (query.isNotEmpty) {
-    final q = query.toLowerCase();
+  // Search filter (name, id, description)
+  if (query.trim().isNotEmpty) {
+    final lower = query.toLowerCase();
     result = result
         .where(
           (t) =>
-              t.name.toLowerCase().contains(q) ||
-              t.id.toLowerCase().contains(q) ||
-              t.description.toLowerCase().contains(q) ||
-              t.tactics.any((tac) => tac.toLowerCase().contains(q)),
+              t.name.toLowerCase().contains(lower) ||
+              t.id.toLowerCase().contains(lower) ||
+              t.description.toLowerCase().contains(lower) ||
+              (t.plainTitle?.toLowerCase().contains(lower) ?? false),
         )
         .toList();
-  }
-
-  switch (sort) {
-    case TechniqueSortOption.nameAsc:
-      result.sort((a, b) => a.name.compareTo(b.name));
-    case TechniqueSortOption.subTechniqueCountDesc:
-      result.sort(
-        (a, b) => b.subTechniques.length.compareTo(a.subTechniques.length),
-      );
-    case TechniqueSortOption.riskDesc:
-      result.sort((a, b) => b.riskScore.compareTo(a.riskScore));
   }
 
   return result;
 }
 
-/// Single technique by ID (includes sub-techniques).
-@Riverpod()
+// ─── Technique by ID ─────────────────────────────────────────────────────────
+@riverpod
 Future<AttackTechnique?> techniqueById(Ref ref, String id) async {
-  final repository = ref.watch(attackTechniqueRepositoryProvider);
-  return repository.getTechniqueById(id);
+  final repo = ref.watch(attackTechniqueRepositoryProvider);
+  return repo.getTechniqueById(id);
 }
 
-/// Techniques belonging to a specific tactic.
-@Riverpod()
-Future<List<AttackTechnique>> techniquesByTactic(
-  Ref ref,
-  String tacticName,
-) async {
-  final repository = ref.watch(attackTechniqueRepositoryProvider);
-  return repository.getTechniquesByTactic(tacticName);
+// ─── Sub-techniques for a parent ID ──────────────────────────────────────────
+@riverpod
+Future<List<AttackTechnique>> subTechniques(Ref ref, String parentId) async {
+  final all = await ref.watch(allTechniquesProvider.future);
+  return all.where((t) => t.parentTechniqueId == parentId).toList();
 }
 
-/// Top N highest-risk techniques (default 10). Used on dashboard and reports.
-@Riverpod()
-Future<List<AttackTechnique>> topRiskTechniques(
-  Ref ref, {
-  int limit = 10,
-}) async {
-  final repository = ref.watch(attackTechniqueRepositoryProvider);
-  return repository.getHighRiskTechniques(limit: limit);
-}
-
-/// Techniques count per tactic — used for coverage heatmap.
-/// Returns a map of { tacticName: techniqueCount }
+// ─── Techniques grouped by tactic (for heatmap / matrix views) ───────────────
 @Riverpod(keepAlive: true)
-Future<Map<String, int>> techniqueCountByTactic(Ref ref) async {
-  final techniques = await ref.watch(allTechniquesProvider.future);
-  final counts = <String, int>{};
+Future<Map<String, List<AttackTechnique>>> techniquesByTactic(Ref ref) async {
+  final all = await ref.watch(allTechniquesProvider.future);
+  final tactics = await ref.watch(allTacticsProvider.future);
 
-  for (final t in techniques) {
-    for (final tac in t.tactics) {
-      counts[tac] = (counts[tac] ?? 0) + 1;
-    }
+  final map = <String, List<AttackTechnique>>{};
+  for (final tactic in tactics) {
+    map[tactic.shortName] = all
+        .where((t) => t.tactics.contains(tactic.shortName) && !t.isSubTechnique)
+        .toList();
   }
-
-  return counts;
+  return map;
 }
 
-/// All unique platforms across all techniques.
+// ─── Coverage stats (used by dashboard & RiskEngine) ─────────────────────────
+@riverpod
+Future<Map<String, int>> techniqueCountByTactic(Ref ref) async {
+  final byTactic = await ref.watch(techniquesByTacticProvider.future);
+  return byTactic.map((k, v) => MapEntry(k, v.length));
+}
+
+// ─── High-risk uncovered techniques (for dashboard + reports) ─────────────────
+@riverpod
+Future<List<AttackTechnique>> highRiskTechniques(Ref ref) async {
+  final all = await ref.watch(allTechniquesProvider.future);
+  return all.where((t) => t.riskScore >= 7.0 && !t.isSubTechnique).toList()
+    ..sort((a, b) => b.riskScore.compareTo(a.riskScore));
+}
+
+// ─── Unique platforms across all techniques ───────────────────────────────────
 @Riverpod(keepAlive: true)
 Future<List<String>> allPlatforms(Ref ref) async {
-  final techniques = await ref.watch(allTechniquesProvider.future);
+  final all = await ref.watch(allTechniquesProvider.future);
   final platforms = <String>{};
-  for (final t in techniques) {
+  for (final t in all) {
     platforms.addAll(t.platforms);
   }
-  final sorted = platforms.toList()..sort();
-  return sorted;
+  return platforms.toList()..sort();
 }
 
-/// Total sub-technique count across all techniques.
-@Riverpod(keepAlive: true)
-Future<int> totalSubTechniqueCount(Ref ref) async {
-  final techniques = await ref.watch(allTechniquesProvider.future);
-  return techniques.fold<int>(0, (sum, t) => sum + t.subTechniques.length);
+// ─── Technique count (for dashboard card) ────────────────────────────────────
+@riverpod
+Future<int> techniqueCount(Ref ref) async {
+  final all = await ref.watch(allTechniquesProvider.future);
+  return all.where((t) => !t.isSubTechnique).length;
+}
+
+@riverpod
+Future<int> totalTechniqueCount(Ref ref) async {
+  final all = await ref.watch(allTechniquesProvider.future);
+  return all.length;
 }

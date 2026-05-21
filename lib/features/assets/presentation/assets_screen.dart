@@ -43,7 +43,8 @@ class AssetsScreen extends ConsumerWidget {
                     Expanded(
                       child: _SummaryCard(
                         label: 'Critical',
-                        value: '${assets.where((a) => a.criticality == AssetCriticality.critical).length}',
+                        value:
+                            '${assets.where((a) => a.criticality == AssetCriticality.critical).length}',
                         icon: Icons.warning_amber,
                         color: AppTheme.dangerColor,
                       ),
@@ -72,34 +73,33 @@ class AssetsScreen extends ConsumerWidget {
                             'Add your organization\'s security assets to improve coverage mapping.',
                         icon: Icons.layers_outlined,
                         actionLabel: 'Add Asset',
-                        onActionPressed: () =>
-                            _showCreateSheet(context, ref),
+                        onActionPressed: () => _showCreateSheet(context, ref),
                       )
                     : ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: assets.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (_, i) => _AssetCard(
                           asset: assets[i],
-                          onEdit: () =>
-                              _showEditSheet(context, ref, assets[i]),
+                          onEdit: () => _showEditSheet(context, ref, assets[i]),
                           onDelete: () async {
                             await ref.read(
                               deleteAssetProvider(assets[i].id).future,
                             );
                           },
-                          onViewTechniques: () =>
-                              _showRelatedTechniquesSheet(context, ref, assets[i]),
+                          onViewTechniques: () => _showRelatedTechniquesSheet(
+                            context,
+                            ref,
+                            assets[i],
+                          ),
                         ),
                       ),
               ],
             ),
           ),
         ),
-        loading: () =>
-            const LoadingWidget(message: 'Loading assets…'),
+        loading: () => const LoadingWidget(message: 'Loading assets…'),
         error: (e, _) => EmptyStateWidget(
           title: 'Error',
           subtitle: e.toString(),
@@ -123,7 +123,10 @@ class AssetsScreen extends ConsumerWidget {
   }
 
   void _showEditSheet(
-      BuildContext context, WidgetRef ref, SecurityAsset asset) {
+    BuildContext context,
+    WidgetRef ref,
+    SecurityAsset asset,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -183,13 +186,15 @@ class _SummaryCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value,
-                    style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22)),
-                Text(label,
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
+                ),
+                Text(label, style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ],
@@ -224,9 +229,10 @@ class _AssetTypeChart extends StatelessWidget {
         color: color,
         radius: 55,
         titleStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: Colors.white),
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       );
     }).toList();
 
@@ -236,8 +242,10 @@ class _AssetTypeChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Asset Distribution',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Asset Distribution',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 16),
             SizedBox(
               height: 180,
@@ -268,18 +276,16 @@ class _AssetTypeChart extends StatelessWidget {
                                     width: 12,
                                     height: 12,
                                     decoration: BoxDecoration(
-                                      color: _typeColors[e.key] ??
-                                          Colors.grey,
-                                      borderRadius:
-                                          BorderRadius.circular(3),
+                                      color: _typeColors[e.key] ?? Colors.grey,
+                                      borderRadius: BorderRadius.circular(3),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     '${e.key} (${e.value})',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
                                   ),
                                 ],
                               ),
@@ -374,27 +380,34 @@ class _AssetCard extends StatelessWidget {
                     color: AppTheme.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(_typeIcon,
-                      color: AppTheme.primaryColor, size: 22),
+                  child: Icon(
+                    _typeIcon,
+                    color: AppTheme.primaryColor,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(asset.name,
-                          style:
-                              Theme.of(context).textTheme.titleMedium),
-                      Text(asset.type,
-                          style:
-                              Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        asset.name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        asset.type,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),
                 // Criticality badge
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _critColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -402,19 +415,22 @@ class _AssetCard extends StatelessWidget {
                   child: Text(
                     _critLabel,
                     style: TextStyle(
-                        color: _critColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold),
+                      color: _critColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
             if (asset.description.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(asset.description,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis),
+              Text(
+                asset.description,
+                style: Theme.of(context).textTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             if (asset.platforms.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -424,16 +440,20 @@ class _AssetCard extends StatelessWidget {
                     .map(
                       (p) => Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 3),
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor
-                              .withValues(alpha: 0.08),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(p,
-                            style: const TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontSize: 11)),
+                        child: Text(
+                          p,
+                          style: const TextStyle(
+                            color: AppTheme.primaryColor,
+                            fontSize: 11,
+                          ),
+                        ),
                       ),
                     )
                     .toList(),
@@ -477,8 +497,9 @@ class _AssetCard extends StatelessWidget {
                   label: const Text('Edit'),
                   onPressed: onEdit,
                   style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero),
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 TextButton.icon(
@@ -486,13 +507,17 @@ class _AssetCard extends StatelessWidget {
                   label: const Text('View Techniques'),
                   onPressed: onViewTechniques,
                   style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero),
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      size: 18, color: Colors.grey),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: Colors.grey,
+                  ),
                   onPressed: () => _confirmDelete(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -513,11 +538,11 @@ class _AssetCard extends StatelessWidget {
         content: Text('Delete "${asset.name}"?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-            style: TextButton.styleFrom(
-                foregroundColor: AppTheme.dangerColor),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.dangerColor),
             onPressed: () {
               Navigator.pop(context);
               onDelete();
@@ -532,12 +557,9 @@ class _AssetCard extends StatelessWidget {
 
 class _AssetTechniqueSheet extends StatelessWidget {
   final SecurityAsset asset;
-  final List<AttackTechnique> techniques;
+  final List<dynamic> techniques;
 
-  const _AssetTechniqueSheet({
-    required this.asset,
-    required this.techniques,
-  });
+  const _AssetTechniqueSheet({required this.asset, required this.techniques});
 
   @override
   Widget build(BuildContext context) {
@@ -598,8 +620,9 @@ class _AssetTechniqueSheet extends StatelessWidget {
                       context.push('/technique/${technique.id}');
                     },
                     leading: CircleAvatar(
-                      backgroundColor:
-                          AppTheme.primaryColor.withValues(alpha: 0.12),
+                      backgroundColor: AppTheme.primaryColor.withValues(
+                        alpha: 0.12,
+                      ),
                       child: Text(
                         technique.id.replaceFirst('T', ''),
                         style: const TextStyle(
@@ -652,16 +675,19 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
   final _platCtrl = TextEditingController();
 
   static const _types = [
-    'Network', 'Server', 'Workstation', 'Application', 'Cloud', 'Other'
+    'Network',
+    'Server',
+    'Workstation',
+    'Application',
+    'Cloud',
+    'Other',
   ];
 
   @override
   void initState() {
     super.initState();
-    _nameCtrl =
-        TextEditingController(text: widget.existing?.name ?? '');
-    _descCtrl =
-        TextEditingController(text: widget.existing?.description ?? '');
+    _nameCtrl = TextEditingController(text: widget.existing?.name ?? '');
+    _descCtrl = TextEditingController(text: widget.existing?.description ?? '');
     if (widget.existing != null) {
       _type = widget.existing!.type.isEmpty ? 'Server' : widget.existing!.type;
       _criticality = widget.existing!.criticality;
@@ -682,7 +708,11 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
     final isEdit = widget.existing != null;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -690,51 +720,54 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(2)),
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            Text(isEdit ? 'Edit Asset' : 'Add Asset',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              isEdit ? 'Edit Asset' : 'Add Asset',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
 
             TextField(
               controller: _nameCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Asset Name *',
-                  prefixIcon: Icon(Icons.label)),
+                labelText: 'Asset Name *',
+                prefixIcon: Icon(Icons.label),
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _descCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Description',
-                  prefixIcon: Icon(Icons.description)),
+                labelText: 'Description',
+                prefixIcon: Icon(Icons.description),
+              ),
               maxLines: 2,
             ),
             const SizedBox(height: 10),
 
             // Type dropdown
-            Text('Asset Type',
-                style: Theme.of(context).textTheme.labelLarge),
+            Text('Asset Type', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 6),
             DropdownButtonFormField<String>(
               initialValue: _type,
               decoration: const InputDecoration(),
               items: _types
-                  .map((t) =>
-                      DropdownMenuItem(value: t, child: Text(t)))
+                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                   .toList(),
               onChanged: (v) => setState(() => _type = v ?? 'Server'),
             ),
             const SizedBox(height: 10),
 
             // Criticality
-            Text('Criticality',
-                style: Theme.of(context).textTheme.labelLarge),
+            Text('Criticality', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 6),
             Row(
               children: AssetCriticality.values.map((c) {
@@ -753,19 +786,23 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
                             : color.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                            color: isSelected
-                                ? color
-                                : color.withValues(alpha: 0.3),
-                            width: isSelected ? 2 : 1),
+                          color: isSelected
+                              ? color
+                              : color.withValues(alpha: 0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
                       ),
-                      child: Text(label,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: color,
-                              fontSize: 11,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal)),
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -780,14 +817,17 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
                   child: TextField(
                     controller: _platCtrl,
                     decoration: const InputDecoration(
-                        labelText: 'Platform',
-                        hintText: 'e.g. Windows'),
+                      labelText: 'Platform',
+                      hintText: 'e.g. Windows',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.add_circle,
-                      color: AppTheme.primaryColor),
+                  icon: const Icon(
+                    Icons.add_circle,
+                    color: AppTheme.primaryColor,
+                  ),
                   onPressed: () {
                     final p = _platCtrl.text.trim();
                     if (p.isNotEmpty && !_platforms.contains(p)) {
@@ -806,8 +846,7 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
                     .map(
                       (p) => Chip(
                         label: Text(p),
-                        onDeleted: () =>
-                            setState(() => _platforms.remove(p)),
+                        onDeleted: () => setState(() => _platforms.remove(p)),
                       ),
                     )
                     .toList(),
@@ -818,14 +857,12 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon:
-                    Icon(isEdit ? Icons.save : Icons.add),
+                icon: Icon(isEdit ? Icons.save : Icons.add),
                 label: Text(isEdit ? 'Save Changes' : 'Add Asset'),
                 onPressed: () async {
                   if (_nameCtrl.text.trim().isEmpty) return;
                   final asset = SecurityAsset(
-                    id: widget.existing?.id ??
-                        const Uuid().v4(),
+                    id: widget.existing?.id ?? const Uuid().v4(),
                     name: _nameCtrl.text.trim(),
                     description: _descCtrl.text.trim(),
                     type: _type,
@@ -836,18 +873,15 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
                     lastScanned: DateTime.now(),
                   );
                   if (isEdit) {
-                    await widget.ref
-                        .read(updateAssetProvider(asset).future);
+                    await widget.ref.read(updateAssetProvider(asset).future);
                   } else {
-                    await widget.ref
-                        .read(createAssetProvider(asset).future);
+                    await widget.ref.read(createAssetProvider(asset).future);
                   }
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                            isEdit ? 'Asset updated' : 'Asset added'),
+                        content: Text(isEdit ? 'Asset updated' : 'Asset added'),
                         backgroundColor: AppTheme.successColor,
                       ),
                     );

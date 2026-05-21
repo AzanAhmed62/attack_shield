@@ -21,6 +21,7 @@ CoverageStatus _$CoverageStatusFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$CoverageStatus {
+  String? get id => throw _privateConstructorUsedError;
   String get techniqueId => throw _privateConstructorUsedError;
   CoverageLevel get level => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
@@ -45,6 +46,7 @@ abstract class $CoverageStatusCopyWith<$Res> {
   ) = _$CoverageStatusCopyWithImpl<$Res, CoverageStatus>;
   @useResult
   $Res call({
+    String? id,
     String techniqueId,
     CoverageLevel level,
     String? notes,
@@ -68,6 +70,7 @@ class _$CoverageStatusCopyWithImpl<$Res, $Val extends CoverageStatus>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? id = freezed,
     Object? techniqueId = null,
     Object? level = null,
     Object? notes = freezed,
@@ -76,6 +79,10 @@ class _$CoverageStatusCopyWithImpl<$Res, $Val extends CoverageStatus>
   }) {
     return _then(
       _value.copyWith(
+            id: freezed == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String?,
             techniqueId: null == techniqueId
                 ? _value.techniqueId
                 : techniqueId // ignore: cast_nullable_to_non_nullable
@@ -112,6 +119,7 @@ abstract class _$$CoverageStatusImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
+    String? id,
     String techniqueId,
     CoverageLevel level,
     String? notes,
@@ -134,6 +142,7 @@ class __$$CoverageStatusImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? id = freezed,
     Object? techniqueId = null,
     Object? level = null,
     Object? notes = freezed,
@@ -142,6 +151,10 @@ class __$$CoverageStatusImplCopyWithImpl<$Res>
   }) {
     return _then(
       _$CoverageStatusImpl(
+        id: freezed == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String?,
         techniqueId: null == techniqueId
             ? _value.techniqueId
             : techniqueId // ignore: cast_nullable_to_non_nullable
@@ -171,6 +184,7 @@ class __$$CoverageStatusImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CoverageStatusImpl implements _CoverageStatus {
   const _$CoverageStatusImpl({
+    this.id,
     required this.techniqueId,
     required this.level,
     this.notes,
@@ -181,6 +195,8 @@ class _$CoverageStatusImpl implements _CoverageStatus {
   factory _$CoverageStatusImpl.fromJson(Map<String, dynamic> json) =>
       _$$CoverageStatusImplFromJson(json);
 
+  @override
+  final String? id;
   @override
   final String techniqueId;
   @override
@@ -201,7 +217,7 @@ class _$CoverageStatusImpl implements _CoverageStatus {
 
   @override
   String toString() {
-    return 'CoverageStatus(techniqueId: $techniqueId, level: $level, notes: $notes, relatedControls: $relatedControls, lastUpdated: $lastUpdated)';
+    return 'CoverageStatus(id: $id, techniqueId: $techniqueId, level: $level, notes: $notes, relatedControls: $relatedControls, lastUpdated: $lastUpdated)';
   }
 
   @override
@@ -209,6 +225,7 @@ class _$CoverageStatusImpl implements _CoverageStatus {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$CoverageStatusImpl &&
+            (identical(other.id, id) || other.id == id) &&
             (identical(other.techniqueId, techniqueId) ||
                 other.techniqueId == techniqueId) &&
             (identical(other.level, level) || other.level == level) &&
@@ -225,6 +242,7 @@ class _$CoverageStatusImpl implements _CoverageStatus {
   @override
   int get hashCode => Object.hash(
     runtimeType,
+    id,
     techniqueId,
     level,
     notes,
@@ -251,6 +269,7 @@ class _$CoverageStatusImpl implements _CoverageStatus {
 
 abstract class _CoverageStatus implements CoverageStatus {
   const factory _CoverageStatus({
+    final String? id,
     required final String techniqueId,
     required final CoverageLevel level,
     final String? notes,
@@ -261,6 +280,8 @@ abstract class _CoverageStatus implements CoverageStatus {
   factory _CoverageStatus.fromJson(Map<String, dynamic> json) =
       _$CoverageStatusImpl.fromJson;
 
+  @override
+  String? get id;
   @override
   String get techniqueId;
   @override

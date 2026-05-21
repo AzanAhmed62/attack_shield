@@ -7,7 +7,7 @@ part of 'repository_providers.dart';
 // **************************************************************************
 
 String _$localStorageServiceHash() =>
-    r'1ab6cbdf7401257108597da485adad67f67dc26e';
+    r'6009aa818e95c9c1fc8fbf24de965b0b9d0b3951';
 
 /// See also [localStorageService].
 @ProviderFor(localStorageService)
@@ -24,8 +24,25 @@ final localStorageServiceProvider = Provider<LocalStorageService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef LocalStorageServiceRef = ProviderRef<LocalStorageService>;
+String _$geminiServiceHash() => r'16798da093ca748d608d068ccd06b1876db61663';
+
+/// See also [geminiService].
+@ProviderFor(geminiService)
+final geminiServiceProvider = Provider<GeminiService>.internal(
+  geminiService,
+  name: r'geminiServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$geminiServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GeminiServiceRef = ProviderRef<GeminiService>;
 String _$attackTechniqueRepositoryHash() =>
-    r'0c0f381c7db940559986a30d5b347d478a287114';
+    r'2fbf25d572094695024c29e7d844779ef97aa347';
 
 /// See also [attackTechniqueRepository].
 @ProviderFor(attackTechniqueRepository)
@@ -43,42 +60,6 @@ final attackTechniqueRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AttackTechniqueRepositoryRef = ProviderRef<AttackTechniqueRepository>;
-String _$coverageRepositoryHash() =>
-    r'86aca550174bce3fc0ff9f48369455dd15a68d6d';
-
-/// See also [coverageRepository].
-@ProviderFor(coverageRepository)
-final coverageRepositoryProvider = Provider<CoverageRepository>.internal(
-  coverageRepository,
-  name: r'coverageRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$coverageRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef CoverageRepositoryRef = ProviderRef<CoverageRepository>;
-String _$bookmarkRepositoryHash() =>
-    r'9e4aec66c28f88753af6648ee4b2875d76da14b9';
-
-/// See also [bookmarkRepository].
-@ProviderFor(bookmarkRepository)
-final bookmarkRepositoryProvider = Provider<BookmarkRepository>.internal(
-  bookmarkRepository,
-  name: r'bookmarkRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$bookmarkRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef BookmarkRepositoryRef = ProviderRef<BookmarkRepository>;
 String _$alertRepositoryHash() => r'35f1b7bc3e8c124906e64c191edd96e7303055fd';
 
 /// See also [alertRepository].
@@ -113,6 +94,42 @@ final assetRepositoryProvider = Provider<AssetRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AssetRepositoryRef = ProviderRef<AssetRepository>;
+String _$bookmarkRepositoryHash() =>
+    r'9e4aec66c28f88753af6648ee4b2875d76da14b9';
+
+/// See also [bookmarkRepository].
+@ProviderFor(bookmarkRepository)
+final bookmarkRepositoryProvider = Provider<BookmarkRepository>.internal(
+  bookmarkRepository,
+  name: r'bookmarkRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$bookmarkRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef BookmarkRepositoryRef = ProviderRef<BookmarkRepository>;
+String _$coverageRepositoryHash() =>
+    r'86aca550174bce3fc0ff9f48369455dd15a68d6d';
+
+/// See also [coverageRepository].
+@ProviderFor(coverageRepository)
+final coverageRepositoryProvider = Provider<CoverageRepository>.internal(
+  coverageRepository,
+  name: r'coverageRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$coverageRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef CoverageRepositoryRef = ProviderRef<CoverageRepository>;
 String _$organizationRepositoryHash() =>
     r'9355db196cd812dd4514ea93af55d5cbd3427d1b';
 

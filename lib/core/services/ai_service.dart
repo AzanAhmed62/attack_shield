@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:attackshield/shared/models/attack_technique.dart';
 import 'package:http/http.dart' as http;
 import 'package:get_storage/get_storage.dart';
 import 'package:attackshield/shared/models/models.dart';

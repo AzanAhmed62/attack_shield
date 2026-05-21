@@ -8,6 +8,7 @@ part of 'coverage_status.dart';
 
 _$CoverageStatusImpl _$$CoverageStatusImplFromJson(Map<String, dynamic> json) =>
     _$CoverageStatusImpl(
+      id: json['id'] as String?,
       techniqueId: json['techniqueId'] as String,
       level: $enumDecode(_$CoverageLevelEnumMap, json['level']),
       notes: json['notes'] as String?,
@@ -24,6 +25,7 @@ _$CoverageStatusImpl _$$CoverageStatusImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$CoverageStatusImplToJson(
   _$CoverageStatusImpl instance,
 ) => <String, dynamic>{
+  'id': instance.id,
   'techniqueId': instance.techniqueId,
   'level': _$CoverageLevelEnumMap[instance.level]!,
   'notes': instance.notes,

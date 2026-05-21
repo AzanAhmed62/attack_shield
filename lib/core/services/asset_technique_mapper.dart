@@ -1,3 +1,4 @@
+import 'package:attackshield/shared/models/attack_technique.dart';
 import 'package:attackshield/shared/models/models.dart';
 
 class AssetTechniqueMapper {
@@ -28,12 +29,7 @@ class AssetTechniqueMapper {
       'Persistence',
       'Exfiltration',
     ],
-    'Cloud': [
-      'Credential Access',
-      'Persistence',
-      'Collection',
-      'Exfiltration',
-    ],
+    'Cloud': ['Credential Access', 'Persistence', 'Collection', 'Exfiltration'],
   };
 
   static List<String> recommendedTactics(SecurityAsset asset) {
@@ -48,24 +44,25 @@ class AssetTechniqueMapper {
     final preferredTactics = recommendedTactics(asset);
     final normalizedPlatforms = asset.platforms.map(_normalize).toSet();
 
-    final scored = techniques
-        .map(
-          (technique) => (
-            technique: technique,
-            score: _relevanceScore(
-              technique,
-              normalizedPlatforms,
-              preferredTactics,
-            ),
-          ),
-        )
-        .where((entry) => entry.score > 0)
-        .toList()
-      ..sort((a, b) {
-        final scoreCompare = b.score.compareTo(a.score);
-        if (scoreCompare != 0) return scoreCompare;
-        return b.technique.riskScore.compareTo(a.technique.riskScore);
-      });
+    final scored =
+        techniques
+            .map(
+              (technique) => (
+                technique: technique,
+                score: _relevanceScore(
+                  technique,
+                  normalizedPlatforms,
+                  preferredTactics,
+                ),
+              ),
+            )
+            .where((entry) => entry.score > 0)
+            .toList()
+          ..sort((a, b) {
+            final scoreCompare = b.score.compareTo(a.score);
+            if (scoreCompare != 0) return scoreCompare;
+            return b.technique.riskScore.compareTo(a.technique.riskScore);
+          });
 
     return scored.take(limit).map((entry) => entry.technique).toList();
   }
@@ -87,7 +84,7 @@ class AssetTechniqueMapper {
       score += 4;
     }
 
-    if (technique.subTechniques.isNotEmpty) {
+    if (technique.subTechniqueIds.isNotEmpty) {
       score += 1;
     }
 

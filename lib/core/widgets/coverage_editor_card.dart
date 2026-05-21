@@ -40,8 +40,9 @@ class _CoverageEditorCardState extends ConsumerState<CoverageEditorCard> {
 
   @override
   Widget build(BuildContext context) {
-    final coverageAsync =
-        ref.watch(techniqueCoverageStatusProvider(widget.techniqueId));
+    final coverageAsync = ref.watch(
+      techniqueCoverageStatusProvider(widget.techniqueId),
+    );
 
     return coverageAsync.when(
       data: (coverage) {
@@ -92,11 +93,14 @@ class _CoverageEditorCardState extends ConsumerState<CoverageEditorCard> {
                       selectedColor: color.withValues(alpha: 0.18),
                       labelStyle: TextStyle(
                         color: color,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                       ),
                       side: BorderSide(
-                        color: isSelected ? color : color.withValues(alpha: 0.4),
+                        color: isSelected
+                            ? color
+                            : color.withValues(alpha: 0.4),
                       ),
                       onSelected: (_) async {
                         setState(() => _selectedLevel = level);
@@ -170,9 +174,7 @@ class _CoverageEditorCardState extends ConsumerState<CoverageEditorCard> {
                           (control) => InputChip(
                             label: Text(control),
                             onDeleted: () {
-                              setState(
-                                () => _relatedControls.remove(control),
-                              );
+                              setState(() => _relatedControls.remove(control));
                             },
                           ),
                         )
@@ -185,7 +187,9 @@ class _CoverageEditorCardState extends ConsumerState<CoverageEditorCard> {
                   child: ElevatedButton.icon(
                     onPressed: _saving ? null : () => _save(context),
                     icon: Icon(_saving ? Icons.sync : Icons.save_outlined),
-                    label: Text(_saving ? 'Saving...' : 'Save Notes & Controls'),
+                    label: Text(
+                      _saving ? 'Saving...' : 'Save Notes & Controls',
+                    ),
                   ),
                 ),
               ],
@@ -240,9 +244,9 @@ class _CoverageEditorCardState extends ConsumerState<CoverageEditorCard> {
         relatedControls: List<String>.from(_relatedControls),
         lastUpdated: DateTime.now(),
       );
-      await ref.read(updateCoverageStatusProvider(status).future);
+      // Save directly to the coverage repository via provider
+      await ref.read(coverageRepositoryProvider).updateCoverageStatus(status);
       ref.invalidate(allCoverageStatusesProvider);
-      ref.invalidate(techniqueCoverageStatusProvider(widget.techniqueId));
       _hydrationKey = '';
       if (mounted) {
         messenger.showSnackBar(

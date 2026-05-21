@@ -1,922 +1,430 @@
-// AttackTactic is exported from attack_technique.dart via models.dart
+// lib/features/coverage/presentation/screens/threat_mapping_screen.dart
+// FULL REPLACEMENT — real coverage data, inline level editing, tactic
+// accordion groups, progress bars, bulk actions.
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:attackshield/core/services/asset_technique_mapper.dart';
-import 'package:attackshield/core/theme/theme.dart';
-import 'package:attackshield/core/widgets/widgets.dart';
-import 'package:attackshield/shared/providers/providers.dart';
-import 'package:attackshield/shared/models/models.dart';
-import 'package:attackshield/core/services/risk_engine.dart';
 
-class ThreatMappingScreen extends ConsumerWidget {
+import '../../../../shared/models/coverage_status.dart';
+import '../../../../shared/providers/coverage_providers.dart';
+import '../../../../shared/providers/technique_providers.dart';
+import '../../../../shared/widgets/shimmer_loader.dart';
+
+class ThreatMappingScreen extends HookConsumerWidget {
   const ThreatMappingScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Coverage & Risk'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Overview'),
-              Tab(text: 'Tactic Matrix'),
-              Tab(text: 'Risk Gaps'),
-              Tab(text: 'Assets'),
-            ],
-          ),
-        ),
-        body: const TabBarView(
-          children: [
-            _OverviewTab(),
-            _TacticMatrixTab(),
-            _RiskGapsTab(),
-            _AssetsTab(),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    final tacticsAsync  = ref.watch(allTacticsProvider);
+    final byTacticAsync = ref.watch(techniquesByTacticProvider);
+    final coverageMap   = ref.watch(coverageMapProvider);
+    final riskReport    = ref.watch(riskReportProvider);
+    final searchCtrl    = useTextEditingController();
+    final searchQuery   = useState('');
+    final cs            = Theme.of(context).colorScheme;
 
-// ─── Overview Tab ─────────────────────────────────────────────────────────────
-
-class _OverviewTab extends ConsumerWidget {
-  const _OverviewTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final riskScoreAsync = ref.watch(organizationRiskScoreProvider);
-    final riskLabelAsync = ref.watch(organizationRiskLabelProvider);
-    final coveragePctAsync = ref.watch(riskEngineCoveragePercentageProvider);
-    final breakdownAsync = ref.watch(riskCoverageBreakdownProvider);
-    final tacticRiskAsync = ref.watch(tacticRiskMapProvider);
-    final allTechAsync = ref.watch(allTechniquesProvider);
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Risk Score Card ───────────────────────────────────────────
-          _RiskScoreCard(
-            riskScoreAsync: riskScoreAsync,
-            riskLabelAsync: riskLabelAsync,
-          ),
-          const SizedBox(height: 16),
-
-          // ── Coverage Progress ─────────────────────────────────────────
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        title: Text('Coverage Map',
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600)),
+        actions: [
+          riskReport.when(
+            data: (r) => Padding(
+              padding: const EdgeInsets.only(right: 12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    'Defensive Coverage Overview',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  coveragePctAsync.when(
-                    data: (pct) => Column(
-                      children: [
-                        Text(
-                          '${pct.toStringAsFixed(1)}%',
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall
-                              ?.copyWith(
-                                color: _coverageColor(pct),
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        breakdownAsync.when(
-                          data: (breakdown) =>
-                              CoverageDonutChart(breakdown: breakdown, size: 180),
-                          loading: () => const LoadingWidget(),
-                          error: (error, _) => Text('Error: $error'),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _coverageLabel(pct),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                    loading: () => const LoadingWidget(),
-                    error: (e, _) => Text('Error: $e'),
-                  ),
+                  Text('${r.coveragePercent.toStringAsFixed(0)}% covered',
+                    style: TextStyle(fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cs.primary)),
+                  Text('Risk: ${r.orgRiskScore.toStringAsFixed(0)}/100',
+                    style: TextStyle(fontSize: 10, color: cs.outline)),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // ── Coverage Breakdown ────────────────────────────────────────
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Coverage Breakdown',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  breakdownAsync.when(
-                    data: (breakdown) => Column(
-                      children: [
-                        _CoverageBreakdownRow(
-                          label: 'Covered',
-                          count: breakdown['covered'] ?? 0,
-                          color: AppTheme.successColor,
-                          icon: Icons.check_circle,
-                        ),
-                        _CoverageBreakdownRow(
-                          label: 'Partial',
-                          count: breakdown['partiallyCovered'] ?? 0,
-                          color: AppTheme.warningColor,
-                          icon: Icons.remove_circle,
-                        ),
-                        _CoverageBreakdownRow(
-                          label: 'Not Covered',
-                          count: breakdown['notCovered'] ?? 0,
-                          color: AppTheme.dangerColor,
-                          icon: Icons.cancel,
-                        ),
-                        _CoverageBreakdownRow(
-                          label: 'Unknown',
-                          count: breakdown['unknown'] ?? 0,
-                          color: Colors.grey,
-                          icon: Icons.help_outline,
-                        ),
-                      ],
-                    ),
-                    loading: () => const LoadingWidget(),
-                    error: (e, _) => Text('Error: $e'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ── Total Techniques ──────────────────────────────────────────
-          allTechAsync.when(
-            data: (techniques) => Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Total Techniques',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          '${techniques.length} parent + ${techniques.fold(0, (s, t) => s + t.subTechniques.length)} sub-techniques',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${techniques.length}',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            loading: () => const LoadingWidget(),
-            error: (e, _) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 16),
-          tacticRiskAsync.when(
-            data: (tacticRisks) => TacticBarChart(tacticRisks: tacticRisks),
-            loading: () => const LoadingWidget(),
-            error: (error, _) => Text('Error: $error'),
+            loading: () => const SizedBox.shrink(),
+            error:   (_, __) => const SizedBox.shrink(),
           ),
         ],
-      ),
-    );
-  }
-
-  Color _coverageColor(double pct) {
-    if (pct >= 70) return AppTheme.successColor;
-    if (pct >= 40) return AppTheme.warningColor;
-    return AppTheme.dangerColor;
-  }
-
-  String _coverageLabel(double pct) {
-    if (pct >= 70) return 'Good coverage — keep monitoring';
-    if (pct >= 40) return 'Partial coverage — address gaps';
-    return 'Low coverage — immediate action needed';
-  }
-}
-
-class _AssetsTab extends ConsumerWidget {
-  const _AssetsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final assetsAsync = ref.watch(allAssetsProvider);
-    final techniquesAsync = ref.watch(allTechniquesProvider);
-
-    return assetsAsync.when(
-      data: (assets) => techniquesAsync.when(
-        data: (techniques) {
-          if (assets.isEmpty) {
-            return const EmptyStateWidget(
-              title: 'No Assets',
-              subtitle:
-                  'Add security assets to connect your environment to ATT&CK techniques.',
-              icon: Icons.layers_outlined,
-            );
-          }
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Asset Coverage Mapping',
-                  style: Theme.of(context).textTheme.headlineMedium,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: TextField(
+              controller: searchCtrl,
+              decoration: InputDecoration(
+                hintText:  'Filter techniques...',
+                hintStyle: TextStyle(fontSize: 13, color: cs.outline),
+                prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                suffixIcon: searchQuery.value.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 16),
+                      onPressed: () {
+                        searchCtrl.clear();
+                        searchQuery.value = '';
+                      })
+                  : null,
+                filled: true,
+                fillColor: cs.surfaceContainerHighest,
+                contentPadding: EdgeInsets.zero,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Critical assets mapped to ATT&CK techniques by asset type, platform, and risk relevance.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 16),
-                ...assets.map((asset) {
-                  final related = AssetTechniqueMapper.relatedTechniques(
-                    asset,
-                    techniques,
-                    limit: 4,
-                  );
-                  final tacticFocus = AssetTechniqueMapper.recommendedTactics(asset);
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      asset.name,
-                                      style:
-                                          Theme.of(context).textTheme.titleMedium,
-                                    ),
-                                    Text(
-                                      '${asset.type} · ${asset.criticality.name}',
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () => context.push('/more/assets'),
-                                child: const Text('Manage'),
-                              ),
-                            ],
-                          ),
-                          if (tacticFocus.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: tacticFocus
-                                  .map((tactic) => Chip(label: Text(tactic)))
-                                  .toList(),
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          if (related.isEmpty)
-                            Text(
-                              'No related techniques found yet.',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            )
-                          else
-                            ...related.map(
-                              (technique) => ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                onTap: () =>
-                                    context.push('/technique/${technique.id}'),
-                                leading: const Icon(
-                                  Icons.security,
-                                  color: AppTheme.primaryColor,
-                                ),
-                                title: Text(technique.name),
-                                subtitle: Text(technique.tactics.join(' · ')),
-                                trailing: Text(
-                                  technique.riskScore.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    color: AppTheme.accentColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ],
+              ),
+              onChanged: (v) => searchQuery.value = v.toLowerCase(),
             ),
-          );
-        },
-        loading: () => const Center(child: LoadingWidget()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+          ),
+        ),
       ),
-      loading: () => const Center(child: LoadingWidget()),
-      error: (error, _) => Center(child: Text('Error: $error')),
-    );
-  }
-}
 
-// ─── Tactic Matrix Tab ────────────────────────────────────────────────────────
-
-class _TacticMatrixTab extends ConsumerWidget {
-  const _TacticMatrixTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tacticRiskAsync = ref.watch(tacticRiskMapProvider);
-    final allTacticsAsync = ref.watch(allTacticsProvider);
-    final techniqueCountAsync = ref.watch(techniqueCountByTacticProvider);
-
-    return tacticRiskAsync.when(
-      data: (tacticRiskMap) => allTacticsAsync.when(
-        data: (tactics) => techniqueCountAsync.when(
-          data: (countMap) => SingleChildScrollView(
+      // ── Summary bar ──────────────────────────────────────────────────────
+      body: tacticsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error:   (e, _) => Center(child: Text('$e')),
+        data: (tactics) => byTacticAsync.when(
+          loading: () => ListView.builder(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ATT&CK Tactic Risk Matrix',
-                  style: Theme.of(context).textTheme.headlineMedium,
+            itemCount: 6,
+            itemBuilder: (_, __) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ShimmerLoader(height: 80),
+            ),
+          ),
+          error: (e, _) => Center(child: Text('$e')),
+          data: (byTactic) {
+            final covMap = coverageMap.value ?? {};
+            final query  = searchQuery.value;
+
+            return CustomScrollView(
+              slivers: [
+                // Summary strip
+                SliverToBoxAdapter(
+                  child: riskReport.when(
+                    data:    (r) => _SummaryStrip(report: r),
+                    loading: () => const ShimmerLoader(height: 56),
+                    error:   (_, __) => const SizedBox.shrink(),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Risk score = avg technique risk × coverage gap. Tap a tactic to view techniques.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 16),
-                ...tactics.map(
-                  (tactic) => _TacticMatrixRow(
-                    tactic: tactic,
-                    riskScore: tacticRiskMap[tactic.name] ?? 0.0,
-                    techniqueCount: countMap[tactic.name] ?? 0,
-                    onTap: () => context.push(
-                      '/library?tactic=${Uri.encodeComponent(tactic.name)}',
-                    ),
+
+                // Tactic accordion groups
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                  sliver: SliverList.builder(
+                    itemCount: tactics.length,
+                    itemBuilder: (_, i) {
+                      final tactic = tactics[i];
+                      var techs    = byTactic[tactic.shortName] ?? [];
+
+                      // Apply search filter
+                      if (query.isNotEmpty) {
+                        techs = techs.where((t) =>
+                          t.name.toLowerCase().contains(query) ||
+                          t.id.toLowerCase().contains(query),
+                        ).toList();
+                      }
+                      if (techs.isEmpty && query.isNotEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final covered = techs.where((t) =>
+                        covMap[t.id] == CoverageLevel.covered).length;
+                      final partial = techs.where((t) =>
+                        covMap[t.id] == CoverageLevel.partiallyCovered).length;
+                      final pct = techs.isEmpty ? 0.0
+                          : (covered + partial * 0.5) / techs.length;
+
+                      return _TacticAccordion(
+                        tactic:       tactic.name,
+                        tacticShort:  tactic.shortName,
+                        techniques:   techs,
+                        covMap:       covMap,
+                        covered:      covered,
+                        partial:      partial,
+                        total:        techs.length,
+                        coveragePct:  pct,
+                        ref:          ref,
+                      );
+                    },
                   ),
                 ),
               ],
-            ),
-          ),
-          loading: () => const Center(child: LoadingWidget()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+            );
+          },
         ),
-        loading: () => const Center(child: LoadingWidget()),
-        error: (e, _) => Center(child: Text('Error: $e')),
       ),
-      loading: () => const Center(child: LoadingWidget()),
-      error: (e, _) => Center(child: Text('Error: $e')),
     );
   }
 }
 
-class _TacticMatrixRow extends StatelessWidget {
-  final AttackTactic tactic;
-  final double riskScore;
-  final int techniqueCount;
-  final VoidCallback onTap;
-
-  const _TacticMatrixRow({
-    required this.tactic,
-    required this.riskScore,
-    required this.techniqueCount,
-    required this.onTap,
-  });
-
-  Color get _riskColor {
-    if (riskScore >= 7.0) return AppTheme.dangerColor;
-    if (riskScore >= 5.0) return AppTheme.accentColor;
-    if (riskScore >= 3.0) return AppTheme.warningColor;
-    return AppTheme.successColor;
-  }
-
-  String get _riskLabel {
-    if (riskScore >= 7.0) return 'Critical';
-    if (riskScore >= 5.0) return 'High';
-    if (riskScore >= 3.0) return 'Medium';
-    return 'Low';
-  }
+// ─── Summary strip ────────────────────────────────────────────────────────────
+class _SummaryStrip extends StatelessWidget {
+  final dynamic report;
+  const _SummaryStrip({required this.report});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 10),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outlineVariant, width: 0.5),
+      ),
+      child: Row(children: [
+        _SummaryChip(
+          value: '${report.coveredCount}',
+          label: 'Covered',
+          color: Colors.green.shade600,
+        ),
+        const SizedBox(width: 16),
+        _SummaryChip(
+          value: '${report.partialCount}',
+          label: 'Partial',
+          color: Colors.amber.shade600,
+        ),
+        const SizedBox(width: 16),
+        _SummaryChip(
+          value: '${report.uncoveredCount}',
+          label: 'Not Covered',
+          color: Colors.red.shade500,
+        ),
+        const Spacer(),
+        Text('${report.totalTechniques} total',
+          style: TextStyle(fontSize: 11, color: cs.outline)),
+      ]),
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  final String value, label;
+  final Color  color;
+  const _SummaryChip(
+      {required this.value, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Text(value,
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+      Text(label,
+        style: TextStyle(fontSize: 9,
+            color: Theme.of(context).colorScheme.outline)),
+    ]);
+  }
+}
+
+// ─── Tactic Accordion ─────────────────────────────────────────────────────────
+class _TacticAccordion extends HookWidget {
+  final String   tactic, tacticShort;
+  final List     techniques;
+  final Map<String, CoverageLevel> covMap;
+  final int      covered, partial, total;
+  final double   coveragePct;
+  final WidgetRef ref;
+
+  const _TacticAccordion({
+    required this.tactic,
+    required this.tacticShort,
+    required this.techniques,
+    required this.covMap,
+    required this.covered,
+    required this.partial,
+    required this.total,
+    required this.coveragePct,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final expanded = useState(coveragePct < 0.8); // auto-expand incomplete tactics
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant, width: 0.5),
+      ),
+      child: Column(children: [
+        // Header
+        InkWell(
+          onTap: () => expanded.value = !expanded.value,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Row(children: [
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tactic.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          '$techniqueCount techniques • ${tactic.id}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _riskColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _riskColor.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Text(
-                      _riskLabel,
-                      style: TextStyle(
-                        color: _riskColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                  Row(children: [
+                    Text(tactic,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 8),
+                    Text('$covered/$total',
+                      style: TextStyle(fontSize: 11, color: cs.outline)),
+                  ]),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: coveragePct,
+                      minHeight: 5,
+                      backgroundColor: cs.outlineVariant,
+                      valueColor: AlwaysStoppedAnimation(
+                        coveragePct >= 0.8 ? Colors.green.shade500
+                          : coveragePct >= 0.5 ? Colors.amber.shade500
+                          : Colors.red.shade400,
                       ),
                     ),
                   ),
                 ],
+              )),
+              const SizedBox(width: 12),
+              AnimatedRotation(
+                turns: expanded.value ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(Icons.keyboard_arrow_down_rounded,
+                  color: cs.outline),
               ),
-              const SizedBox(height: 8),
-              // Risk bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: riskScore / 10.0,
-                  minHeight: 6,
-                  backgroundColor: _riskColor.withValues(alpha: 0.15),
-                  valueColor: AlwaysStoppedAnimation<Color>(_riskColor),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Exposure: ${riskScore.toStringAsFixed(1)} / 10',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: _riskColor),
-              ),
-            ],
+            ]),
           ),
         ),
+
+        // Technique rows
+        if (expanded.value) ...[
+          Divider(height: 1, color: cs.outlineVariant),
+          ...techniques.map((t) => _TechniqueRow(
+            technique: t,
+            coverage:  covMap[t.id] ?? CoverageLevel.unknown,
+            onTap:     () => context.push('/library/${t.id}'),
+            onCoverageChange: (level) async {
+              await ref.read(setCoverageLevelProvider(t.id, level).future);
+            },
+          )),
+        ],
+      ]),
+    );
+  }
+}
+
+// ─── Technique Row ────────────────────────────────────────────────────────────
+class _TechniqueRow extends StatelessWidget {
+  final dynamic         technique;
+  final CoverageLevel   coverage;
+  final VoidCallback    onTap;
+  final void Function(CoverageLevel) onCoverageChange;
+
+  const _TechniqueRow({
+    required this.technique,
+    required this.coverage,
+    required this.onTap,
+    required this.onCoverageChange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs    = Theme.of(context).colorScheme;
+    final color = _coverageColor(coverage);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        child: Row(children: [
+          Container(width: 3, height: 32,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            )),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(technique.id,
+              style: TextStyle(fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: cs.primary,
+                  fontFamily: 'monospace')),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(technique.name,
+            style: const TextStyle(fontSize: 13),
+            maxLines: 1, overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 8),
+
+          // Coverage cycle button
+          GestureDetector(
+            onTap: () => onCoverageChange(_nextLevel(coverage)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: color.withOpacity(.3)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(_coverageIcon(coverage), size: 12, color: color),
+                const SizedBox(width: 3),
+                Text(_coverageLabel(coverage),
+                  style: TextStyle(fontSize: 10,
+                      color: color, fontWeight: FontWeight.w600)),
+              ]),
+            ),
+          ),
+        ]),
       ),
     );
   }
-}
 
-// ─── Risk Gaps Tab ────────────────────────────────────────────────────────────
-
-class _RiskGapsTab extends ConsumerWidget {
-  const _RiskGapsTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final gapsAsync = ref.watch(topRiskGapsProvider(limit: 50));
-    final breakdownAsync = ref.watch(riskGapsBySeverityProvider);
-
-    return gapsAsync.when(
-      data: (gaps) {
-        if (gaps.isEmpty) {
-          return const EmptyStateWidget(
-            title: 'No Risk Gaps Found',
-            subtitle: 'All techniques are covered. Great work!',
-            icon: Icons.verified_user,
-          );
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Priority Risk Gaps',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Uncovered techniques sorted by exposure risk. Address highest severity first.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-
-              // Severity summary chips
-              breakdownAsync.when(
-                data: (breakdown) => Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _SeverityChip(
-                      label: 'Critical',
-                      count: breakdown['Critical'] ?? 0,
-                      color: AppTheme.dangerColor,
-                    ),
-                    _SeverityChip(
-                      label: 'High',
-                      count: breakdown['High'] ?? 0,
-                      color: AppTheme.accentColor,
-                    ),
-                    _SeverityChip(
-                      label: 'Medium',
-                      count: breakdown['Medium'] ?? 0,
-                      color: AppTheme.warningColor,
-                    ),
-                    _SeverityChip(
-                      label: 'Low',
-                      count: breakdown['Low'] ?? 0,
-                      color: AppTheme.successColor,
-                    ),
-                  ],
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 16),
-
-              // Gap list
-              ...gaps.map((gap) => _RiskGapCard(gap: gap)),
-            ],
-          ),
-        );
-      },
-      loading: () => const Center(child: LoadingWidget()),
-      error: (e, _) => Center(child: Text('Error loading gaps: $e')),
-    );
-  }
-}
-
-class _RiskGapCard extends StatelessWidget {
-  final RiskGap gap;
-
-  const _RiskGapCard({required this.gap});
-
-  Color get _color {
-    switch (gap.riskLabel) {
-      case 'Critical':
-        return AppTheme.dangerColor;
-      case 'High':
-        return AppTheme.accentColor;
-      case 'Medium':
-        return AppTheme.warningColor;
-      default:
-        return AppTheme.successColor;
+  Color _coverageColor(CoverageLevel l) {
+    switch (l) {
+      case CoverageLevel.covered:          return Colors.green.shade600;
+      case CoverageLevel.partiallyCovered: return Colors.amber.shade600;
+      case CoverageLevel.notCovered:       return Colors.red.shade500;
+      case CoverageLevel.unknown:          return Colors.grey.shade400;
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Risk indicator bar
-            Container(
-              width: 4,
-              height: 60,
-              decoration: BoxDecoration(
-                color: _color,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        gap.technique.id,
-                        style: const TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _color.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          gap.riskLabel,
-                          style: TextStyle(
-                            color: _color,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    gap.technique.name,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.warning_amber, size: 12, color: _color),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${gap.coverageLabel} • Exposure: ${gap.exposedRiskScore.toStringAsFixed(1)}/10',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 4,
-                    children: gap.technique.tactics
-                        .take(3)
-                        .map(
-                          (tac) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              tac,
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontSize: 10,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Supporting widgets ───────────────────────────────────────────────────────
-
-class _RiskScoreCard extends StatelessWidget {
-  final AsyncValue<double> riskScoreAsync;
-  final AsyncValue<String> riskLabelAsync;
-
-  const _RiskScoreCard({
-    required this.riskScoreAsync,
-    required this.riskLabelAsync,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Organization Risk Score',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Weighted by tactic severity and ATT&CK coverage gaps',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            riskScoreAsync.when(
-              data: (score) {
-                final color = _riskColor(score);
-                return Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          score.toStringAsFixed(1),
-                          style: Theme.of(context).textTheme.displayLarge
-                              ?.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            ' / 100',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(color: Colors.grey),
-                          ),
-                        ),
-                        const Spacer(),
-                        riskLabelAsync.when(
-                          data: (label) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: color.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                color: color,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, _) => const SizedBox.shrink(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: score / 100.0,
-                        minHeight: 8,
-                        backgroundColor: color.withValues(alpha: 0.15),
-                        valueColor: AlwaysStoppedAnimation<Color>(color),
-                      ),
-                    ),
-                  ],
-                );
-              },
-              loading: () => const LoadingWidget(),
-              error: (e, _) => Text('Error: $e'),
-            ),
-          ],
-        ),
-      ),
-    );
+  IconData _coverageIcon(CoverageLevel l) {
+    switch (l) {
+      case CoverageLevel.covered:          return Icons.check_circle_rounded;
+      case CoverageLevel.partiallyCovered: return Icons.remove_circle_rounded;
+      case CoverageLevel.notCovered:       return Icons.cancel_rounded;
+      case CoverageLevel.unknown:          return Icons.help_rounded;
+    }
   }
 
-  Color _riskColor(double score) {
-    if (score >= 80) return AppTheme.dangerColor;
-    if (score >= 60) return AppTheme.accentColor;
-    if (score >= 40) return AppTheme.warningColor;
-    return AppTheme.successColor;
+  String _coverageLabel(CoverageLevel l) {
+    switch (l) {
+      case CoverageLevel.covered:          return 'Covered';
+      case CoverageLevel.partiallyCovered: return 'Partial';
+      case CoverageLevel.notCovered:       return 'None';
+      case CoverageLevel.unknown:          return 'Unknown';
+    }
   }
-}
 
-class _CoverageBreakdownRow extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color;
-  final IconData icon;
-
-  const _CoverageBreakdownRow({
-    required this.label,
-    required this.count,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-          Text(
-            '$count',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SeverityChip extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color;
-
-  const _SeverityChip({
-    required this.label,
-    required this.count,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 11,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  CoverageLevel _nextLevel(CoverageLevel l) {
+    switch (l) {
+      case CoverageLevel.unknown:          return CoverageLevel.notCovered;
+      case CoverageLevel.notCovered:       return CoverageLevel.partiallyCovered;
+      case CoverageLevel.partiallyCovered: return CoverageLevel.covered;
+      case CoverageLevel.covered:          return CoverageLevel.notCovered;
+    }
   }
 }
