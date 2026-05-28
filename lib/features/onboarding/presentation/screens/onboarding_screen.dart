@@ -171,7 +171,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           .read(organizationProfileV2Provider.notifier)
           .createOrUpdateProfile(profile);
 
-      // Mark onboarding complete
+      // Mark onboarding complete FIRST (before seeding)
+      // This ensures the router guard is updated even if seeding is slow
       await GetStorage().write(AppConstants.storageKeyOnboardingComplete, true);
 
       // Seed initial content immediately so the first post-onboarding session
@@ -180,8 +181,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       await storageService.initialize();
       final seedService = SeedDataService(
         storage: storageService,
-        alertRepo: AlertRepositoryImpl(storageService),
-        simRepo: SimulationRepositoryImpl(storageService),
+        alertRepo: AlertRepositoryImpl(),
         assetRepo: AssetRepositoryImpl(storageService),
       );
       await seedService.seedIfNeeded();
@@ -194,7 +194,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             duration: Duration(seconds: 2),
           ),
         );
-        context.go('/');
+        // Use a small delay to allow snackbar to show, then navigate
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (mounted) {
+          context.go('/');
+          // Reset loading state after navigation is initiated
+          setState(() => _isLoading = false);
+        }
       }
     } catch (e) {
       setState(() => _isLoading = false);

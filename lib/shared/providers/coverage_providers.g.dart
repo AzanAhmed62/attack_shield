@@ -61,7 +61,7 @@ final riskReportProvider = AutoDisposeFutureProvider<RiskReport>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef RiskReportRef = AutoDisposeFutureProviderRef<RiskReport>;
-String _$orgRiskScoreHash() => r'251c25a31a66f1dcde57d0966f79628b794d4d43';
+String _$orgRiskScoreHash() => r'191319eb7f8052ea957197af0802fb76d720dc45';
 
 /// See also [orgRiskScore].
 @ProviderFor(orgRiskScore)
@@ -79,7 +79,7 @@ final orgRiskScoreProvider = AutoDisposeFutureProvider<double>.internal(
 // ignore: unused_element
 typedef OrgRiskScoreRef = AutoDisposeFutureProviderRef<double>;
 String _$coveragePercentageHash() =>
-    r'0e5be13c0796fc9d6cd29c3d4b056829e8891e8f';
+    r'27b24eb68420e65fcb046a9672195aadccae1635';
 
 /// See also [coveragePercentage].
 @ProviderFor(coveragePercentage)
@@ -96,7 +96,7 @@ final coveragePercentageProvider = AutoDisposeFutureProvider<double>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CoveragePercentageRef = AutoDisposeFutureProviderRef<double>;
-String _$coverageBreakdownHash() => r'bb4c7af0424e5e74819d0a53a9dc03f0f316604b';
+String _$coverageBreakdownHash() => r'b05ba748bc0c3a76673d410c963df37d32520700';
 
 /// See also [coverageBreakdown].
 @ProviderFor(coverageBreakdown)
@@ -114,7 +114,7 @@ final coverageBreakdownProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CoverageBreakdownRef = AutoDisposeFutureProviderRef<Map<String, int>>;
-String _$topCoverageGapsHash() => r'2670aab20ed38fa8e52d48fabf358540b005155d';
+String _$topCoverageGapsHash() => r'4768281d15829dcbb2c267a83ab68f3974b2ba9e';
 
 /// See also [topCoverageGaps].
 @ProviderFor(topCoverageGaps)
@@ -283,187 +283,8 @@ class _TechniqueCoverageStatusProviderElement
       (origin as TechniqueCoverageStatusProvider).techniqueId;
 }
 
-String _$setCoverageLevelHash() => r'35b6cd2818ca1b77629c7b60d660f64aa68e4202';
-
-/// See also [setCoverageLevel].
-@ProviderFor(setCoverageLevel)
-const setCoverageLevelProvider = SetCoverageLevelFamily();
-
-/// See also [setCoverageLevel].
-class SetCoverageLevelFamily extends Family<AsyncValue<void>> {
-  /// See also [setCoverageLevel].
-  const SetCoverageLevelFamily();
-
-  /// See also [setCoverageLevel].
-  SetCoverageLevelProvider call(
-    String techniqueId,
-    CoverageLevel level, {
-    String? notes,
-    List<String>? controls,
-  }) {
-    return SetCoverageLevelProvider(
-      techniqueId,
-      level,
-      notes: notes,
-      controls: controls,
-    );
-  }
-
-  @override
-  SetCoverageLevelProvider getProviderOverride(
-    covariant SetCoverageLevelProvider provider,
-  ) {
-    return call(
-      provider.techniqueId,
-      provider.level,
-      notes: provider.notes,
-      controls: provider.controls,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'setCoverageLevelProvider';
-}
-
-/// See also [setCoverageLevel].
-class SetCoverageLevelProvider extends AutoDisposeFutureProvider<void> {
-  /// See also [setCoverageLevel].
-  SetCoverageLevelProvider(
-    String techniqueId,
-    CoverageLevel level, {
-    String? notes,
-    List<String>? controls,
-  }) : this._internal(
-         (ref) => setCoverageLevel(
-           ref as SetCoverageLevelRef,
-           techniqueId,
-           level,
-           notes: notes,
-           controls: controls,
-         ),
-         from: setCoverageLevelProvider,
-         name: r'setCoverageLevelProvider',
-         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-             ? null
-             : _$setCoverageLevelHash,
-         dependencies: SetCoverageLevelFamily._dependencies,
-         allTransitiveDependencies:
-             SetCoverageLevelFamily._allTransitiveDependencies,
-         techniqueId: techniqueId,
-         level: level,
-         notes: notes,
-         controls: controls,
-       );
-
-  SetCoverageLevelProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.techniqueId,
-    required this.level,
-    required this.notes,
-    required this.controls,
-  }) : super.internal();
-
-  final String techniqueId;
-  final CoverageLevel level;
-  final String? notes;
-  final List<String>? controls;
-
-  @override
-  Override overrideWith(
-    FutureOr<void> Function(SetCoverageLevelRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: SetCoverageLevelProvider._internal(
-        (ref) => create(ref as SetCoverageLevelRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        techniqueId: techniqueId,
-        level: level,
-        notes: notes,
-        controls: controls,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<void> createElement() {
-    return _SetCoverageLevelProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is SetCoverageLevelProvider &&
-        other.techniqueId == techniqueId &&
-        other.level == level &&
-        other.notes == notes &&
-        other.controls == controls;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, techniqueId.hashCode);
-    hash = _SystemHash.combine(hash, level.hashCode);
-    hash = _SystemHash.combine(hash, notes.hashCode);
-    hash = _SystemHash.combine(hash, controls.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin SetCoverageLevelRef on AutoDisposeFutureProviderRef<void> {
-  /// The parameter `techniqueId` of this provider.
-  String get techniqueId;
-
-  /// The parameter `level` of this provider.
-  CoverageLevel get level;
-
-  /// The parameter `notes` of this provider.
-  String? get notes;
-
-  /// The parameter `controls` of this provider.
-  List<String>? get controls;
-}
-
-class _SetCoverageLevelProviderElement
-    extends AutoDisposeFutureProviderElement<void>
-    with SetCoverageLevelRef {
-  _SetCoverageLevelProviderElement(super.provider);
-
-  @override
-  String get techniqueId => (origin as SetCoverageLevelProvider).techniqueId;
-  @override
-  CoverageLevel get level => (origin as SetCoverageLevelProvider).level;
-  @override
-  String? get notes => (origin as SetCoverageLevelProvider).notes;
-  @override
-  List<String>? get controls => (origin as SetCoverageLevelProvider).controls;
-}
-
 String _$tacticRiskBreakdownHash() =>
-    r'e5b00852267b65017459b2790f9a3dee824f0142';
+    r'f3ebdd89584102342094276bf715ef6455c893f8';
 
 /// See also [tacticRiskBreakdown].
 @ProviderFor(tacticRiskBreakdown)
@@ -624,5 +445,21 @@ class _TacticCoverageStatsProviderElement
       (origin as TacticCoverageStatsProvider).tacticShortName;
 }
 
+String _$coverageActionsHash() => r'fa30c4d96cf3a0a3d258dbc76a047314eed0c6fa';
+
+/// See also [CoverageActions].
+@ProviderFor(CoverageActions)
+final coverageActionsProvider =
+    AutoDisposeNotifierProvider<CoverageActions, bool>.internal(
+      CoverageActions.new,
+      name: r'coverageActionsProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$coverageActionsHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$CoverageActions = AutoDisposeNotifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

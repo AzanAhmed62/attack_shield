@@ -1,6 +1,6 @@
 // lib/shared/providers/coverage_providers.dart
-// FULL REPLACEMENT — coverage providers now feed real STIX data through
-// RiskEngine and produce live, accurate scores.
+// FULL REPLACEMENT — setCoverage uses a Notifier (not a broken family provider),
+// all providers use correct Ref syntax, RiskEngine wired to real STIX data.
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -12,7 +12,7 @@ import 'technique_providers.dart';
 
 part 'coverage_providers.g.dart';
 
-// ─── All coverage statuses (persisted in GetStorage) ─────────────────────────
+// ─── All coverage statuses ────────────────────────────────────────────────────
 @Riverpod(keepAlive: true)
 Future<List<CoverageStatus>> allCoverageStatuses(Ref ref) async {
   final repo = ref.watch(coverageRepositoryProvider);
@@ -23,10 +23,10 @@ Future<List<CoverageStatus>> allCoverageStatuses(Ref ref) async {
 @riverpod
 Future<Map<String, CoverageLevel>> coverageMap(Ref ref) async {
   final statuses = await ref.watch(allCoverageStatusesProvider.future);
-  return { for (final s in statuses) s.techniqueId : s.level };
+  return {for (final s in statuses) s.techniqueId: s.level};
 }
 
-// ─── Full RiskReport (recomputed whenever coverage or techniques change) ──────
+// ─── Full RiskReport (recomputed on every coverage or technique change) ───────
 @riverpod
 Future<RiskReport> riskReport(Ref ref) async {
   final techniques = await ref.watch(allTechniquesProvider.future);
@@ -34,84 +34,81 @@ Future<RiskReport> riskReport(Ref ref) async {
   return RiskEngine.calculate(techniques: techniques, coverageMap: covMap);
 }
 
-// ─── Convenience accessors (used in UI) ──────────────────────────────────────
+// ─── Convenience accessors ────────────────────────────────────────────────────
 @riverpod
-Future<double> orgRiskScore(Ref ref) async {
-  final report = await ref.watch(riskReportProvider.future);
-  return report.orgRiskScore;
-}
+Future<double> orgRiskScore(Ref ref) async =>
+    (await ref.watch(riskReportProvider.future)).orgRiskScore;
 
 @riverpod
-Future<double> coveragePercentage(Ref ref) async {
-  final report = await ref.watch(riskReportProvider.future);
-  return report.coveragePercent;
-}
+Future<double> coveragePercentage(Ref ref) async =>
+    (await ref.watch(riskReportProvider.future)).coveragePercent;
 
 @riverpod
 Future<Map<String, int>> coverageBreakdown(Ref ref) async {
-  final report = await ref.watch(riskReportProvider.future);
+  final r = await ref.watch(riskReportProvider.future);
   return {
-    'covered':   report.coveredCount,
-    'partial':   report.partialCount,
-    'uncovered': report.uncoveredCount,
-    'unknown':   report.unknownCount,
+    'covered':   r.coveredCount,
+    'partial':   r.partialCount,
+    'uncovered': r.uncoveredCount,
+    'unknown':   r.unknownCount,
   };
 }
 
 @riverpod
-Future<List<String>> topCoverageGaps(Ref ref) async {
-  final report = await ref.watch(riskReportProvider.future);
-  return report.topGaps;
-}
+Future<List<String>> topCoverageGaps(Ref ref) async =>
+    (await ref.watch(riskReportProvider.future)).topGaps;
 
-// ─── Per-technique coverage status ───────────────────────────────────────────
+// ─── Per-technique coverage ───────────────────────────────────────────────────
 @riverpod
 Future<CoverageStatus?> techniqueCoverageStatus(Ref ref, String techniqueId) async {
   final repo = ref.watch(coverageRepositoryProvider);
   return repo.getCoverageStatus(techniqueId);
 }
 
-// ─── Mutation: set coverage level for a technique ────────────────────────────
+// ─── Coverage mutations via Notifier (avoids broken named-param family) ───────
 @riverpod
-Future<void> setCoverageLevel(
-  Ref ref,
-  String techniqueId,
-  CoverageLevel level, {
-  String? notes,
-  List<String>? controls,
-}) async {
-  final repo = ref.watch(coverageRepositoryProvider);
-  final existing = await repo.getCoverageStatus(techniqueId);
+class CoverageActions extends _$CoverageActions {
+  @override
+  bool build() => false;
 
-  final updated = CoverageStatus(
-    id:              existing?.id ?? techniqueId,
-    techniqueId:     techniqueId,
-    level:           level,
-    notes:           notes ?? existing?.notes,
-    relatedControls: controls ?? existing?.relatedControls ?? [],
-    lastUpdated:     DateTime.now(),
-  );
+  Future<void> setLevel(
+    String techniqueId,
+    CoverageLevel level, {
+    String? notes,
+    List<String>? controls,
+  }) async {
+    final repo     = ref.read(coverageRepositoryProvider);
+    final existing = await repo.getCoverageStatus(techniqueId);
 
-  await repo.updateCoverageStatus(updated);
+    final updated = CoverageStatus(
+      id:              existing?.id ?? techniqueId,
+      techniqueId:     techniqueId,
+      level:           level,
+      notes:           notes ?? existing?.notes,
+      relatedControls: controls ?? existing?.relatedControls ?? [],
+      lastUpdated:     DateTime.now(),
+    );
 
-  // Invalidate all derived providers so UI refreshes
-  ref.invalidate(allCoverageStatusesProvider);
-  ref.invalidate(coverageMapProvider);
-  ref.invalidate(riskReportProvider);
-  ref.invalidate(orgRiskScoreProvider);
-  ref.invalidate(coveragePercentageProvider);
-  ref.invalidate(coverageBreakdownProvider);
-  ref.invalidate(topCoverageGapsProvider);
+    await repo.updateCoverageStatus(updated);
+    _invalidateAll();
+  }
+
+  void _invalidateAll() {
+    ref.invalidate(allCoverageStatusesProvider);
+    ref.invalidate(coverageMapProvider);
+    ref.invalidate(riskReportProvider);
+    ref.invalidate(orgRiskScoreProvider);
+    ref.invalidate(coveragePercentageProvider);
+    ref.invalidate(coverageBreakdownProvider);
+    ref.invalidate(topCoverageGapsProvider);
+  }
 }
 
-// ─── Tactic-level coverage (for matrix heatmap) ──────────────────────────────
+// ─── Tactic-level coverage for the heatmap ───────────────────────────────────
 @riverpod
-Future<List<TacticRiskEntry>> tacticRiskBreakdown(Ref ref) async {
-  final report = await ref.watch(riskReportProvider.future);
-  return report.tacticBreakdown;
-}
+Future<List<TacticRiskEntry>> tacticRiskBreakdown(Ref ref) async =>
+    (await ref.watch(riskReportProvider.future)).tacticBreakdown;
 
-// ─── Coverage stats for a specific tactic ────────────────────────────────────
 @riverpod
 Future<({int covered, int total, double coveragePct})> tacticCoverageStats(
   Ref ref,
@@ -121,11 +118,9 @@ Future<({int covered, int total, double coveragePct})> tacticCoverageStats(
   final covMap   = await ref.watch(coverageMapProvider.future);
   final techs    = byTactic[tacticShortName] ?? [];
   if (techs.isEmpty) return (covered: 0, total: 0, coveragePct: 0.0);
-
-  final covered = techs.where((t) =>
-    covMap[t.id] == CoverageLevel.covered
-  ).length;
-
+  final covered  = techs
+      .where((t) => covMap[t.id] == CoverageLevel.covered)
+      .length;
   return (
     covered:     covered,
     total:       techs.length,

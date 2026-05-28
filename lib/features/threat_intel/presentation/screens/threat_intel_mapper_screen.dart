@@ -1,3 +1,4 @@
+import 'package:attackshield/shared/models/security_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -146,27 +147,27 @@ class _ThreatIntelMapperScreenState
           ? result.mappedTechniques.first.techniqueId
           : null;
 
-      final alert = AlertItem(
+      final securityAlert = SecurityAlert(
         id: const Uuid().v4(),
         title: result.alertTitle,
         description: result.summary,
-        priority: priority,
-        status: AlertStatus.open,
+        severity: _priorityToSeverity(priority),
+        status: 'open',
         source: 'AI Threat Intel Mapper',
-        relatedTechniqueId: relatedId,
+        linkedTechniqueId: relatedId,
         createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        isRead: false,
         notes:
             'Threat actor: ${result.threatActor}\nMapped techniques: ${result.mappedTechniques.map((m) => m.techniqueId).join(', ')}\n\nRecommendations:\n${result.recommendedActions.map((r) => '• $r').join('\n')}',
       );
 
-      await ref.read(createAlertProvider(alert).future);
+      await ref.read(alertActionsProvider.notifier).create(securityAlert);
 
       if (mounted) {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Alert "${alert.title}" created'),
+            content: Text('Alert "${securityAlert.title}" created'),
             backgroundColor: AppTheme.successColor,
             action: SnackBarAction(
               label: 'View',
@@ -184,6 +185,15 @@ class _ThreatIntelMapperScreenState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  String _priorityToSeverity(AlertPriority priority) {
+    return switch (priority) {
+      AlertPriority.critical => 'critical',
+      AlertPriority.high => 'high',
+      AlertPriority.medium => 'medium',
+      AlertPriority.low => 'low',
+    };
   }
 }
 

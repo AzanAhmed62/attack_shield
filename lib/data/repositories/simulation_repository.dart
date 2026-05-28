@@ -1,11 +1,11 @@
 // lib/data/repositories/simulation_repository.dart
-// FULL REPLACEMENT — persists simulation history in GetStorage,
-// exposes getSimulationHistory() used by the history tab.
+// FIX: imports SimulationHistoryEntry from its extracted model file,
+// not from simulations_screen.dart (which would be a circular import).
 
 import 'dart:convert';
+import 'package:attackshield/shared/models/simulation_history_entry.dart';
 import 'package:get_storage/get_storage.dart';
 
-import '../../features/simulations/presentation/screens/simulations_screen.dart';
 import '../services/local_storage_service.dart';
 
 const _kHistoryKey = 'simulation_history_v1';
@@ -17,6 +17,7 @@ abstract class SimulationRepository {
 }
 
 class SimulationRepositoryImpl implements SimulationRepository {
+  // ignore: unused_field
   final LocalStorageService _storage;
   SimulationRepositoryImpl(this._storage);
 
@@ -26,7 +27,7 @@ class SimulationRepositoryImpl implements SimulationRepository {
   Future<List<SimulationHistoryEntry>> getSimulationHistory() async {
     try {
       final raw = _box.read<String>(_kHistoryKey);
-      if (raw == null) return [];
+      if (raw == null || raw.isEmpty) return [];
       final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
       return list.map(_fromJson).toList()
         ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -39,15 +40,12 @@ class SimulationRepositoryImpl implements SimulationRepository {
   Future<void> saveSimulationResult(SimulationHistoryEntry entry) async {
     final existing = await getSimulationHistory();
     existing.insert(0, entry);
-    // Keep last 50 results
-    final trimmed = existing.take(50).toList();
+    final trimmed = existing.take(50).toList(); // keep last 50
     await _box.write(_kHistoryKey, jsonEncode(trimmed.map(_toJson).toList()));
   }
 
   @override
-  Future<void> clearHistory() async {
-    await _box.remove(_kHistoryKey);
-  }
+  Future<void> clearHistory() async => _box.remove(_kHistoryKey);
 
   Map<String, dynamic> _toJson(SimulationHistoryEntry e) => {
     'scenarioName':     e.scenarioName,
@@ -59,10 +57,10 @@ class SimulationRepositoryImpl implements SimulationRepository {
 
   SimulationHistoryEntry _fromJson(Map<String, dynamic> m) =>
     SimulationHistoryEntry(
-      scenarioName:    m['scenarioName'] as String,
-      scenarioIcon:    m['scenarioIcon'] as String,
+      scenarioName:    m['scenarioName']    as String,
+      scenarioIcon:    m['scenarioIcon']    as String,
       totalTechniques: m['totalTechniques'] as int,
-      readiness:       (m['readiness'] as num).toDouble(),
+      readiness:       (m['readiness']      as num).toDouble(),
       timestamp:       DateTime.parse(m['timestamp'] as String),
     );
 }

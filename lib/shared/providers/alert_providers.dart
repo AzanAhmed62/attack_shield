@@ -1,105 +1,74 @@
 // lib/shared/providers/alert_providers.dart
-// Real CRUD providers for AlertItem with proper enums and types.
+// FULL REPLACEMENT — correct Riverpod codegen syntax. Family providers only
+// take primitive types as params (String, int, bool). Complex object mutations
+// use a Notifier pattern instead.
 
-import 'package:attackshield/shared/models/alert_item.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../models/security_alert.dart';
 import 'repository_providers.dart';
 
 part 'alert_providers.g.dart';
 
-// ─── All alerts (live list) ───────────────────────────────────────────────────
-@Riverpod(keepAlive: false)
-Future<List<AlertItem>> alerts(Ref ref) async {
+// ─── All alerts (live, re-fetched whenever invalidated) ───────────────────────
+@riverpod
+Future<List<SecurityAlert>> alerts(Ref ref) async {
   final repo = ref.watch(alertRepositoryProvider);
   return repo.getAllAlerts();
 }
 
-// ─── Create ───────────────────────────────────────────────────────────────────
+// ─── Alert mutations via a Notifier (avoids complex family params) ────────────
 @riverpod
-Future<void> createAlert(Ref ref, AlertItem alert) async {
-  final repo = ref.read(alertRepositoryProvider);
-  await repo.createAlert(alert);
-  ref.invalidate(alertsProvider);
+class AlertActions extends _$AlertActions {
+  @override
+  bool build() => false; // dummy state — we just use the actions
+
+  Future<void> create(SecurityAlert alert) async {
+    final repo = ref.read(alertRepositoryProvider);
+    await repo.createAlert(alert);
+    ref.invalidate(alertsProvider);
+  }
+
+  Future<void> resolve(String id) async {
+    final repo   = ref.read(alertRepositoryProvider);
+    final alerts = await repo.getAllAlerts();
+    try {
+      final alert = alerts.firstWhere((a) => a.id == id);
+      await repo.updateAlert(alert.copyWith(status: 'resolved'));
+      ref.invalidate(alertsProvider);
+    } catch (_) {}
+  }
+
+  Future<void> markRead(String id) async {
+    final repo   = ref.read(alertRepositoryProvider);
+    final alerts = await repo.getAllAlerts();
+    try {
+      final alert = alerts.firstWhere((a) => a.id == id);
+      if (!alert.isRead) {
+        await repo.updateAlert(alert.copyWith(isRead: true));
+        ref.invalidate(alertsProvider);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> delete(String id) async {
+    final repo = ref.read(alertRepositoryProvider);
+    await repo.deleteAlert(id);
+    ref.invalidate(alertsProvider);
+  }
 }
 
-// ─── Update status ────────────────────────────────────────────────────────────
-@riverpod
-Future<void> updateAlertStatus(Ref ref, String id, AlertStatus status) async {
-  final repo = ref.read(alertRepositoryProvider);
-  final alerts = await repo.getAllAlerts();
-  final alert = alerts.firstWhere((a) => a.id == id);
-  await repo.updateAlert(alert.copyWith(status: status));
-  ref.invalidate(alertsProvider);
-}
-
-// ─── Resolve alert ────────────────────────────────────────────────────────────
-@riverpod
-Future<void> resolveAlert(Ref ref, String id) async {
-  final repo = ref.read(alertRepositoryProvider);
-  final alerts = await repo.getAllAlerts();
-  final alert = alerts.firstWhere((a) => a.id == id);
-  await repo.updateAlert(alert.copyWith(status: AlertStatus.resolved));
-  ref.invalidate(alertsProvider);
-}
-
-// ─── Acknowledge alert ────────────────────────────────────────────────────────
-@riverpod
-Future<void> acknowledgeAlert(Ref ref, String id) async {
-  final repo = ref.read(alertRepositoryProvider);
-  final alerts = await repo.getAllAlerts();
-  final alert = alerts.firstWhere((a) => a.id == id);
-  await repo.updateAlert(alert.copyWith(status: AlertStatus.acknowledged));
-  ref.invalidate(alertsProvider);
-}
-
-// ─── Delete ───────────────────────────────────────────────────────────────────
-@riverpod
-Future<void> deleteAlert(Ref ref, String id) async {
-  final repo = ref.read(alertRepositoryProvider);
-  await repo.deleteAlert(id);
-  ref.invalidate(alertsProvider);
-}
-
-// ─── Get by status ────────────────────────────────────────────────────────────
-@riverpod
-Future<List<AlertItem>> alertsByStatus(Ref ref, AlertStatus status) async {
-  final repo = ref.watch(alertRepositoryProvider);
-  return repo.getAlertsByStatus(status);
-}
-
-// ─── Get by priority ──────────────────────────────────────────────────────────
-@riverpod
-Future<List<AlertItem>> alertsByPriority(
-  Ref ref,
-  AlertPriority priority,
-) async {
-  final repo = ref.watch(alertRepositoryProvider);
-  return repo.getAlertsByPriority(priority);
-}
-
-// ─── Get by technique ─────────────────────────────────────────────────────────
-@riverpod
-Future<List<AlertItem>> alertsByTechnique(Ref ref, String techniqueId) async {
-  final repo = ref.watch(alertRepositoryProvider);
-  return repo.getAlertsByTechnique(techniqueId);
-}
-
-// ─── Alert count (for dashboard badge) ───────────────────────────────────────
+// ─── Counts (for dashboard) ───────────────────────────────────────────────────
 @riverpod
 Future<int> openAlertCount(Ref ref) async {
   final all = await ref.watch(alertsProvider.future);
-  return all.where((a) => a.status == AlertStatus.open).length;
+  return all.where((a) => a.status == 'open').length;
 }
 
 @riverpod
 Future<int> criticalAlertCount(Ref ref) async {
   final all = await ref.watch(alertsProvider.future);
   return all
-      .where(
-        (a) =>
-            a.priority == AlertPriority.critical &&
-            a.status == AlertStatus.open,
-      )
+      .where((a) => a.severity == 'critical' && a.status == 'open')
       .length;
 }

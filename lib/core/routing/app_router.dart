@@ -1,40 +1,43 @@
-// lib/core/router/app_router.dart
-// FULL REPLACEMENT — all routes verified, onboarding guard, no broken paths.
+// lib/core/routing/app_router.dart
+// FULL REPLACEMENT — correct import paths matching actual repo structure.
+// Keeps /technique/:id as a redirect for backward compatibility with any
+// old context.push('/technique/$id') calls in unchanged screens.
 
-import 'package:attackshield/features/attack_library/presentation/screens/attack_library_screen.dart';
-import 'package:attackshield/features/organization/presentation/screens/organization_setup_wizard.dart';
-import 'package:attackshield/features/technique_detail/presentation/screens/technique_detail_screen.dart';
-import 'package:attackshield/features/threat_mapping/presentation/screens/threat_mapping_screen.dart';
+import 'package:attackshield/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:get_storage/get_storage.dart';
 
+// ── Screens — use actual paths from repo directory structure ──────────────────
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/attack_library/presentation/screens/attack_library_screen.dart';
+import '../../features/technique_detail/presentation/screens/technique_detail_screen.dart';
+import '../../features/threat_mapping/presentation/screens/threat_mapping_screen.dart';
 import '../../features/alerts/presentation/screens/alerts_screen.dart';
 import '../../features/alerts/presentation/screens/create_alert_screen.dart';
 import '../../features/simulations/presentation/screens/simulations_screen.dart';
 import '../../features/reports/presentation/screens/reports_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
-import '../../shared/widgets/main_scaffold.dart';
+import '../../core/widgets/main_scaffold.dart';
 
 part 'app_router.g.dart';
 
-// ─── Route constants ──────────────────────────────────────────────────────────
+// ─── Route path constants ─────────────────────────────────────────────────────
 class AppRoutes {
-  static const onboarding       = '/onboarding';
-  static const orgSetup         = '/setup-organization';
-  static const dashboard        = '/dashboard';
-  static const library          = '/library';
-  static const libraryDetail    = '/library/:id';
-  static const coverage         = '/coverage';
-  static const alerts           = '/alerts';
-  static const createAlert      = '/alerts/create';
-  static const simulations      = '/simulations';
-  static const reports          = '/reports';
-  static const settings         = '/settings';
+  static const onboarding = '/onboarding';
+  static const dashboard = '/dashboard';
+  static const library = '/library';
+  static const libraryDetail = '/library/:id';
+  static const technique = '/technique/:id'; // legacy compat alias
+  static const coverage = '/coverage';
+  static const alerts = '/alerts';
+  static const createAlert = '/alerts/create';
+  static const simulations = '/simulations';
+  static const reports = '/reports';
+  static const settings = '/settings';
 }
 
 @riverpod
@@ -43,56 +46,46 @@ GoRouter appRouter(Ref ref) {
     initialLocation: AppRoutes.dashboard,
     debugLogDiagnostics: false,
 
-    // ── Onboarding redirect guard ─────────────────────────────────────────
+    // ── Onboarding guard ──────────────────────────────────────────────────
     redirect: (context, state) {
-      final storage  = GetStorage();
-      final hasOnboarded = storage.read<bool>('hasCompletedOnboarding') ?? false;
-      final orgName      = storage.read<String>('org_name');
-      final isOnboarding = state.matchedLocation == AppRoutes.onboarding ||
-                           state.matchedLocation == AppRoutes.orgSetup;
+      final storage = GetStorage();
+      final hasOnboarded =
+          storage.read<bool>(AppConstants.storageKeyOnboardingComplete) ??
+          false;
+      final loc = state.matchedLocation;
+      final isSetup = loc == AppRoutes.onboarding;
 
-      // First launch — redirect to onboarding
-      if (!hasOnboarded && !isOnboarding) return AppRoutes.onboarding;
-      // Org profile missing — redirect to setup
-      if (hasOnboarded && (orgName == null || orgName.isEmpty) && !isOnboarding) {
-        return AppRoutes.orgSetup;
-      }
+      if (!hasOnboarded && !isSetup) return AppRoutes.onboarding;
       return null;
     },
 
     routes: [
-      // ── Onboarding (outside shell) ──────────────────────────────────────
+      // ── Onboarding (outside shell) ────────────────────────────────────
       GoRoute(
-        path:    AppRoutes.onboarding,
-        name:    'onboarding',
+        path: AppRoutes.onboarding,
+        name: 'onboarding',
         builder: (_, __) => const OnboardingScreen(),
       ),
-      GoRoute(
-        path:    AppRoutes.orgSetup,
-        name:    'orgSetup',
-        builder: (_, __) => const OrganizationSetupWizard(),
-      ),
 
-      // ── Main shell (bottom nav) ─────────────────────────────────────────
+      // ── Main shell (bottom nav) ───────────────────────────────────────
       ShellRoute(
         builder: (context, state, child) =>
-          MainScaffold(location: state.matchedLocation, child: child),
+            MainScaffold(child: child, location: state.matchedLocation),
         routes: [
-
           GoRoute(
-            path:    AppRoutes.dashboard,
-            name:    'dashboard',
+            path: AppRoutes.dashboard,
+            name: 'dashboard',
             builder: (_, __) => const DashboardScreen(),
           ),
 
           GoRoute(
-            path:    AppRoutes.library,
-            name:    'library',
+            path: AppRoutes.library,
+            name: 'library',
             builder: (_, __) => const AttackLibraryScreen(),
             routes: [
               GoRoute(
-                path:    ':id',
-                name:    'techniqueDetail',
+                path: ':id',
+                name: 'libraryDetail',
                 builder: (_, state) => TechniqueDetailScreen(
                   techniqueId: state.pathParameters['id']!,
                 ),
@@ -100,40 +93,47 @@ GoRouter appRouter(Ref ref) {
             ],
           ),
 
+          // ── Legacy /technique/:id → redirect to /library/:id ────────
           GoRoute(
-            path:    AppRoutes.coverage,
-            name:    'coverage',
+            path: '/technique/:id',
+            name: 'techniqueCompat',
+            redirect: (_, state) => '/library/${state.pathParameters['id']}',
+          ),
+
+          GoRoute(
+            path: AppRoutes.coverage,
+            name: 'coverage',
             builder: (_, __) => const ThreatMappingScreen(),
           ),
 
           GoRoute(
-            path:    AppRoutes.alerts,
-            name:    'alerts',
+            path: AppRoutes.alerts,
+            name: 'alerts',
             builder: (_, __) => const AlertsScreen(),
             routes: [
               GoRoute(
-                path:    'create',
-                name:    'createAlert',
+                path: 'create',
+                name: 'createAlert',
                 builder: (_, __) => const CreateAlertScreen(),
               ),
             ],
           ),
 
           GoRoute(
-            path:    AppRoutes.simulations,
-            name:    'simulations',
+            path: AppRoutes.simulations,
+            name: 'simulations',
             builder: (_, __) => const SimulationsScreen(),
           ),
 
           GoRoute(
-            path:    AppRoutes.reports,
-            name:    'reports',
+            path: AppRoutes.reports,
+            name: 'reports',
             builder: (_, __) => const ReportsScreen(),
           ),
 
           GoRoute(
-            path:    AppRoutes.settings,
-            name:    'settings',
+            path: AppRoutes.settings,
+            name: 'settings',
             builder: (_, __) => const SettingsScreen(),
           ),
         ],
@@ -142,16 +142,19 @@ GoRouter appRouter(Ref ref) {
 
     errorBuilder: (_, state) => Scaffold(
       body: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.broken_image_outlined, size: 48),
-          const SizedBox(height: 12),
-          Text('Page not found: ${state.error?.message ?? state.uri}'),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () => state.namedLocation('dashboard'),
-            child: const Text('Go to Dashboard'),
-          ),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.broken_image_outlined, size: 48),
+            const SizedBox(height: 12),
+            Text('Page not found: ${state.uri}'),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () => state.namedLocation('dashboard'),
+              child: const Text('Go to Dashboard'),
+            ),
+          ],
+        ),
       ),
     ),
   );

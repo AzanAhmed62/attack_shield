@@ -1,34 +1,27 @@
 // lib/features/simulations/presentation/screens/simulations_screen.dart
-// FULL REPLACEMENT — ATT&CK Navigator-style tactic matrix heatmap,
-// scenario builder, Gemini narrative, simulation history chart.
+// FIX: removed @riverpod + SimulationHistoryEntry defined inside screen
+// FIX: simulation results now saved to SimulationRepository after each run
+// FIX: imports simulation_providers.dart for history
 
-import 'dart:math';
-import 'package:attackshield/features/simulation/providers/simulation_providers.dart';
+import 'package:attackshield/shared/models/simulation_history_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../shared/models/attack_technique.dart';
 import '../../../../shared/models/coverage_status.dart';
 import '../../../../shared/providers/technique_providers.dart';
 import '../../../../shared/providers/coverage_providers.dart';
 import '../../../../shared/providers/repository_providers.dart';
-import '../../../../shared/widgets/shimmer_loader.dart';
-import '../../../../core/engine/risk_engine.dart';
-import '../../../../data/services/gemini_service.dart';
-
-part 'simulations_screen.g.dart';
+import '../../../../shared/providers/simulation_providers.dart';
+import '../../../../core/widgets/shimmer_loader.dart';
 
 // ─── Built-in scenarios ───────────────────────────────────────────────────────
 class _Scenario {
-  final String id, name, description, icon;
-  final List<String> tacticFocus; // shortNames to highlight
-  final List<String> techniques; // T-IDs included in scenario
-  final String threatActor;
-
+  final String id, name, description, icon, threatActor;
+  final List<String> tacticFocus, techniques;
   const _Scenario({
     required this.id,
     required this.name,
@@ -44,9 +37,9 @@ const _scenarios = [
   _Scenario(
     id: 'ransomware',
     name: 'Ransomware Attack',
+    icon: '🔒',
     description:
         'Simulates a modern ransomware intrusion chain from phishing to encryption.',
-    icon: '🔒',
     threatActor: 'Conti / LockBit TTPs',
     tacticFocus: [
       'initial-access',
@@ -69,9 +62,9 @@ const _scenarios = [
   _Scenario(
     id: 'apt29',
     name: 'APT29 (Cozy Bear)',
+    icon: '🕵️',
     description:
         'Nation-state espionage campaign targeting credentials and sensitive data.',
-    icon: '🕵️',
     threatActor: 'APT29 / SVR',
     tacticFocus: [
       'initial-access',
@@ -94,9 +87,9 @@ const _scenarios = [
   _Scenario(
     id: 'supply_chain',
     name: 'Supply Chain Compromise',
+    icon: '📦',
     description:
         'Attacker compromises a trusted software vendor to reach targets.',
-    icon: '📦',
     threatActor: 'SolarWinds-style TTP',
     tacticFocus: [
       'initial-access',
@@ -109,8 +102,8 @@ const _scenarios = [
   _Scenario(
     id: 'insider_threat',
     name: 'Insider Threat',
-    description: 'Malicious or negligent insider abusing legitimate access.',
     icon: '👤',
+    description: 'Malicious or negligent insider abusing legitimate access.',
     threatActor: 'Insider / Compromised Account',
     tacticFocus: [
       'collection',
@@ -123,9 +116,9 @@ const _scenarios = [
   _Scenario(
     id: 'cloud_attack',
     name: 'Cloud Infrastructure Attack',
+    icon: '☁️',
     description:
         'Targets cloud-hosted resources through misconfiguration and credential abuse.',
-    icon: '☁️',
     threatActor: 'Cloud-native adversary',
     tacticFocus: [
       'initial-access',
@@ -137,7 +130,6 @@ const _scenarios = [
   ),
 ];
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
 class SimulationsScreen extends HookConsumerWidget {
   const SimulationsScreen({super.key});
 
@@ -162,7 +154,7 @@ class SimulationsScreen extends HookConsumerWidget {
           preferredSize: const Size.fromHeight(44),
           child: Row(
             children: _tabs.asMap().entries.map((e) {
-              final selected = e.key == tabIndex.value;
+              final sel = e.key == tabIndex.value;
               return Expanded(
                 child: GestureDetector(
                   onTap: () => tabIndex.value = e.key,
@@ -172,7 +164,7 @@ class SimulationsScreen extends HookConsumerWidget {
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: selected ? cs.primary : Colors.transparent,
+                          color: sel ? cs.primary : Colors.transparent,
                           width: 2,
                         ),
                       ),
@@ -182,10 +174,8 @@ class SimulationsScreen extends HookConsumerWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: selected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: selected ? cs.primary : cs.outline,
+                        fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
+                        color: sel ? cs.primary : cs.outline,
                       ),
                     ),
                   ),
@@ -204,7 +194,7 @@ class SimulationsScreen extends HookConsumerWidget {
   }
 }
 
-// ─── Tab 1: Matrix Heatmap ────────────────────────────────────────────────────
+// ─── Matrix heatmap ───────────────────────────────────────────────────────────
 class _MatrixTab extends HookConsumerWidget {
   const _MatrixTab();
 
@@ -225,7 +215,6 @@ class _MatrixTab extends HookConsumerWidget {
           final covMap = coverageMap.value ?? {};
           return Column(
             children: [
-              // Legend
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: Row(
@@ -242,13 +231,12 @@ class _MatrixTab extends HookConsumerWidget {
                     _LegendDot(color: cs.outlineVariant, label: 'Unknown'),
                     const Spacer(),
                     Text(
-                      'Tap a cell to view technique',
+                      'Tap cell to view',
                       style: TextStyle(fontSize: 10, color: cs.outline),
                     ),
                   ],
                 ),
               ),
-              // Matrix
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -287,18 +275,16 @@ class _TacticColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final total = techniques.length;
     final covered = techniques
         .where((t) => covMap[t.id] == CoverageLevel.covered)
         .length;
-    final pct = total > 0 ? covered / total : 0.0;
+    final pct = techniques.isEmpty ? 0.0 : covered / techniques.length;
 
     return Container(
       width: 108,
       margin: const EdgeInsets.only(right: 6),
       child: Column(
         children: [
-          // Tactic header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
@@ -331,7 +317,7 @@ class _TacticColumn extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$covered/$total',
+                  '$covered/${techniques.length}',
                   style: TextStyle(
                     fontSize: 9,
                     color: cs.onPrimaryContainer.withOpacity(.7),
@@ -341,7 +327,6 @@ class _TacticColumn extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          // Technique cells
           ...techniques.map((t) {
             final cov = covMap[t.id] ?? CoverageLevel.unknown;
             final color = _cellColor(cov, t.riskScore);
@@ -385,9 +370,8 @@ class _TacticColumn extends StatelessWidget {
       case CoverageLevel.partiallyCovered:
         return Colors.amber.shade600;
       case CoverageLevel.notCovered:
-        // Shade red by risk score — higher risk = darker red
-        final intensity = (riskScore / 10.0).clamp(0.3, 1.0);
-        return Color.lerp(Colors.red.shade300, Colors.red.shade800, intensity)!;
+        final i = (riskScore / 10.0).clamp(0.3, 1.0);
+        return Color.lerp(Colors.red.shade300, Colors.red.shade800, i)!;
       case CoverageLevel.unknown:
         return Colors.grey.shade400;
     }
@@ -398,34 +382,31 @@ class _LegendDot extends StatelessWidget {
   final Color color;
   final String label;
   const _LegendDot({required this.color, required this.label});
-
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(2),
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+      ),
+      const SizedBox(width: 4),
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
 }
 
-// ─── Tab 2: Scenarios ─────────────────────────────────────────────────────────
+// ─── Scenarios tab ────────────────────────────────────────────────────────────
 class _ScenariosTab extends HookConsumerWidget {
   const _ScenariosTab();
 
@@ -451,7 +432,6 @@ class _ScenariosTab extends HookConsumerWidget {
 
       final allTechs = allTechsAsync.value ?? [];
       final covMap = coverageMap.value ?? {};
-
       final scenTechs = allTechs
           .where((t) => scenario.techniques.contains(t.id))
           .toList();
@@ -482,7 +462,17 @@ class _ScenariosTab extends HookConsumerWidget {
       );
       running.value = false;
 
-      // Fetch Gemini narrative
+      // FIX: save to repository so History tab shows it
+      final entry = SimulationHistoryEntry(
+        scenarioName: scenario.name,
+        scenarioIcon: scenario.icon,
+        totalTechniques: total,
+        readiness: readiness,
+        timestamp: DateTime.now(),
+      );
+      await ref.read(saveSimulationResultProvider(entry).future);
+
+      // Gemini narrative
       narrativeLoading.value = true;
       try {
         final gemini = ref.read(geminiServiceProvider);
@@ -515,7 +505,6 @@ class _ScenariosTab extends HookConsumerWidget {
               style: TextStyle(fontSize: 12, color: cs.outline),
             ),
             const SizedBox(height: 14),
-
             ..._scenarios.map(
               (s) => _ScenarioCard(
                 scenario: s,
@@ -523,8 +512,7 @@ class _ScenariosTab extends HookConsumerWidget {
                 onRun: () => runScenario(s),
               ),
             ),
-          ] else ...[
-            // Result view
+          ] else
             _SimResultCard(
               result: result.value!,
               narrative: narrative.value,
@@ -534,7 +522,6 @@ class _ScenariosTab extends HookConsumerWidget {
                 narrative.value = null;
               },
             ),
-          ],
         ],
       ),
     );
@@ -550,7 +537,6 @@ class _ScenarioCard extends StatelessWidget {
     required this.isRunning,
     required this.onRun,
   });
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -646,7 +632,6 @@ class _SimResultCard extends StatelessWidget {
     required this.narrativeLoading,
     required this.onReset,
   });
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -683,7 +668,6 @@ class _SimResultCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Score card
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -723,7 +707,7 @@ class _SimResultCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      result.scenario.icon + '  ' + result.scenario.name,
+                      '${result.scenario.icon}  ${result.scenario.name}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -788,7 +772,6 @@ class _SimResultCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // Exposed techniques
         if (result.gaps.isNotEmpty) ...[
           Container(
             padding: const EdgeInsets.all(14),
@@ -846,7 +829,6 @@ class _SimResultCard extends StatelessWidget {
           const SizedBox(height: 12),
         ],
 
-        // AI narrative
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -887,8 +869,6 @@ class _SimResultCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-
-        // Action button
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
@@ -902,13 +882,13 @@ class _SimResultCard extends StatelessWidget {
   }
 }
 
-// ─── Tab 3: History ───────────────────────────────────────────────────────────
+// ─── History tab ──────────────────────────────────────────────────────────────
 class _HistoryTab extends ConsumerWidget {
   const _HistoryTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Simulation history from repository
+    // FIX: uses simulationHistoryProvider from simulation_providers.dart (not @riverpod in this file)
     final historyAsync = ref.watch(simulationHistoryProvider);
     final cs = Theme.of(context).colorScheme;
 
@@ -960,8 +940,6 @@ class _HistoryTab extends ConsumerWidget {
                 style: TextStyle(fontSize: 12, color: cs.outline),
               ),
               const SizedBox(height: 16),
-
-              // Line chart
               SizedBox(
                 height: 180,
                 child: LineChart(
@@ -986,13 +964,13 @@ class _HistoryTab extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      bottomTitles: const AxisTitles(
+                      bottomTitles: AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      topTitles: const AxisTitles(
+                      topTitles: AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      rightTitles: const AxisTitles(
+                      rightTitles: AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
                     ),
@@ -1021,8 +999,6 @@ class _HistoryTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // History list
               ...history.reversed.map((h) {
                 final color = h.readiness >= 75
                     ? Colors.green.shade600
@@ -1056,8 +1032,7 @@ class _HistoryTab extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              '${h.timestamp.day}/${h.timestamp.month}/${h.timestamp.year}  '
-                              '· ${h.totalTechniques} techniques assessed',
+                              '${h.timestamp.day}/${h.timestamp.month}/${h.timestamp.year}  · ${h.totalTechniques} techniques',
                               style: TextStyle(fontSize: 11, color: cs.outline),
                             ),
                           ],
@@ -1090,36 +1065,12 @@ class _SimResult {
   final List<String> gaps;
   final double readiness;
   final DateTime timestamp;
-
   const _SimResult({
     required this.scenario,
     required this.total,
     required this.passed,
     required this.failed,
     required this.gaps,
-    required this.readiness,
-    required this.timestamp,
-  });
-}
-
-// ─── Simulation history provider (stub — wire to SimulationRepository) ────────
-// Replace this with your real simulationRepository data once the repo is set up.
-@riverpod
-Future<List<SimulationHistoryEntry>> simulationHistory(Ref ref) async {
-  final repo = ref.watch(simulationRepositoryProvider);
-  return repo.getSimulationHistory();
-}
-
-class SimulationHistoryEntry {
-  final String scenarioName, scenarioIcon;
-  final int totalTechniques;
-  final double readiness;
-  final DateTime timestamp;
-
-  const SimulationHistoryEntry({
-    required this.scenarioName,
-    required this.scenarioIcon,
-    required this.totalTechniques,
     required this.readiness,
     required this.timestamp,
   });

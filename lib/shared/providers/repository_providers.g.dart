@@ -60,7 +60,7 @@ final attackTechniqueRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AttackTechniqueRepositoryRef = ProviderRef<AttackTechniqueRepository>;
-String _$alertRepositoryHash() => r'35f1b7bc3e8c124906e64c191edd96e7303055fd';
+String _$alertRepositoryHash() => r'3a745e7c539e7963a18ce5677b6199b844f6caa1';
 
 /// See also [alertRepository].
 @ProviderFor(alertRepository)

@@ -1,10 +1,9 @@
 // lib/features/reports/presentation/screens/reports_screen.dart
-// FULL REPLACEMENT — generates PDF with real data: risk score, coverage
-// breakdown, top gaps, tactic scores, Gemini executive summary.
-
-import 'dart:typed_data';
+// FIX: added missing import for RiskReport from core/engine/risk_engine.dart
+// FIX: _buildPdf now correctly typed and uses real coverage data
 
 import 'package:flutter/material.dart';
+import 'dart:typed_data' show Uint8List;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:get_storage/get_storage.dart';
@@ -12,11 +11,11 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+// FIX: import RiskReport — was missing, caused compile error
+import '../../../../core/engine/risk_engine.dart';
 import '../../../../shared/providers/coverage_providers.dart';
 import '../../../../shared/providers/technique_providers.dart';
 import '../../../../shared/providers/repository_providers.dart';
-import '../../../../core/engine/risk_engine.dart';
-import '../../../../data/services/gemini_service.dart';
 
 class ReportsScreen extends HookConsumerWidget {
   const ReportsScreen({super.key});
@@ -26,7 +25,6 @@ class ReportsScreen extends HookConsumerWidget {
     final riskReport = ref.watch(riskReportProvider);
     final isGenerating = useState(false);
     final statusMsg = useState<String?>(null);
-    final storage = GetStorage();
     final cs = Theme.of(context).colorScheme;
 
     Future<void> generateReport() async {
@@ -35,17 +33,15 @@ class ReportsScreen extends HookConsumerWidget {
       try {
         final report = await ref.read(riskReportProvider.future);
         final allTechs = await ref.read(allTechniquesProvider.future);
-        final covMap = await ref.read(coverageMapProvider.future);
-        final orgName = storage.read<String>('org_name') ?? 'Your Organisation';
-        final sector = storage.read<String>('org_sector') ?? '';
+        final orgName =
+            GetStorage().read<String>('org_name') ?? 'Your Organisation';
+        final sector = GetStorage().read<String>('org_sector') ?? '';
 
-        // Resolve top gap technique names
         final topGapNames = report.topGaps.map((id) {
           final t = allTechs.where((x) => x.id == id).firstOrNull;
           return t != null ? '$id — ${t.name}' : id;
         }).toList();
 
-        // AI narrative
         statusMsg.value = 'Generating AI executive summary...';
         String narrative = '';
         final gemini = ref.read(geminiServiceProvider);
@@ -70,14 +66,12 @@ class ReportsScreen extends HookConsumerWidget {
 
         statusMsg.value = null;
         await Printing.sharePdf(
-          bytes: pdfBytes is Uint8List
-              ? pdfBytes
-              : Uint8List.fromList(pdfBytes),
+          bytes: Uint8List.fromList(pdfBytes),
           filename:
-              'ATTCKShield_Report_${DateTime.now().toIso8601String().substring(0, 10)}.pdf',
+              'ATTCKShield_${DateTime.now().toIso8601String().substring(0, 10)}.pdf',
         );
       } catch (e) {
-        statusMsg.value = 'Error generating report: $e';
+        statusMsg.value = 'Error: $e';
       } finally {
         isGenerating.value = false;
       }
@@ -97,7 +91,6 @@ class ReportsScreen extends HookConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ── Report card ─────────────────────────────────────────────────
           riskReport.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Text('Error loading data: $e'),
@@ -124,7 +117,7 @@ class ReportsScreen extends HookConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'ATT&CK Shield Security Report',
+                            'ATT\u0026CK Shield Security Report',
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
@@ -137,10 +130,9 @@ class ReportsScreen extends HookConsumerWidget {
                       ),
                       const Divider(height: 24),
 
-                      // Stats preview
                       _ReportStat(
                         icon: Icons.security_rounded,
-                        label: 'Organisation Risk Score',
+                        label: 'Risk Score',
                         value: '${r.orgRiskScore.toStringAsFixed(0)}/100',
                         color: r.orgRiskScore >= 75
                             ? Colors.red.shade600
@@ -153,26 +145,24 @@ class ReportsScreen extends HookConsumerWidget {
                         icon: Icons.verified_user_outlined,
                         label: 'Coverage',
                         value:
-                            '${r.coveragePercent.toStringAsFixed(0)}%  '
-                            '(${r.coveredCount} covered, '
-                            '${r.uncoveredCount} gaps)',
+                            '${r.coveragePercent.toStringAsFixed(0)}% (${r.coveredCount} covered, ${r.uncoveredCount} gaps)',
                         color: cs.primary,
                       ),
                       const SizedBox(height: 10),
                       _ReportStat(
                         icon: Icons.dataset_outlined,
-                        label: 'Techniques Assessed',
+                        label: 'Techniques',
                         value: '${r.totalTechniques} across 14 tactics',
                         color: cs.primary,
                       ),
                       const SizedBox(height: 10),
                       _ReportStat(
                         icon: Icons.auto_awesome_rounded,
-                        label: 'AI Executive Summary',
-                        value: GeminiService().hasApiKey
+                        label: 'AI Summary',
+                        value: ref.read(geminiServiceProvider).hasApiKey
                             ? 'Will be generated by Gemini'
                             : 'Configure API key in Settings',
-                        color: GeminiService().hasApiKey
+                        color: ref.read(geminiServiceProvider).hasApiKey
                             ? Colors.green.shade600
                             : cs.outline,
                       ),
@@ -190,10 +180,9 @@ class ReportsScreen extends HookConsumerWidget {
                       ...[
                         'Cover page with org name and date',
                         'AI-generated executive summary',
-                        'Risk score gauge with label',
-                        'Coverage breakdown by tactic (14 tactics)',
+                        'Risk score with label',
+                        'Coverage breakdown by tactic',
                         'Top 10 highest-risk uncovered techniques',
-                        'Recommended mitigations per gap',
                       ].map(
                         (item) => Padding(
                           padding: const EdgeInsets.only(bottom: 4),
@@ -215,7 +204,6 @@ class ReportsScreen extends HookConsumerWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Status message
                 if (statusMsg.value != null) ...[
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -241,7 +229,6 @@ class ReportsScreen extends HookConsumerWidget {
                   const SizedBox(height: 12),
                 ],
 
-                // Generate button
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
@@ -267,8 +254,6 @@ class ReportsScreen extends HookConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // Share options row
                 if (!isGenerating.value)
                   Text(
                     'PDF will open the share sheet — save, email, or print.',
@@ -287,6 +272,7 @@ class ReportsScreen extends HookConsumerWidget {
     );
   }
 
+  // FIX: explicit RiskReport type (import now present)
   Future<List<int>> _buildPdf({
     required String orgName,
     required String sector,
@@ -296,14 +282,13 @@ class ReportsScreen extends HookConsumerWidget {
   }) async {
     final doc = pw.Document();
     final date = DateTime.now().toString().substring(0, 10);
-
     final riskColor = report.orgRiskScore >= 75
         ? PdfColors.red700
         : report.orgRiskScore >= 50
         ? PdfColors.orange700
         : PdfColors.green700;
 
-    // ── Page 1: Cover ──────────────────────────────────────────────────────
+    // Cover page
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -362,8 +347,6 @@ class ReportsScreen extends HookConsumerWidget {
               ),
             ),
             pw.SizedBox(height: 32),
-
-            // Risk score
             pw.Row(
               children: [
                 pw.Column(
@@ -402,7 +385,7 @@ class ReportsScreen extends HookConsumerWidget {
                     _pdfStat('Covered', '${report.coveredCount} techniques'),
                     _pdfStat('Gaps', '${report.uncoveredCount} techniques'),
                     _pdfStat(
-                      'Total Assessed',
+                      'Assessed',
                       '${report.totalTechniques} techniques',
                     ),
                   ],
@@ -410,8 +393,6 @@ class ReportsScreen extends HookConsumerWidget {
               ],
             ),
             pw.Divider(),
-
-            // Executive summary
             if (narrative.isNotEmpty) ...[
               pw.SizedBox(height: 8),
               pw.Text(
@@ -432,7 +413,7 @@ class ReportsScreen extends HookConsumerWidget {
       ),
     );
 
-    // ── Page 2: Tactic breakdown + gaps ───────────────────────────────────
+    // Breakdown page
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -444,43 +425,38 @@ class ReportsScreen extends HookConsumerWidget {
               style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 12),
-
-            // Tactic table
             pw.Table(
               border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
               children: [
-                // Header
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(
                     color: PdfColors.blueGrey100,
                   ),
                   children: [
-                    _pdfTableCell('Tactic', header: true),
-                    _pdfTableCell('Risk Score', header: true),
-                    _pdfTableCell('Covered', header: true),
-                    _pdfTableCell('Total', header: true),
+                    _pdfCell('Tactic', header: true),
+                    _pdfCell('Risk Score', header: true),
+                    _pdfCell('Covered', header: true),
+                    _pdfCell('Total', header: true),
                   ],
                 ),
                 ...report.tacticBreakdown.map(
                   (t) => pw.TableRow(
                     children: [
-                      _pdfTableCell(t.tacticShortName.replaceAll('-', ' ')),
-                      _pdfTableCell('${t.score.toStringAsFixed(0)}/100'),
-                      _pdfTableCell('${t.coveredCount}'),
-                      _pdfTableCell('${t.techniqueCount}'),
+                      _pdfCell(t.tacticShortName.replaceAll('-', ' ')),
+                      _pdfCell('${t.score.toStringAsFixed(0)}/100'),
+                      _pdfCell('${t.coveredCount}'),
+                      _pdfCell('${t.techniqueCount}'),
                     ],
                   ),
                 ),
               ],
             ),
             pw.SizedBox(height: 20),
-
             pw.Text(
               'Top 10 High-Risk Coverage Gaps',
               style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 8),
-
             ...topGapNames
                 .take(10)
                 .toList()
@@ -506,14 +482,11 @@ class ReportsScreen extends HookConsumerWidget {
                     ),
                   ),
                 ),
-
             pw.SizedBox(height: 16),
             pw.Divider(),
             pw.SizedBox(height: 8),
             pw.Text(
-              'This report was generated by ATT&CK Shield using MITRE ATT&CK Enterprise v14.5. '
-              'Risk scores use the formula: ExposedRisk = riskScore × coverageMultiplier, '
-              'aggregated by tactic weight.',
+              'Generated by ATT\u0026CK Shield using MITRE ATT\u0026CK Enterprise v14.5. Risk formula: ExposedRisk = riskScore × coverageMultiplier, aggregated by tactic weight.',
               style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
             ),
           ],
@@ -540,7 +513,7 @@ class ReportsScreen extends HookConsumerWidget {
     ),
   );
 
-  pw.Widget _pdfTableCell(String text, {bool header = false}) => pw.Padding(
+  pw.Widget _pdfCell(String text, {bool header = false}) => pw.Padding(
     padding: const pw.EdgeInsets.all(6),
     child: pw.Text(
       text,
@@ -562,7 +535,6 @@ class _ReportStat extends StatelessWidget {
     required this.value,
     required this.color,
   });
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;

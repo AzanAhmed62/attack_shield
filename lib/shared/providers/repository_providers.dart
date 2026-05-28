@@ -1,5 +1,6 @@
 // lib/shared/providers/repository_providers.dart
-// FULL REPLACEMENT — wires all repositories + GeminiService into Riverpod.
+// FULL REPLACEMENT — all repositories wired, GeminiService singleton,
+// AlertRepository uses new SecurityAlert-based impl.
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -17,26 +18,18 @@ import '../../data/services/gemini_service.dart';
 
 part 'repository_providers.g.dart';
 
-// ─── Storage service (singleton) ─────────────────────────────────────────────
 @Riverpod(keepAlive: true)
 LocalStorageService localStorageService(Ref ref) => LocalStorageService();
 
-// ─── Gemini AI service (singleton) ───────────────────────────────────────────
 @Riverpod(keepAlive: true)
 GeminiService geminiService(Ref ref) => GeminiService();
 
-// ─── Repositories ─────────────────────────────────────────────────────────────
-
-// Attack techniques — uses its own internal GetStorage, no LocalStorageService dep
 @Riverpod(keepAlive: true)
 AttackTechniqueRepository attackTechniqueRepository(Ref ref) =>
     AttackTechniqueRepositoryImpl();
 
 @Riverpod(keepAlive: true)
-AlertRepository alertRepository(Ref ref) {
-  final storage = ref.watch(localStorageServiceProvider);
-  return AlertRepositoryImpl(storage);
-}
+AlertRepository alertRepository(Ref ref) => AlertRepositoryImpl();
 
 @Riverpod(keepAlive: true)
 AssetRepository assetRepository(Ref ref) {

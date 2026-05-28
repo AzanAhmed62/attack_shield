@@ -2,6 +2,7 @@ import 'package:attackshield/core/constants/constants.dart';
 import 'package:attackshield/shared/models/models.dart';
 import 'package:attackshield/data/repositories/repositories.dart';
 import 'package:attackshield/data/services/services.dart';
+import 'package:attackshield/shared/models/security_alert.dart';
 
 /// Seeds realistic sample data after onboarding completes.
 /// Only runs once — subsequent launches skip it.
@@ -10,17 +11,14 @@ class SeedDataService {
 
   final LocalStorageService _storage;
   final AlertRepository _alertRepo;
-  final SimulationRepository _simRepo;
   final AssetRepository _assetRepo;
 
   SeedDataService({
     required LocalStorageService storage,
     required AlertRepository alertRepo,
-    required SimulationRepository simRepo,
     required AssetRepository assetRepo,
   }) : _storage = storage,
        _alertRepo = alertRepo,
-       _simRepo = simRepo,
        _assetRepo = assetRepo;
 
   Future<void> seedIfNeeded() async {
@@ -83,8 +81,37 @@ class SeedDataService {
     ];
 
     for (final alert in alerts) {
-      await _alertRepo.createAlert(alert);
+      final securityAlert = SecurityAlert(
+        id: alert.id,
+        title: alert.title,
+        description: alert.description,
+        severity: _priorityToSeverity(alert.priority),
+        status: _statusToString(alert.status),
+        source: alert.source,
+        linkedTechniqueId: alert.relatedTechniqueId,
+        createdAt: alert.createdAt,
+        isRead: false,
+        notes: alert.notes,
+      );
+      await _alertRepo.createAlert(securityAlert);
     }
+  }
+
+  String _priorityToSeverity(AlertPriority priority) {
+    return switch (priority) {
+      AlertPriority.critical => 'critical',
+      AlertPriority.high => 'high',
+      AlertPriority.medium => 'medium',
+      AlertPriority.low => 'low',
+    };
+  }
+
+  String _statusToString(AlertStatus status) {
+    return switch (status) {
+      AlertStatus.open => 'open',
+      AlertStatus.acknowledged => 'open',
+      AlertStatus.resolved => 'resolved',
+    };
   }
 
   Future<void> _seedAssets() async {

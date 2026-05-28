@@ -1,132 +1,82 @@
-import 'package:attackshield/shared/models/models.dart';
-import '../../core/errors/errors.dart';
-import '../services/services.dart';
+// lib/data/repositories/alert_repository.dart
+// FULL REPLACEMENT — full CRUD that matches alert_providers.dart.
+// Persists SecurityAlert objects to GetStorage.
+
+import 'dart:convert';
+import 'package:get_storage/get_storage.dart';
+
+import '../../shared/models/security_alert.dart';
+
+const _kAlertsKey = 'security_alerts_v1';
 
 abstract class AlertRepository {
-  Future<List<AlertItem>> getAllAlerts();
-  Future<AlertItem?> getAlertById(String id);
-  Future<void> createAlert(AlertItem alert);
-  Future<void> updateAlert(AlertItem alert);
+  Future<List<SecurityAlert>> getAllAlerts();
+  Future<SecurityAlert?> getAlertById(String id);
+  Future<void> createAlert(SecurityAlert alert);
+  Future<void> updateAlert(SecurityAlert alert);
   Future<void> deleteAlert(String id);
-  Future<List<AlertItem>> getAlertsByStatus(AlertStatus status);
-  Future<List<AlertItem>> getAlertsByPriority(AlertPriority priority);
-  Future<List<AlertItem>> getAlertsByTechnique(String techniqueId);
   Future<void> clearAllAlerts();
 }
 
 class AlertRepositoryImpl implements AlertRepository {
-  final LocalStorageService _storageService;
-  static const String _storageKey = 'alerts';
+  final _box = GetStorage();
 
-  AlertRepositoryImpl(this._storageService);
 
   @override
-  Future<List<AlertItem>> getAllAlerts() async {
+  Future<List<SecurityAlert>> getAllAlerts() async {
     try {
-      final alertsJson = _storageService.read<List>(_storageKey) ?? [];
-      return alertsJson
-          .map((e) => AlertItem.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final raw = _box.read<String>(_kAlertsKey);
+      if (raw == null || raw.isEmpty) return [];
+      final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+      final alerts = list.map(SecurityAlert.fromJson).toList();
+      // Sort: newest first, then by severity
+      alerts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return alerts;
     } catch (e) {
-      throw DataException(message: 'Failed to fetch alerts: $e');
+      return [];
     }
   }
 
   @override
-  Future<AlertItem?> getAlertById(String id) async {
+  Future<SecurityAlert?> getAlertById(String id) async {
+    final all = await getAllAlerts();
     try {
-      final alerts = await getAllAlerts();
-      try {
-        return alerts.firstWhere((a) => a.id == id);
-      } catch (e) {
-        return null;
-      }
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch alert: $e');
+      return all.firstWhere((a) => a.id == id);
+    } catch (_) {
+      return null;
     }
   }
 
   @override
-  Future<void> createAlert(AlertItem alert) async {
-    try {
-      final alerts = await getAllAlerts();
-      alerts.add(alert);
-      await _storageService.write(
-        _storageKey,
-        alerts.map((a) => a.toJson()).toList(),
-      );
-    } catch (e) {
-      throw DataException(message: 'Failed to create alert: $e');
-    }
+  Future<void> createAlert(SecurityAlert alert) async {
+    final all = await getAllAlerts();
+    all.insert(0, alert); // newest first
+    await _persist(all);
   }
 
   @override
-  Future<void> updateAlert(AlertItem alert) async {
-    try {
-      final alerts = await getAllAlerts();
-      final index = alerts.indexWhere((a) => a.id == alert.id);
-      if (index != -1) {
-        alerts[index] = alert;
-        await _storageService.write(
-          _storageKey,
-          alerts.map((a) => a.toJson()).toList(),
-        );
-      }
-    } catch (e) {
-      throw DataException(message: 'Failed to update alert: $e');
-    }
+  Future<void> updateAlert(SecurityAlert alert) async {
+    final all = await getAllAlerts();
+    final idx = all.indexWhere((a) => a.id == alert.id);
+    if (idx == -1) return;
+    all[idx] = alert;
+    await _persist(all);
   }
 
   @override
   Future<void> deleteAlert(String id) async {
-    try {
-      final alerts = await getAllAlerts();
-      alerts.removeWhere((a) => a.id == id);
-      await _storageService.write(
-        _storageKey,
-        alerts.map((a) => a.toJson()).toList(),
-      );
-    } catch (e) {
-      throw DataException(message: 'Failed to delete alert: $e');
-    }
-  }
-
-  @override
-  Future<List<AlertItem>> getAlertsByStatus(AlertStatus status) async {
-    try {
-      final alerts = await getAllAlerts();
-      return alerts.where((a) => a.status == status).toList();
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch alerts by status: $e');
-    }
-  }
-
-  @override
-  Future<List<AlertItem>> getAlertsByPriority(AlertPriority priority) async {
-    try {
-      final alerts = await getAllAlerts();
-      return alerts.where((a) => a.priority == priority).toList();
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch alerts by priority: $e');
-    }
-  }
-
-  @override
-  Future<List<AlertItem>> getAlertsByTechnique(String techniqueId) async {
-    try {
-      final alerts = await getAllAlerts();
-      return alerts.where((a) => a.relatedTechniqueId == techniqueId).toList();
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch alerts by technique: $e');
-    }
+    final all = await getAllAlerts();
+    all.removeWhere((a) => a.id == id);
+    await _persist(all);
   }
 
   @override
   Future<void> clearAllAlerts() async {
-    try {
-      await _storageService.remove(_storageKey);
-    } catch (e) {
-      throw DataException(message: 'Failed to clear alerts: $e');
-    }
+    await _box.remove(_kAlertsKey);
+  }
+
+  Future<void> _persist(List<SecurityAlert> alerts) async {
+    final json = jsonEncode(alerts.map((a) => a.toJson()).toList());
+    await _box.write(_kAlertsKey, json);
   }
 }
