@@ -41,6 +41,23 @@ final geminiServiceProvider = Provider<GeminiService>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GeminiServiceRef = ProviderRef<GeminiService>;
+String _$osintServiceHash() => r'ef0c6d876ce5915b2e9dee8dc96354567efd39c5';
+
+/// See also [osintService].
+@ProviderFor(osintService)
+final osintServiceProvider = Provider<OsintService>.internal(
+  osintService,
+  name: r'osintServiceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$osintServiceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef OsintServiceRef = ProviderRef<OsintService>;
 String _$attackTechniqueRepositoryHash() =>
     r'2fbf25d572094695024c29e7d844779ef97aa347';
 
@@ -77,7 +94,7 @@ final alertRepositoryProvider = Provider<AlertRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AlertRepositoryRef = ProviderRef<AlertRepository>;
-String _$assetRepositoryHash() => r'9318f098fe2f774d0e883d7dd3409f0915435b7e';
+String _$assetRepositoryHash() => r'32f0edfd71335130b24877ec9e747405f1d459f0';
 
 /// See also [assetRepository].
 @ProviderFor(assetRepository)
@@ -95,7 +112,7 @@ final assetRepositoryProvider = Provider<AssetRepository>.internal(
 // ignore: unused_element
 typedef AssetRepositoryRef = ProviderRef<AssetRepository>;
 String _$bookmarkRepositoryHash() =>
-    r'9e4aec66c28f88753af6648ee4b2875d76da14b9';
+    r'aaa8dc9b9c73fcb3d1170d3f4842baf12dc26210';
 
 /// See also [bookmarkRepository].
 @ProviderFor(bookmarkRepository)
@@ -113,7 +130,7 @@ final bookmarkRepositoryProvider = Provider<BookmarkRepository>.internal(
 // ignore: unused_element
 typedef BookmarkRepositoryRef = ProviderRef<BookmarkRepository>;
 String _$coverageRepositoryHash() =>
-    r'86aca550174bce3fc0ff9f48369455dd15a68d6d';
+    r'f40964ff660fd9966a393214fe0f051ccf766bce';
 
 /// See also [coverageRepository].
 @ProviderFor(coverageRepository)
@@ -131,7 +148,7 @@ final coverageRepositoryProvider = Provider<CoverageRepository>.internal(
 // ignore: unused_element
 typedef CoverageRepositoryRef = ProviderRef<CoverageRepository>;
 String _$organizationRepositoryHash() =>
-    r'9355db196cd812dd4514ea93af55d5cbd3427d1b';
+    r'd392105e853d9c45b897d7b519f866998cd68a47';
 
 /// See also [organizationRepository].
 @ProviderFor(organizationRepository)
@@ -149,7 +166,7 @@ final organizationRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef OrganizationRepositoryRef = ProviderRef<OrganizationRepository>;
-String _$reportRepositoryHash() => r'2d6ae4da22e5b6011a1a8790212af51cd3f43699';
+String _$reportRepositoryHash() => r'3567c15732ae6fae010209a5d1025ad037f9b899';
 
 /// See also [reportRepository].
 @ProviderFor(reportRepository)
@@ -167,7 +184,7 @@ final reportRepositoryProvider = Provider<ReportRepository>.internal(
 // ignore: unused_element
 typedef ReportRepositoryRef = ProviderRef<ReportRepository>;
 String _$simulationRepositoryHash() =>
-    r'a74657890976601f2c8f3e432076acedea2e8c4e';
+    r'4e9b90ab73622a0f938f44ff707a510f233690de';
 
 /// See also [simulationRepository].
 @ProviderFor(simulationRepository)

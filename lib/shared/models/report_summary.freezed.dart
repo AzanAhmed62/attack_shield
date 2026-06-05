@@ -23,14 +23,14 @@ ReportSummary _$ReportSummaryFromJson(Map<String, dynamic> json) {
 mixin _$ReportSummary {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
-  int get totalTechniquesReviewed => throw _privateConstructorUsedError;
-  double get riskScore => throw _privateConstructorUsedError;
-  double get coveragePercentage => throw _privateConstructorUsedError;
-  List<String> get topRiskyTechniques => throw _privateConstructorUsedError;
-  List<String> get unresolvedGaps => throw _privateConstructorUsedError;
-  List<String> get recommendedActions => throw _privateConstructorUsedError;
-  DateTime? get generatedAt => throw _privateConstructorUsedError;
-  String? get notes => throw _privateConstructorUsedError;
+  DateTime get generatedAt => throw _privateConstructorUsedError;
+  double get orgRiskScore => throw _privateConstructorUsedError;
+  double get coveragePercent => throw _privateConstructorUsedError;
+  int get totalTechniques => throw _privateConstructorUsedError;
+  int get coveredCount => throw _privateConstructorUsedError;
+  int get gapCount => throw _privateConstructorUsedError;
+  String get aiNarrative => throw _privateConstructorUsedError;
+  String? get pdfPath => throw _privateConstructorUsedError;
 
   /// Serializes this ReportSummary to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -52,14 +52,14 @@ abstract class $ReportSummaryCopyWith<$Res> {
   $Res call({
     String id,
     String title,
-    int totalTechniquesReviewed,
-    double riskScore,
-    double coveragePercentage,
-    List<String> topRiskyTechniques,
-    List<String> unresolvedGaps,
-    List<String> recommendedActions,
-    DateTime? generatedAt,
-    String? notes,
+    DateTime generatedAt,
+    double orgRiskScore,
+    double coveragePercent,
+    int totalTechniques,
+    int coveredCount,
+    int gapCount,
+    String aiNarrative,
+    String? pdfPath,
   });
 }
 
@@ -80,14 +80,14 @@ class _$ReportSummaryCopyWithImpl<$Res, $Val extends ReportSummary>
   $Res call({
     Object? id = null,
     Object? title = null,
-    Object? totalTechniquesReviewed = null,
-    Object? riskScore = null,
-    Object? coveragePercentage = null,
-    Object? topRiskyTechniques = null,
-    Object? unresolvedGaps = null,
-    Object? recommendedActions = null,
-    Object? generatedAt = freezed,
-    Object? notes = freezed,
+    Object? generatedAt = null,
+    Object? orgRiskScore = null,
+    Object? coveragePercent = null,
+    Object? totalTechniques = null,
+    Object? coveredCount = null,
+    Object? gapCount = null,
+    Object? aiNarrative = null,
+    Object? pdfPath = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -99,37 +99,37 @@ class _$ReportSummaryCopyWithImpl<$Res, $Val extends ReportSummary>
                 ? _value.title
                 : title // ignore: cast_nullable_to_non_nullable
                       as String,
-            totalTechniquesReviewed: null == totalTechniquesReviewed
-                ? _value.totalTechniquesReviewed
-                : totalTechniquesReviewed // ignore: cast_nullable_to_non_nullable
-                      as int,
-            riskScore: null == riskScore
-                ? _value.riskScore
-                : riskScore // ignore: cast_nullable_to_non_nullable
-                      as double,
-            coveragePercentage: null == coveragePercentage
-                ? _value.coveragePercentage
-                : coveragePercentage // ignore: cast_nullable_to_non_nullable
-                      as double,
-            topRiskyTechniques: null == topRiskyTechniques
-                ? _value.topRiskyTechniques
-                : topRiskyTechniques // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            unresolvedGaps: null == unresolvedGaps
-                ? _value.unresolvedGaps
-                : unresolvedGaps // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            recommendedActions: null == recommendedActions
-                ? _value.recommendedActions
-                : recommendedActions // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            generatedAt: freezed == generatedAt
+            generatedAt: null == generatedAt
                 ? _value.generatedAt
                 : generatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            notes: freezed == notes
-                ? _value.notes
-                : notes // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            orgRiskScore: null == orgRiskScore
+                ? _value.orgRiskScore
+                : orgRiskScore // ignore: cast_nullable_to_non_nullable
+                      as double,
+            coveragePercent: null == coveragePercent
+                ? _value.coveragePercent
+                : coveragePercent // ignore: cast_nullable_to_non_nullable
+                      as double,
+            totalTechniques: null == totalTechniques
+                ? _value.totalTechniques
+                : totalTechniques // ignore: cast_nullable_to_non_nullable
+                      as int,
+            coveredCount: null == coveredCount
+                ? _value.coveredCount
+                : coveredCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            gapCount: null == gapCount
+                ? _value.gapCount
+                : gapCount // ignore: cast_nullable_to_non_nullable
+                      as int,
+            aiNarrative: null == aiNarrative
+                ? _value.aiNarrative
+                : aiNarrative // ignore: cast_nullable_to_non_nullable
+                      as String,
+            pdfPath: freezed == pdfPath
+                ? _value.pdfPath
+                : pdfPath // ignore: cast_nullable_to_non_nullable
                       as String?,
           )
           as $Val,
@@ -149,14 +149,14 @@ abstract class _$$ReportSummaryImplCopyWith<$Res>
   $Res call({
     String id,
     String title,
-    int totalTechniquesReviewed,
-    double riskScore,
-    double coveragePercentage,
-    List<String> topRiskyTechniques,
-    List<String> unresolvedGaps,
-    List<String> recommendedActions,
-    DateTime? generatedAt,
-    String? notes,
+    DateTime generatedAt,
+    double orgRiskScore,
+    double coveragePercent,
+    int totalTechniques,
+    int coveredCount,
+    int gapCount,
+    String aiNarrative,
+    String? pdfPath,
   });
 }
 
@@ -176,14 +176,14 @@ class __$$ReportSummaryImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? title = null,
-    Object? totalTechniquesReviewed = null,
-    Object? riskScore = null,
-    Object? coveragePercentage = null,
-    Object? topRiskyTechniques = null,
-    Object? unresolvedGaps = null,
-    Object? recommendedActions = null,
-    Object? generatedAt = freezed,
-    Object? notes = freezed,
+    Object? generatedAt = null,
+    Object? orgRiskScore = null,
+    Object? coveragePercent = null,
+    Object? totalTechniques = null,
+    Object? coveredCount = null,
+    Object? gapCount = null,
+    Object? aiNarrative = null,
+    Object? pdfPath = freezed,
   }) {
     return _then(
       _$ReportSummaryImpl(
@@ -195,37 +195,37 @@ class __$$ReportSummaryImplCopyWithImpl<$Res>
             ? _value.title
             : title // ignore: cast_nullable_to_non_nullable
                   as String,
-        totalTechniquesReviewed: null == totalTechniquesReviewed
-            ? _value.totalTechniquesReviewed
-            : totalTechniquesReviewed // ignore: cast_nullable_to_non_nullable
-                  as int,
-        riskScore: null == riskScore
-            ? _value.riskScore
-            : riskScore // ignore: cast_nullable_to_non_nullable
-                  as double,
-        coveragePercentage: null == coveragePercentage
-            ? _value.coveragePercentage
-            : coveragePercentage // ignore: cast_nullable_to_non_nullable
-                  as double,
-        topRiskyTechniques: null == topRiskyTechniques
-            ? _value._topRiskyTechniques
-            : topRiskyTechniques // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
-        unresolvedGaps: null == unresolvedGaps
-            ? _value._unresolvedGaps
-            : unresolvedGaps // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
-        recommendedActions: null == recommendedActions
-            ? _value._recommendedActions
-            : recommendedActions // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
-        generatedAt: freezed == generatedAt
+        generatedAt: null == generatedAt
             ? _value.generatedAt
             : generatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        notes: freezed == notes
-            ? _value.notes
-            : notes // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        orgRiskScore: null == orgRiskScore
+            ? _value.orgRiskScore
+            : orgRiskScore // ignore: cast_nullable_to_non_nullable
+                  as double,
+        coveragePercent: null == coveragePercent
+            ? _value.coveragePercent
+            : coveragePercent // ignore: cast_nullable_to_non_nullable
+                  as double,
+        totalTechniques: null == totalTechniques
+            ? _value.totalTechniques
+            : totalTechniques // ignore: cast_nullable_to_non_nullable
+                  as int,
+        coveredCount: null == coveredCount
+            ? _value.coveredCount
+            : coveredCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        gapCount: null == gapCount
+            ? _value.gapCount
+            : gapCount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        aiNarrative: null == aiNarrative
+            ? _value.aiNarrative
+            : aiNarrative // ignore: cast_nullable_to_non_nullable
+                  as String,
+        pdfPath: freezed == pdfPath
+            ? _value.pdfPath
+            : pdfPath // ignore: cast_nullable_to_non_nullable
                   as String?,
       ),
     );
@@ -238,17 +238,15 @@ class _$ReportSummaryImpl implements _ReportSummary {
   const _$ReportSummaryImpl({
     required this.id,
     required this.title,
-    this.totalTechniquesReviewed = 0,
-    this.riskScore = 0.0,
-    this.coveragePercentage = 0.0,
-    final List<String> topRiskyTechniques = const [],
-    final List<String> unresolvedGaps = const [],
-    final List<String> recommendedActions = const [],
-    this.generatedAt,
-    this.notes,
-  }) : _topRiskyTechniques = topRiskyTechniques,
-       _unresolvedGaps = unresolvedGaps,
-       _recommendedActions = recommendedActions;
+    required this.generatedAt,
+    required this.orgRiskScore,
+    required this.coveragePercent,
+    required this.totalTechniques,
+    required this.coveredCount,
+    required this.gapCount,
+    this.aiNarrative = '',
+    this.pdfPath,
+  });
 
   factory _$ReportSummaryImpl.fromJson(Map<String, dynamic> json) =>
       _$$ReportSummaryImplFromJson(json);
@@ -258,51 +256,26 @@ class _$ReportSummaryImpl implements _ReportSummary {
   @override
   final String title;
   @override
-  @JsonKey()
-  final int totalTechniquesReviewed;
+  final DateTime generatedAt;
+  @override
+  final double orgRiskScore;
+  @override
+  final double coveragePercent;
+  @override
+  final int totalTechniques;
+  @override
+  final int coveredCount;
+  @override
+  final int gapCount;
   @override
   @JsonKey()
-  final double riskScore;
+  final String aiNarrative;
   @override
-  @JsonKey()
-  final double coveragePercentage;
-  final List<String> _topRiskyTechniques;
-  @override
-  @JsonKey()
-  List<String> get topRiskyTechniques {
-    if (_topRiskyTechniques is EqualUnmodifiableListView)
-      return _topRiskyTechniques;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_topRiskyTechniques);
-  }
-
-  final List<String> _unresolvedGaps;
-  @override
-  @JsonKey()
-  List<String> get unresolvedGaps {
-    if (_unresolvedGaps is EqualUnmodifiableListView) return _unresolvedGaps;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_unresolvedGaps);
-  }
-
-  final List<String> _recommendedActions;
-  @override
-  @JsonKey()
-  List<String> get recommendedActions {
-    if (_recommendedActions is EqualUnmodifiableListView)
-      return _recommendedActions;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_recommendedActions);
-  }
-
-  @override
-  final DateTime? generatedAt;
-  @override
-  final String? notes;
+  final String? pdfPath;
 
   @override
   String toString() {
-    return 'ReportSummary(id: $id, title: $title, totalTechniquesReviewed: $totalTechniquesReviewed, riskScore: $riskScore, coveragePercentage: $coveragePercentage, topRiskyTechniques: $topRiskyTechniques, unresolvedGaps: $unresolvedGaps, recommendedActions: $recommendedActions, generatedAt: $generatedAt, notes: $notes)';
+    return 'ReportSummary(id: $id, title: $title, generatedAt: $generatedAt, orgRiskScore: $orgRiskScore, coveragePercent: $coveragePercent, totalTechniques: $totalTechniques, coveredCount: $coveredCount, gapCount: $gapCount, aiNarrative: $aiNarrative, pdfPath: $pdfPath)';
   }
 
   @override
@@ -312,30 +285,21 @@ class _$ReportSummaryImpl implements _ReportSummary {
             other is _$ReportSummaryImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.title, title) || other.title == title) &&
-            (identical(
-                  other.totalTechniquesReviewed,
-                  totalTechniquesReviewed,
-                ) ||
-                other.totalTechniquesReviewed == totalTechniquesReviewed) &&
-            (identical(other.riskScore, riskScore) ||
-                other.riskScore == riskScore) &&
-            (identical(other.coveragePercentage, coveragePercentage) ||
-                other.coveragePercentage == coveragePercentage) &&
-            const DeepCollectionEquality().equals(
-              other._topRiskyTechniques,
-              _topRiskyTechniques,
-            ) &&
-            const DeepCollectionEquality().equals(
-              other._unresolvedGaps,
-              _unresolvedGaps,
-            ) &&
-            const DeepCollectionEquality().equals(
-              other._recommendedActions,
-              _recommendedActions,
-            ) &&
             (identical(other.generatedAt, generatedAt) ||
                 other.generatedAt == generatedAt) &&
-            (identical(other.notes, notes) || other.notes == notes));
+            (identical(other.orgRiskScore, orgRiskScore) ||
+                other.orgRiskScore == orgRiskScore) &&
+            (identical(other.coveragePercent, coveragePercent) ||
+                other.coveragePercent == coveragePercent) &&
+            (identical(other.totalTechniques, totalTechniques) ||
+                other.totalTechniques == totalTechniques) &&
+            (identical(other.coveredCount, coveredCount) ||
+                other.coveredCount == coveredCount) &&
+            (identical(other.gapCount, gapCount) ||
+                other.gapCount == gapCount) &&
+            (identical(other.aiNarrative, aiNarrative) ||
+                other.aiNarrative == aiNarrative) &&
+            (identical(other.pdfPath, pdfPath) || other.pdfPath == pdfPath));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -344,14 +308,14 @@ class _$ReportSummaryImpl implements _ReportSummary {
     runtimeType,
     id,
     title,
-    totalTechniquesReviewed,
-    riskScore,
-    coveragePercentage,
-    const DeepCollectionEquality().hash(_topRiskyTechniques),
-    const DeepCollectionEquality().hash(_unresolvedGaps),
-    const DeepCollectionEquality().hash(_recommendedActions),
     generatedAt,
-    notes,
+    orgRiskScore,
+    coveragePercent,
+    totalTechniques,
+    coveredCount,
+    gapCount,
+    aiNarrative,
+    pdfPath,
   );
 
   /// Create a copy of ReportSummary
@@ -372,14 +336,14 @@ abstract class _ReportSummary implements ReportSummary {
   const factory _ReportSummary({
     required final String id,
     required final String title,
-    final int totalTechniquesReviewed,
-    final double riskScore,
-    final double coveragePercentage,
-    final List<String> topRiskyTechniques,
-    final List<String> unresolvedGaps,
-    final List<String> recommendedActions,
-    final DateTime? generatedAt,
-    final String? notes,
+    required final DateTime generatedAt,
+    required final double orgRiskScore,
+    required final double coveragePercent,
+    required final int totalTechniques,
+    required final int coveredCount,
+    required final int gapCount,
+    final String aiNarrative,
+    final String? pdfPath,
   }) = _$ReportSummaryImpl;
 
   factory _ReportSummary.fromJson(Map<String, dynamic> json) =
@@ -390,21 +354,21 @@ abstract class _ReportSummary implements ReportSummary {
   @override
   String get title;
   @override
-  int get totalTechniquesReviewed;
+  DateTime get generatedAt;
   @override
-  double get riskScore;
+  double get orgRiskScore;
   @override
-  double get coveragePercentage;
+  double get coveragePercent;
   @override
-  List<String> get topRiskyTechniques;
+  int get totalTechniques;
   @override
-  List<String> get unresolvedGaps;
+  int get coveredCount;
   @override
-  List<String> get recommendedActions;
+  int get gapCount;
   @override
-  DateTime? get generatedAt;
+  String get aiNarrative;
   @override
-  String? get notes;
+  String? get pdfPath;
 
   /// Create a copy of ReportSummary
   /// with the given fields replaced by the non-null parameter values.

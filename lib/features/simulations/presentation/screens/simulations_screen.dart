@@ -1,35 +1,50 @@
 // lib/features/simulations/presentation/screens/simulations_screen.dart
-// FIX: removed @riverpod + SimulationHistoryEntry defined inside screen
-// FIX: simulation results now saved to SimulationRepository after each run
-// FIX: imports simulation_providers.dart for history
+// FULL REPLACEMENT — three tabs:
+//   1. Matrix   — Navigator-style heatmap (tap cell → technique detail)
+//   2. Scenarios — Kill-chain step animator + OTX live intel + Gemini narrative
+//   3. History  — Readiness trend line chart
 
-import 'package:attackshield/shared/models/simulation_history_entry.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-import '../../../../shared/models/attack_technique.dart';
 import '../../../../shared/models/coverage_status.dart';
 import '../../../../shared/providers/technique_providers.dart';
 import '../../../../shared/providers/coverage_providers.dart';
 import '../../../../shared/providers/repository_providers.dart';
 import '../../../../shared/providers/simulation_providers.dart';
 import '../../../../core/widgets/shimmer_loader.dart';
+import '../models/simulation_history_entry.dart';
 
-// ─── Built-in scenarios ───────────────────────────────────────────────────────
+// ─── Scenario definitions ─────────────────────────────────────────────────────
 class _Scenario {
   final String id, name, description, icon, threatActor;
-  final List<String> tacticFocus, techniques;
+  final List<_KillChainStep> killChain;
+
   const _Scenario({
     required this.id,
     required this.name,
     required this.description,
     required this.icon,
-    required this.tacticFocus,
-    required this.techniques,
     required this.threatActor,
+    required this.killChain,
+  });
+
+  List<String> get techniqueIds => killChain.map((s) => s.techniqueId).toList();
+}
+
+class _KillChainStep {
+  final String techniqueId;
+  final String tacticLabel;
+  final String attackerAction; // what attacker does if not covered
+  final String defensiveValue; // what coverage prevents
+  const _KillChainStep({
+    required this.techniqueId,
+    required this.tacticLabel,
+    required this.attackerAction,
+    required this.defensiveValue,
   });
 }
 
@@ -39,24 +54,49 @@ const _scenarios = [
     name: 'Ransomware Attack',
     icon: '🔒',
     description:
-        'Simulates a modern ransomware intrusion chain from phishing to encryption.',
+        'Modern ransomware intrusion: phishing → execution → persistence → encryption.',
     threatActor: 'Conti / LockBit TTPs',
-    tacticFocus: [
-      'initial-access',
-      'execution',
-      'persistence',
-      'lateral-movement',
-      'impact',
-    ],
-    techniques: [
-      'T1566',
-      'T1059',
-      'T1547',
-      'T1486',
-      'T1490',
-      'T1027',
-      'T1083',
-      'T1021',
+    killChain: [
+      _KillChainStep(
+        techniqueId: 'T1566',
+        tacticLabel: 'Initial Access',
+        attackerAction:
+            'Sends phishing email with malicious attachment to employee',
+        defensiveValue:
+            'Email filtering + user training blocks the initial entry',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1059',
+        tacticLabel: 'Execution',
+        attackerAction: 'Runs PowerShell / cmd scripts to download payload',
+        defensiveValue: 'Script-block logging + AppLocker stops execution',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1547',
+        tacticLabel: 'Persistence',
+        attackerAction: 'Adds Run key to survive reboot',
+        defensiveValue: 'Autoruns monitoring catches the registry change',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1027',
+        tacticLabel: 'Defense Evasion',
+        attackerAction: 'Obfuscates payload to evade AV detection',
+        defensiveValue:
+            'Behavioural detection + sandbox catches obfuscated code',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1083',
+        tacticLabel: 'Discovery',
+        attackerAction: 'Enumerates file shares and backup locations',
+        defensiveValue: 'File access auditing alerts on mass enumeration',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1486',
+        tacticLabel: 'Impact',
+        attackerAction: 'Encrypts all accessible files; drops ransom note',
+        defensiveValue:
+            'Immutable backups + honeypot files trigger early detection',
+      ),
     ],
   ),
   _Scenario(
@@ -64,76 +104,188 @@ const _scenarios = [
     name: 'APT29 (Cozy Bear)',
     icon: '🕵️',
     description:
-        'Nation-state espionage campaign targeting credentials and sensitive data.',
-    threatActor: 'APT29 / SVR',
-    tacticFocus: [
-      'initial-access',
-      'credential-access',
-      'collection',
-      'exfiltration',
-      'command-and-control',
-    ],
-    techniques: [
-      'T1566',
-      'T1078',
-      'T1003',
-      'T1056',
-      'T1041',
-      'T1071',
-      'T1105',
-      'T1560',
+        'Nation-state espionage: credential theft → data staging → exfiltration.',
+    threatActor: 'SVR — Russian Foreign Intelligence',
+    killChain: [
+      _KillChainStep(
+        techniqueId: 'T1566',
+        tacticLabel: 'Initial Access',
+        attackerAction:
+            'Spear-phishing email targeting executive with SWIFT attachment',
+        defensiveValue:
+            'Advanced email filtering and exec awareness blocks entry',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1078',
+        tacticLabel: 'Valid Accounts',
+        attackerAction:
+            'Uses stolen credentials from previous breach to log in',
+        defensiveValue:
+            'MFA and privileged access management block credential reuse',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1003',
+        tacticLabel: 'Credential Access',
+        attackerAction: 'Dumps LSASS memory to harvest domain credentials',
+        defensiveValue:
+            'Credential Guard + LSASS protection prevents memory dump',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1560',
+        tacticLabel: 'Collection',
+        attackerAction:
+            'Archives sensitive files into encrypted ZIP for staging',
+        defensiveValue: 'DLP + file activity monitoring detects mass archiving',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1041',
+        tacticLabel: 'Exfiltration',
+        attackerAction:
+            'Exfiltrates data over C2 HTTPS channel to cloud storage',
+        defensiveValue:
+            'Network DLP + proxy inspection intercepts the transfer',
+      ),
     ],
   ),
   _Scenario(
     id: 'supply_chain',
-    name: 'Supply Chain Compromise',
+    name: 'Supply Chain Attack',
     icon: '📦',
     description:
-        'Attacker compromises a trusted software vendor to reach targets.',
+        'Compromise a trusted software update to reach all downstream customers.',
     threatActor: 'SolarWinds-style TTP',
-    tacticFocus: [
-      'initial-access',
-      'persistence',
-      'defense-evasion',
-      'lateral-movement',
+    killChain: [
+      _KillChainStep(
+        techniqueId: 'T1195',
+        tacticLabel: 'Initial Access',
+        attackerAction:
+            'Injects malicious code into vendor software build pipeline',
+        defensiveValue:
+            'SBOM tracking + signed build verification detects tampering',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1036',
+        tacticLabel: 'Defense Evasion',
+        attackerAction: 'Masquerades malicious binary as legitimate update',
+        defensiveValue:
+            'Binary signature validation + hash comparison catches mismatch',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1055',
+        tacticLabel: 'Execution',
+        attackerAction:
+            'Injects into trusted process to execute payload silently',
+        defensiveValue: 'Process injection detection via EDR halts execution',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1021',
+        tacticLabel: 'Lateral Movement',
+        attackerAction:
+            'Uses remote services to move across network from beachhead',
+        defensiveValue:
+            'Network segmentation + lateral movement detection limits spread',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1070',
+        tacticLabel: 'Defense Evasion',
+        attackerAction: 'Clears event logs and footprints to avoid detection',
+        defensiveValue:
+            'SIEM log forwarding to immutable store preserves evidence',
+      ),
     ],
-    techniques: ['T1195', 'T1059', 'T1036', 'T1055', 'T1078', 'T1021', 'T1070'],
   ),
   _Scenario(
-    id: 'insider_threat',
+    id: 'insider',
     name: 'Insider Threat',
     icon: '👤',
-    description: 'Malicious or negligent insider abusing legitimate access.',
-    threatActor: 'Insider / Compromised Account',
-    tacticFocus: [
-      'collection',
-      'exfiltration',
-      'discovery',
-      'credential-access',
+    description:
+        'Malicious employee abusing legitimate access to exfiltrate data.',
+    threatActor: 'Privileged Insider / Compromised Account',
+    killChain: [
+      _KillChainStep(
+        techniqueId: 'T1078',
+        tacticLabel: 'Valid Accounts',
+        attackerAction: 'Logs in with own credentials — no alarm triggered',
+        defensiveValue:
+            'User behaviour analytics (UBA) detects anomalous activity patterns',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1087',
+        tacticLabel: 'Discovery',
+        attackerAction: 'Queries AD to discover high-value accounts and shares',
+        defensiveValue:
+            'LDAP query monitoring alerts on mass account enumeration',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1005',
+        tacticLabel: 'Collection',
+        attackerAction: 'Copies sensitive documents to personal folder',
+        defensiveValue:
+            'DLP policies block copying confidential data to unapproved locations',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1041',
+        tacticLabel: 'Exfiltration',
+        attackerAction:
+            'Uploads files to personal cloud storage (Dropbox, GDrive)',
+        defensiveValue:
+            'CASB monitoring detects and blocks upload to unapproved SaaS',
+      ),
     ],
-    techniques: ['T1078', 'T1083', 'T1005', 'T1041', 'T1114', 'T1087', 'T1213'],
   ),
   _Scenario(
-    id: 'cloud_attack',
-    name: 'Cloud Infrastructure Attack',
+    id: 'cloud',
+    name: 'Cloud Attack',
     icon: '☁️',
     description:
-        'Targets cloud-hosted resources through misconfiguration and credential abuse.',
-    threatActor: 'Cloud-native adversary',
-    tacticFocus: [
-      'initial-access',
-      'privilege-escalation',
-      'collection',
-      'exfiltration',
+        'Exploit cloud misconfiguration to access sensitive data and resources.',
+    threatActor: 'Cloud-native adversary / SSRF exploitation',
+    killChain: [
+      _KillChainStep(
+        techniqueId: 'T1190',
+        tacticLabel: 'Initial Access',
+        attackerAction:
+            'Exploits public-facing application vulnerability (SSRF/RCE)',
+        defensiveValue:
+            'WAF + patching cadence blocks known public-facing exploits',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1552',
+        tacticLabel: 'Credential Access',
+        attackerAction:
+            'Steals cloud metadata credentials from instance metadata service',
+        defensiveValue: 'IMDSv2 enforcement prevents credential theft via SSRF',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1098',
+        tacticLabel: 'Privilege Escalation',
+        attackerAction:
+            'Adds IAM permissions to escalate from app role to admin',
+        defensiveValue:
+            'IAM policy guardrails + CloudTrail alert block privilege escalation',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1530',
+        tacticLabel: 'Collection',
+        attackerAction:
+            'Lists and downloads all S3 buckets with sensitive data',
+        defensiveValue:
+            'S3 Block Public Access + bucket policies prevent mass download',
+      ),
+      _KillChainStep(
+        techniqueId: 'T1537',
+        tacticLabel: 'Exfiltration',
+        attackerAction: 'Replicates data to attacker-controlled S3 bucket',
+        defensiveValue:
+            'Data exfiltration detection + SCPs prevent cross-account replication',
+      ),
     ],
-    techniques: ['T1078', 'T1190', 'T1098', 'T1530', 'T1619', 'T1552', 'T1537'],
   ),
 ];
 
+// ─── Screen ───────────────────────────────────────────────────────────────────
 class SimulationsScreen extends HookConsumerWidget {
   const SimulationsScreen({super.key});
-
-  static const _tabs = ['Matrix', 'Scenarios', 'History'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -153,7 +305,9 @@ class SimulationsScreen extends HookConsumerWidget {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
           child: Row(
-            children: _tabs.asMap().entries.map((e) {
+            children: ['Matrix', 'Scenarios', 'History'].asMap().entries.map((
+              e,
+            ) {
               final sel = e.key == tabIndex.value;
               return Expanded(
                 child: GestureDetector(
@@ -194,7 +348,7 @@ class SimulationsScreen extends HookConsumerWidget {
   }
 }
 
-// ─── Matrix heatmap ───────────────────────────────────────────────────────────
+// ─── Tab 1: Matrix heatmap ────────────────────────────────────────────────────
 class _MatrixTab extends HookConsumerWidget {
   const _MatrixTab();
 
@@ -216,19 +370,16 @@ class _MatrixTab extends HookConsumerWidget {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                 child: Row(
                   children: [
-                    _LegendDot(color: Colors.green.shade500, label: 'Covered'),
-                    const SizedBox(width: 12),
-                    _LegendDot(color: Colors.amber.shade500, label: 'Partial'),
-                    const SizedBox(width: 12),
-                    _LegendDot(
-                      color: Colors.red.shade400,
-                      label: 'Not Covered',
-                    ),
-                    const SizedBox(width: 12),
-                    _LegendDot(color: cs.outlineVariant, label: 'Unknown'),
+                    _LegDot(Colors.green.shade500, 'Covered'),
+                    const SizedBox(width: 10),
+                    _LegDot(Colors.amber.shade500, 'Partial'),
+                    const SizedBox(width: 10),
+                    _LegDot(Colors.red.shade400, 'Not Covered'),
+                    const SizedBox(width: 10),
+                    _LegDot(Colors.grey.shade400, 'Unknown'),
                     const Spacer(),
                     Text(
                       'Tap cell to view',
@@ -244,11 +395,100 @@ class _MatrixTab extends HookConsumerWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: tactics.map((tactic) {
-                      final techs = byTactic[tactic.shortName] ?? [];
-                      return _TacticColumn(
-                        tactic: tactic,
-                        techniques: techs,
-                        covMap: covMap,
+                      final techs = (byTactic[tactic.shortName] ?? [])
+                          .take(15)
+                          .toList();
+                      final covered = techs
+                          .where((t) => covMap[t.id] == CoverageLevel.covered)
+                          .length;
+                      final pct = techs.isEmpty ? 0.0 : covered / techs.length;
+                      return Container(
+                        width: 110,
+                        margin: const EdgeInsets.only(right: 6),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 7,
+                                horizontal: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cs.primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    tactic.name,
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.onPrimaryContainer,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(2),
+                                    child: LinearProgressIndicator(
+                                      value: pct,
+                                      minHeight: 3,
+                                      backgroundColor: cs.primaryContainer,
+                                      valueColor: AlwaysStoppedAnimation(
+                                        Colors.green.shade500,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '$covered/${techs.length}',
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      color: cs.onPrimaryContainer.withOpacity(
+                                        .7,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            ...techs.map((t) {
+                              final cov = covMap[t.id] ?? CoverageLevel.unknown;
+                              final c = _cellColor(cov, t.riskScore);
+                              return GestureDetector(
+                                onTap: () => context.push('/library/${t.id}'),
+                                child: Tooltip(
+                                  message: '${t.id}: ${t.name}',
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                      horizontal: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: c,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Text(
+                                      t.id,
+                                      style: const TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
                       );
                     }).toList(),
                   ),
@@ -260,128 +500,29 @@ class _MatrixTab extends HookConsumerWidget {
       ),
     );
   }
-}
 
-class _TacticColumn extends StatelessWidget {
-  final AttackTactic tactic;
-  final List<AttackTechnique> techniques;
-  final Map<String, CoverageLevel> covMap;
-  const _TacticColumn({
-    required this.tactic,
-    required this.techniques,
-    required this.covMap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final covered = techniques
-        .where((t) => covMap[t.id] == CoverageLevel.covered)
-        .length;
-    final pct = techniques.isEmpty ? 0.0 : covered / techniques.length;
-
-    return Container(
-      width: 108,
-      margin: const EdgeInsets.only(right: 6),
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-            decoration: BoxDecoration(
-              color: cs.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  tactic.name,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onPrimaryContainer,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: pct,
-                    minHeight: 3,
-                    backgroundColor: cs.primaryContainer,
-                    valueColor: AlwaysStoppedAnimation(Colors.green.shade500),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$covered/${techniques.length}',
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: cs.onPrimaryContainer.withOpacity(.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          ...techniques.map((t) {
-            final cov = covMap[t.id] ?? CoverageLevel.unknown;
-            final color = _cellColor(cov, t.riskScore);
-            return GestureDetector(
-              onTap: () => context.push('/library/${t.id}'),
-              child: Tooltip(
-                message: '${t.id}: ${t.name}',
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 3),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    t.id,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Color _cellColor(CoverageLevel cov, double riskScore) {
+  Color _cellColor(CoverageLevel cov, double risk) {
     switch (cov) {
       case CoverageLevel.covered:
         return Colors.green.shade600;
       case CoverageLevel.partiallyCovered:
         return Colors.amber.shade600;
       case CoverageLevel.notCovered:
-        final i = (riskScore / 10.0).clamp(0.3, 1.0);
-        return Color.lerp(Colors.red.shade300, Colors.red.shade800, i)!;
+        return Color.lerp(
+          Colors.red.shade300,
+          Colors.red.shade800,
+          (risk / 10).clamp(.3, 1.0),
+        )!;
       case CoverageLevel.unknown:
         return Colors.grey.shade400;
     }
   }
 }
 
-class _LegendDot extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _LegendDot({required this.color, required this.label});
+class _LegDot extends StatelessWidget {
+  final Color c;
+  final String l;
+  const _LegDot(this.c, this.l);
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
@@ -390,15 +531,15 @@ class _LegendDot extends StatelessWidget {
         width: 8,
         height: 8,
         decoration: BoxDecoration(
-          color: color,
+          color: c,
           borderRadius: BorderRadius.circular(2),
         ),
       ),
       const SizedBox(width: 4),
       Text(
-        label,
+        l,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 9,
           color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
@@ -406,475 +547,511 @@ class _LegendDot extends StatelessWidget {
   );
 }
 
-// ─── Scenarios tab ────────────────────────────────────────────────────────────
+// ─── Tab 2: Kill-chain Scenarios ──────────────────────────────────────────────
 class _ScenariosTab extends HookConsumerWidget {
   const _ScenariosTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selected = useState<_Scenario?>(null);
     final running = useState(false);
-    final selectedScenario = useState<_Scenario?>(null);
-    final result = useState<_SimResult?>(null);
+    final stepIdx = useState(-1); // -1 = not started, -2 = complete
+    final stepResults = useState<List<bool>>([]); // true=blocked, false=exposed
     final narrative = useState<String?>(null);
-    final narrativeLoading = useState(false);
+    final narLoading = useState(false);
 
-    final allTechsAsync = ref.watch(allTechniquesProvider);
-    final coverageMap = ref.watch(coverageMapProvider);
+    final covMap = ref.watch(coverageMapProvider).value ?? {};
     final cs = Theme.of(context).colorScheme;
 
-    Future<void> runScenario(_Scenario scenario) async {
+    Future<void> runKillChain(_Scenario scenario) async {
+      selected.value = scenario;
       running.value = true;
-      selectedScenario.value = scenario;
-      result.value = null;
+      stepIdx.value = -1;
+      stepResults.value = [];
       narrative.value = null;
 
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(const Duration(milliseconds: 400));
 
-      final allTechs = allTechsAsync.value ?? [];
-      final covMap = coverageMap.value ?? {};
-      final scenTechs = allTechs
-          .where((t) => scenario.techniques.contains(t.id))
-          .toList();
-
-      int passed = 0, failed = 0;
-      final gaps = <String>[];
-      for (final t in scenTechs) {
-        final cov = covMap[t.id] ?? CoverageLevel.unknown;
-        if (cov == CoverageLevel.covered) {
-          passed++;
-        } else {
-          failed++;
-          gaps.add(t.id);
-        }
+      final results = <bool>[];
+      for (int i = 0; i < scenario.killChain.length; i++) {
+        stepIdx.value = i;
+        await Future.delayed(const Duration(milliseconds: 900));
+        final step = scenario.killChain[i];
+        final cov = covMap[step.techniqueId] ?? CoverageLevel.unknown;
+        results.add(cov == CoverageLevel.covered);
+        stepResults.value = List.from(results);
       }
 
-      final total = scenTechs.length;
-      final readiness = total > 0 ? (passed / total) * 100.0 : 0.0;
-
-      result.value = _SimResult(
-        scenario: scenario,
-        total: total,
-        passed: passed,
-        failed: failed,
-        gaps: gaps,
-        readiness: readiness,
-        timestamp: DateTime.now(),
-      );
+      stepIdx.value = -2; // complete
       running.value = false;
 
-      // FIX: save to repository so History tab shows it
+      // Save to history
+      final passed = results.where((r) => r).length;
+      final readiness = results.isEmpty ? 0.0 : (passed / results.length) * 100;
       final entry = SimulationHistoryEntry(
         scenarioName: scenario.name,
         scenarioIcon: scenario.icon,
-        totalTechniques: total,
+        totalTechniques: scenario.killChain.length,
         readiness: readiness,
         timestamp: DateTime.now(),
       );
       await ref.read(saveSimulationResultProvider(entry).future);
 
       // Gemini narrative
-      narrativeLoading.value = true;
+      narLoading.value = true;
       try {
+        final gaps = scenario.killChain
+            .where((s) {
+              final cov = covMap[s.techniqueId] ?? CoverageLevel.unknown;
+              return cov != CoverageLevel.covered;
+            })
+            .map((s) => s.techniqueId)
+            .toList();
         final gemini = ref.read(geminiServiceProvider);
-        final r = await gemini.generateSimulationNarrative(
+        final result = await gemini.generateSimulationNarrative(
           scenarioName: scenario.name,
           uncoveredTechniques: gaps,
           readinessScore: readiness,
         );
-        if (r.isSuccess) narrative.value = r.text;
+        if (result.isSuccess) narrative.value = result.text;
       } finally {
-        narrativeLoading.value = false;
+        narLoading.value = false;
       }
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (result.value == null) ...[
-            Text(
-              'Select a Scenario',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Run a simulation to see how your coverage holds up against real attack patterns.',
-              style: TextStyle(fontSize: 12, color: cs.outline),
-            ),
-            const SizedBox(height: 14),
-            ..._scenarios.map(
-              (s) => _ScenarioCard(
-                scenario: s,
-                isRunning: running.value && selectedScenario.value?.id == s.id,
-                onRun: () => runScenario(s),
-              ),
-            ),
-          ] else
-            _SimResultCard(
-              result: result.value!,
-              narrative: narrative.value,
-              narrativeLoading: narrativeLoading.value,
-              onReset: () {
-                result.value = null;
-                narrative.value = null;
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
+    void reset() {
+      selected.value = null;
+      stepIdx.value = -1;
+      stepResults.value = [];
+      narrative.value = null;
+    }
 
-class _ScenarioCard extends StatelessWidget {
-  final _Scenario scenario;
-  final bool isRunning;
-  final VoidCallback onRun;
-  const _ScenarioCard({
-    required this.scenario,
-    required this.isRunning,
-    required this.onRun,
-  });
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant, width: 0.5),
-      ),
-      child: Row(
+    if (selected.value == null) {
+      // Scenario selection grid
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         children: [
-          Text(scenario.icon, style: const TextStyle(fontSize: 28)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  scenario.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  scenario.description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: cs.outline,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline_rounded,
-                      size: 12,
-                      color: cs.outline,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      scenario.threatActor,
-                      style: TextStyle(fontSize: 11, color: cs.outline),
-                    ),
-                    const SizedBox(width: 10),
-                    Icon(Icons.layers_outlined, size: 12, color: cs.outline),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${scenario.techniques.length} techniques',
-                      style: TextStyle(fontSize: 11, color: cs.outline),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          Text(
+            'Select an Attack Scenario',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
           ),
-          const SizedBox(width: 10),
-          isRunning
-              ? const SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : FilledButton.tonal(
-                  onPressed: onRun,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    minimumSize: Size.zero,
-                  ),
-                  child: const Text('Run', style: TextStyle(fontSize: 12)),
-                ),
+          const SizedBox(height: 4),
+          Text(
+            'Watch an attack unfold step-by-step and see exactly where your coverage holds or fails.',
+            style: TextStyle(fontSize: 12, color: cs.outline),
+          ),
+          const SizedBox(height: 16),
+          ..._scenarios.map(
+            (s) => _ScenarioCard(scenario: s, onTap: () => runKillChain(s)),
+          ),
         ],
-      ),
-    );
-  }
-}
+      );
+    }
 
-class _SimResultCard extends StatelessWidget {
-  final _SimResult result;
-  final String? narrative;
-  final bool narrativeLoading;
-  final VoidCallback onReset;
-  const _SimResultCard({
-    required this.result,
-    required this.narrative,
-    required this.narrativeLoading,
-    required this.onReset,
-  });
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final readiness = result.readiness;
-    final color = readiness >= 75
+    // Kill-chain animation view
+    final scenario = selected.value!;
+    final steps = scenario.killChain;
+    final cur = stepIdx.value;
+    final complete = cur == -2;
+    final passed = stepResults.value.where((r) => r).length;
+    final total = stepResults.value.length;
+    final readiness = total > 0 ? (passed / steps.length) * 100.0 : 0.0;
+    final rColor = readiness >= 75
         ? Colors.green.shade600
         : readiness >= 50
         ? Colors.amber.shade600
         : Colors.red.shade600;
-    final label = readiness >= 75
-        ? 'Well Protected'
-        : readiness >= 50
-        ? 'Partially Ready'
-        : 'High Exposure';
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              'Simulation Result',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: onReset,
-              icon: const Icon(Icons.arrow_back_rounded, size: 14),
-              label: const Text('Back'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
+        // Header
         Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cs.outlineVariant, width: 0.5),
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          color: cs.surfaceContainerLow,
           child: Row(
             children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 80,
-                    height: 80,
-                    child: CircularProgressIndicator(
-                      value: readiness / 100,
-                      strokeWidth: 7,
-                      backgroundColor: cs.outlineVariant,
-                      color: color,
-                      strokeCap: StrokeCap.round,
-                    ),
-                  ),
-                  Text(
-                    '${readiness.toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 20),
+              Text(scenario.icon, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${result.scenario.icon}  ${result.scenario.name}',
+                      scenario.name,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: color,
-                        ),
+                    Text(
+                      scenario.threatActor,
+                      style: TextStyle(fontSize: 11, color: cs.outline),
+                    ),
+                  ],
+                ),
+              ),
+              if (!running.value)
+                TextButton.icon(
+                  onPressed: reset,
+                  icon: const Icon(Icons.arrow_back_rounded, size: 14),
+                  label: const Text('Back'),
+                ),
+            ],
+          ),
+        ),
+
+        // Progress bar
+        if (running.value || complete)
+          LinearProgressIndicator(
+            value: complete ? 1.0 : (cur >= 0 ? (cur + 1) / steps.length : 0),
+            minHeight: 3,
+            backgroundColor: cs.outlineVariant,
+            valueColor: AlwaysStoppedAnimation(complete ? rColor : cs.primary),
+          ),
+
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Steps
+                ...steps.asMap().entries.map((e) {
+                  final i = e.key;
+                  final step = e.value;
+                  final done = i < stepResults.value.length;
+                  final active = i == cur;
+                  final blocked = done && stepResults.value[i];
+
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: active
+                          ? cs.primaryContainer.withOpacity(.3)
+                          : done
+                          ? (blocked
+                                ? Colors.green.shade50
+                                : Colors.red.shade50)
+                          : cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: active
+                            ? cs.primary
+                            : done
+                            ? (blocked
+                                  ? Colors.green.shade300
+                                  : Colors.red.shade300)
+                            : cs.outlineVariant,
+                        width: active ? 1.5 : 0.5,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.check_rounded,
-                          size: 14,
-                          color: Colors.green.shade600,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${result.passed} covered',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.green.shade600,
+                        // Step number / result icon
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: active
+                                ? cs.primary
+                                : done
+                                ? (blocked
+                                      ? Colors.green.shade500
+                                      : Colors.red.shade500)
+                                : cs.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: active
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : done
+                                ? Icon(
+                                    blocked
+                                        ? Icons.shield_rounded
+                                        : Icons.warning_amber_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  )
+                                : Text(
+                                    '${i + 1}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: cs.outline,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Icon(
-                          Icons.close_rounded,
-                          size: 14,
-                          color: Colors.red.shade500,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${result.failed} exposed',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.red.shade500,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${step.tacticLabel}  ·  ${step.techniqueId}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: active
+                                            ? cs.primary
+                                            : cs.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  if (done)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: blocked
+                                            ? Colors.green.shade100
+                                            : Colors.red.shade100,
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        blocked ? '✓ Blocked' : '✗ Exposed',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: blocked
+                                              ? Colors.green.shade700
+                                              : Colors.red.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              if (done) ...[
+                                Text(
+                                  blocked
+                                      ? step.defensiveValue
+                                      : step.attackerAction,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: blocked
+                                        ? Colors.green.shade800
+                                        : Colors.red.shade800,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ] else if (active) ...[
+                                Text(
+                                  step.attackerAction,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: cs.outline,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ] else ...[
+                                Text(
+                                  step.attackerAction,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: cs.outline,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                              if (done) ...[
+                                const SizedBox(height: 4),
+                                GestureDetector(
+                                  onTap: () => context.push(
+                                    '/library/${step.techniqueId}',
+                                  ),
+                                  child: Text(
+                                    'View ${step.techniqueId} →',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: cs.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
+                  );
+                }),
 
-        if (result.gaps.isNotEmpty) ...[
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.shade200, width: 0.5),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      size: 16,
-                      color: Colors.red.shade600,
+                // Final result
+                if (complete) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cs.outlineVariant, width: 0.5),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Exposed Techniques (${result.gaps.length})',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.red.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: result.gaps
-                      .map(
-                        (id) => ActionChip(
-                          label: Text(id, style: const TextStyle(fontSize: 11)),
-                          backgroundColor: Colors.red.shade100,
-                          side: BorderSide(
-                            color: Colors.red.shade300,
-                            width: 0.5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 72,
+                                  height: 72,
+                                  child: CircularProgressIndicator(
+                                    value: readiness / 100,
+                                    strokeWidth: 7,
+                                    backgroundColor: cs.outlineVariant,
+                                    color: rColor,
+                                    strokeCap: StrokeCap.round,
+                                  ),
+                                ),
+                                Text(
+                                  '${readiness.toStringAsFixed(0)}%',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: rColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Simulation Complete',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: cs.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: rColor.withOpacity(.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      readiness >= 75
+                                          ? 'Well Protected'
+                                          : readiness >= 50
+                                          ? 'Partially Ready'
+                                          : 'High Exposure',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: rColor,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.shield_rounded,
+                                        size: 13,
+                                        color: Colors.green.shade600,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$passed/${steps.length} steps blocked',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.green.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        if (narrative.value != null) ...[
+                          const Divider(height: 20),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.auto_awesome_rounded,
+                                size: 14,
+                                color: cs.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'AI Attack Narrative',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
+                                ),
+                              ),
+                            ],
                           ),
-                          onPressed: () => context.push('/library/$id'),
-                          avatar: const Icon(
-                            Icons.open_in_new_rounded,
-                            size: 11,
+                          const SizedBox(height: 8),
+                          Text(
+                            narrative.value!,
+                            style: const TextStyle(fontSize: 12, height: 1.5),
+                          ),
+                        ] else if (narLoading.value) ...[
+                          const Divider(height: 20),
+                          const ShimmerLoader(height: 50),
+                        ],
+
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            icon: const Icon(Icons.map_outlined, size: 15),
+                            label: const Text(
+                              'Fix exposed gaps in Coverage Map',
+                            ),
+                            onPressed: () => context.push('/coverage'),
                           ),
                         ),
-                      )
-                      .toList(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cs.outlineVariant, width: 0.5),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.auto_awesome_rounded, size: 15, color: cs.primary),
-                  const SizedBox(width: 6),
-                  Text(
-                    'AI Attack Narrative',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: cs.onSurface,
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.replay_rounded, size: 15),
+                            label: const Text('Run another scenario'),
+                            onPressed: reset,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              narrativeLoading
-                  ? const ShimmerLoader(height: 60)
-                  : narrative == null
-                  ? Text(
-                      'AI service unavailable. Configure your Gemini API key in Settings.',
-                      style: TextStyle(fontSize: 12, color: cs.outline),
-                    )
-                  : Text(
-                      narrative!,
-                      style: const TextStyle(fontSize: 13, height: 1.5),
-                    ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            icon: const Icon(Icons.map_outlined, size: 16),
-            label: const Text('Fix these gaps in Coverage Map'),
-            onPressed: () => context.push('/coverage'),
+              ],
+            ),
           ),
         ),
       ],
@@ -882,13 +1059,94 @@ class _SimResultCard extends StatelessWidget {
   }
 }
 
-// ─── History tab ──────────────────────────────────────────────────────────────
+class _ScenarioCard extends StatelessWidget {
+  final _Scenario scenario;
+  final VoidCallback onTap;
+  const _ScenarioCard({required this.scenario, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: cs.outlineVariant, width: 0.5),
+          ),
+          child: Row(
+            children: [
+              Text(scenario.icon, style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      scenario.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      scenario.description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.outline,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline_rounded,
+                          size: 12,
+                          color: cs.outline,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          scenario.threatActor,
+                          style: TextStyle(fontSize: 11, color: cs.outline),
+                        ),
+                        const SizedBox(width: 10),
+                        Icon(
+                          Icons.linear_scale_rounded,
+                          size: 12,
+                          color: cs.outline,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${scenario.killChain.length}-step kill chain',
+                          style: TextStyle(fontSize: 11, color: cs.outline),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.play_arrow_rounded, color: cs.primary, size: 28),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Tab 3: History ───────────────────────────────────────────────────────────
 class _HistoryTab extends ConsumerWidget {
   const _HistoryTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // FIX: uses simulationHistoryProvider from simulation_providers.dart (not @riverpod in this file)
     final historyAsync = ref.watch(simulationHistoryProvider);
     final cs = Theme.of(context).colorScheme;
 
@@ -896,7 +1154,7 @@ class _HistoryTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('$e')),
       data: (history) {
-        if (history.isEmpty) {
+        if (history.isEmpty)
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -904,7 +1162,7 @@ class _HistoryTab extends ConsumerWidget {
                 Icon(Icons.history_rounded, size: 48, color: cs.outlineVariant),
                 const SizedBox(height: 12),
                 Text(
-                  'No simulations run yet.',
+                  'No simulations yet.',
                   style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 6),
@@ -915,9 +1173,9 @@ class _HistoryTab extends ConsumerWidget {
               ],
             ),
           );
-        }
 
-        final spots = history
+        final spots = history.reversed
+            .toList()
             .asMap()
             .entries
             .map((e) => FlSpot(e.key.toDouble(), e.value.readiness))
@@ -936,7 +1194,7 @@ class _HistoryTab extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Simulation readiness scores over time',
+                'Your simulation readiness scores over time',
                 style: TextStyle(fontSize: 12, color: cs.outline),
               ),
               const SizedBox(height: 16),
@@ -950,7 +1208,7 @@ class _HistoryTab extends ConsumerWidget {
                       show: true,
                       drawVerticalLine: false,
                       getDrawingHorizontalLine: (_) =>
-                          FlLine(color: cs.outlineVariant, strokeWidth: 0.5),
+                          FlLine(color: cs.outlineVariant, strokeWidth: .5),
                     ),
                     borderData: FlBorderData(show: false),
                     titlesData: FlTitlesData(
@@ -981,7 +1239,7 @@ class _HistoryTab extends ConsumerWidget {
                         color: cs.primary,
                         barWidth: 2.5,
                         dotData: FlDotData(
-                          getDotPainter: (spot, _, __, ___) =>
+                          getDotPainter: (_, __, ___, ____) =>
                               FlDotCirclePainter(
                                 radius: 4,
                                 color: cs.primary,
@@ -999,8 +1257,8 @@ class _HistoryTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              ...history.reversed.map((h) {
-                final color = h.readiness >= 75
+              ...history.map((h) {
+                final c = h.readiness >= 75
                     ? Colors.green.shade600
                     : h.readiness >= 50
                     ? Colors.amber.shade600
@@ -1011,7 +1269,7 @@ class _HistoryTab extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: cs.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cs.outlineVariant, width: 0.5),
+                    border: Border.all(color: cs.outlineVariant, width: .5),
                   ),
                   child: Row(
                     children: [
@@ -1032,7 +1290,7 @@ class _HistoryTab extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              '${h.timestamp.day}/${h.timestamp.month}/${h.timestamp.year}  · ${h.totalTechniques} techniques',
+                              '${h.timestamp.day}/${h.timestamp.month}/${h.timestamp.year}  ·  ${h.totalTechniques} steps',
                               style: TextStyle(fontSize: 11, color: cs.outline),
                             ),
                           ],
@@ -1043,7 +1301,7 @@ class _HistoryTab extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: color,
+                          color: c,
                         ),
                       ),
                     ],
@@ -1056,22 +1314,4 @@ class _HistoryTab extends ConsumerWidget {
       },
     );
   }
-}
-
-// ─── Internal result model ────────────────────────────────────────────────────
-class _SimResult {
-  final _Scenario scenario;
-  final int total, passed, failed;
-  final List<String> gaps;
-  final double readiness;
-  final DateTime timestamp;
-  const _SimResult({
-    required this.scenario,
-    required this.total,
-    required this.passed,
-    required this.failed,
-    required this.gaps,
-    required this.readiness,
-    required this.timestamp,
-  });
 }

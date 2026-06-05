@@ -60,6 +60,13 @@ GoRouter appRouter(Ref ref) {
     },
 
     routes: [
+      // ── Root route redirect ───────────────────────────────────────────
+      GoRoute(
+        path: '/',
+        name: 'root',
+        redirect: (_, __) => AppRoutes.dashboard,
+      ),
+
       // ── Onboarding (outside shell) ────────────────────────────────────
       GoRoute(
         path: AppRoutes.onboarding,
@@ -140,7 +147,7 @@ GoRouter appRouter(Ref ref) {
       ),
     ],
 
-    errorBuilder: (_, state) => Scaffold(
+    errorBuilder: (context, state) => Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -150,7 +157,7 @@ GoRouter appRouter(Ref ref) {
             Text('Page not found: ${state.uri}'),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: () => state.namedLocation('dashboard'),
+              onPressed: () => context.go(AppRoutes.dashboard),
               child: const Text('Go to Dashboard'),
             ),
           ],

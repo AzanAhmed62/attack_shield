@@ -2,7 +2,6 @@ import 'package:attackshield/core/constants/constants.dart';
 import 'package:attackshield/shared/models/models.dart';
 import 'package:attackshield/data/repositories/repositories.dart';
 import 'package:attackshield/data/services/services.dart';
-import 'package:attackshield/shared/models/security_alert.dart';
 
 /// Seeds realistic sample data after onboarding completes.
 /// Only runs once — subsequent launches skip it.
@@ -81,12 +80,12 @@ class SeedDataService {
     ];
 
     for (final alert in alerts) {
-      final securityAlert = SecurityAlert(
+      final securityAlert = AlertItem(
         id: alert.id,
         title: alert.title,
         description: alert.description,
-        severity: _priorityToSeverity(alert.priority),
-        status: _statusToString(alert.status),
+        priority: alert.priority,
+        status: alert.status,
         source: alert.source,
         linkedTechniqueId: alert.relatedTechniqueId,
         createdAt: alert.createdAt,
@@ -97,22 +96,7 @@ class SeedDataService {
     }
   }
 
-  String _priorityToSeverity(AlertPriority priority) {
-    return switch (priority) {
-      AlertPriority.critical => 'critical',
-      AlertPriority.high => 'high',
-      AlertPriority.medium => 'medium',
-      AlertPriority.low => 'low',
-    };
-  }
-
-  String _statusToString(AlertStatus status) {
-    return switch (status) {
-      AlertStatus.open => 'open',
-      AlertStatus.acknowledged => 'open',
-      AlertStatus.resolved => 'resolved',
-    };
-  }
+  // Removed: _priorityToSeverity and _statusToString - no longer needed
 
   Future<void> _seedAssets() async {
     // The AssetRepository already seeds default assets in _defaultAssets().

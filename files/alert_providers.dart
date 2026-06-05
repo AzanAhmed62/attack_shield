@@ -1,7 +1,6 @@
 // lib/shared/providers/alert_providers.dart
 // FULL REPLACEMENT — uses AlertItem model (existing), correct Notifier pattern.
 
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/alert_item.dart';
 import 'repository_providers.dart';
@@ -27,8 +26,8 @@ class AlertActions extends _$AlertActions {
   }
 
   Future<void> resolve(String id) async {
-    final repo = ref.read(alertRepositoryProvider);
-    final all = await repo.getAllAlerts();
+    final repo   = ref.read(alertRepositoryProvider);
+    final all    = await repo.getAllAlerts();
     try {
       final alert = all.firstWhere((a) => a.id == id);
       await repo.updateAlert(alert.copyWith(status: AlertStatus.resolved));
@@ -38,7 +37,7 @@ class AlertActions extends _$AlertActions {
 
   Future<void> acknowledge(String id) async {
     final repo = ref.read(alertRepositoryProvider);
-    final all = await repo.getAllAlerts();
+    final all  = await repo.getAllAlerts();
     try {
       final alert = all.firstWhere((a) => a.id == id);
       await repo.updateAlert(alert.copyWith(status: AlertStatus.acknowledged));
@@ -48,7 +47,7 @@ class AlertActions extends _$AlertActions {
 
   Future<void> markRead(String id) async {
     final repo = ref.read(alertRepositoryProvider);
-    final all = await repo.getAllAlerts();
+    final all  = await repo.getAllAlerts();
     try {
       final alert = all.firstWhere((a) => a.id == id);
       if (!alert.isRead) {
@@ -75,10 +74,7 @@ Future<int> openAlertCount(Ref ref) async {
 Future<int> criticalAlertCount(Ref ref) async {
   final all = await ref.watch(alertsProvider.future);
   return all
-      .where(
-        (a) =>
-            a.priority == AlertPriority.critical &&
-            a.status == AlertStatus.open,
-      )
+      .where((a) => a.priority == AlertPriority.critical &&
+                    a.status   == AlertStatus.open)
       .length;
 }

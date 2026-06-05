@@ -26,7 +26,7 @@ final allReportsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AllReportsRef = AutoDisposeFutureProviderRef<List<ReportSummary>>;
-String _$latestReportHash() => r'eead5aeb4503db96e9ce7a107cf3d4dfd378c4be';
+String _$latestReportHash() => r'c81e80ecd3894f448edd0cf0a02b97bea1840eb1';
 
 /// The most recently generated report, or null if none exist.
 ///
@@ -330,7 +330,7 @@ class _DeleteReportProviderElement
   String get id => (origin as DeleteReportProvider).id;
 }
 
-String _$clearAllReportsHash() => r'238de81d10706cf429492c697ee2f914b94b079a';
+String _$clearAllReportsHash() => r'bdb3e0bf0bc3244d85a61def6eb8bd265b05e723';
 
 /// Clear all reports.
 ///

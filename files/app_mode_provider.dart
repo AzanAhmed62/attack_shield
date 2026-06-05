@@ -1,16 +1,14 @@
 // lib/shared/providers/app_mode_provider.dart
-// NEW FILE — AppMode toggle (Expert / Plain English) used by dashboard
-// and technique_detail_screen. Persisted across sessions.
+// NEW FILE — global AppMode (Expert / Plain English) toggle.
+// Persisted across sessions via GetStorage.
+// Used in: dashboard_screen, technique_detail_screen, threat_mapping_screen.
 
 import 'package:get_storage/get_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_mode_provider.g.dart';
 
-enum AppMode {
-  expertMode,         // Full technical MITRE data
-  plainLanguageMode,  // Plain English, non-technical
-}
+enum AppMode { expertMode, plainLanguageMode }
 
 const _kAppModeKey = 'app_mode_v1';
 
@@ -28,16 +26,17 @@ class AppModeNotifier extends _$AppModeNotifier {
     final next = state == AppMode.expertMode
         ? AppMode.plainLanguageMode
         : AppMode.expertMode;
-    state = next;
-    _storage.write(_kAppModeKey, next == AppMode.plainLanguageMode ? 'plain' : 'expert');
+    _save(next);
   }
 
-  void setMode(AppMode mode) {
+  void setMode(AppMode mode) => _save(mode);
+
+  void _save(AppMode mode) {
     state = mode;
     _storage.write(_kAppModeKey, mode == AppMode.plainLanguageMode ? 'plain' : 'expert');
   }
 }
 
-// Convenience alias — screens watch this directly
-// Usage: final mode = ref.watch(appModeProvider);
-// Notifier: ref.read(appModeProvider.notifier).toggleAppMode();
+// Convenience shorthand — watch this in screens:
+// final mode = ref.watch(appModeProvider);
+// ref.read(appModeProvider.notifier).toggleAppMode();

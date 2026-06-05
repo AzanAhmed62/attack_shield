@@ -162,7 +162,7 @@ class _AssetByIdProviderElement
   String get id => (origin as AssetByIdProvider).id;
 }
 
-String _$assetCountByTypeHash() => r'cb4859eb004f3eaf7cb8e38150b0864760dbc93b';
+String _$assetCountByTypeHash() => r'241d95aba104d17702ede9ef92586b0479613480';
 
 /// Assets grouped by type — used for the coverage matrix asset distribution view.
 ///
@@ -202,7 +202,7 @@ final criticalAssetCountProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CriticalAssetCountRef = AutoDisposeFutureProviderRef<int>;
-String _$createAssetHash() => r'0c1284c2826f39a1eb80ca84c7ecffd89dff617d';
+String _$createAssetHash() => r'e3d1edbde40a4a06c52085ec41f9cdd898a766ad';
 
 /// See also [createAsset].
 @ProviderFor(createAsset)
@@ -320,7 +320,7 @@ class _CreateAssetProviderElement extends AutoDisposeFutureProviderElement<void>
   SecurityAsset get asset => (origin as CreateAssetProvider).asset;
 }
 
-String _$updateAssetHash() => r'0c381b09f8270a54300efd38121de50714b97570';
+String _$updateAssetHash() => r'd7586343768ef08ce68649e165c3f686c26fe9a1';
 
 /// See also [updateAsset].
 @ProviderFor(updateAsset)
@@ -556,7 +556,7 @@ class _DeleteAssetProviderElement extends AutoDisposeFutureProviderElement<void>
   String get id => (origin as DeleteAssetProvider).id;
 }
 
-String _$clearAllAssetsHash() => r'952de4016f28c075781558089216dd932fc0e927';
+String _$clearAllAssetsHash() => r'b68bd2bc90739774a68c3f9b82232720c4794eb7';
 
 /// See also [clearAllAssets].
 @ProviderFor(clearAllAssets)

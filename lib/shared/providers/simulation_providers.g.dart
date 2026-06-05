@@ -26,7 +26,7 @@ final simulationHistoryProvider =
 typedef SimulationHistoryRef =
     AutoDisposeFutureProviderRef<List<SimulationHistoryEntry>>;
 String _$saveSimulationResultHash() =>
-    r'ad611a6410fef9e8117b470fc597ebe857aef720';
+    r'023e75c21d779e8e8e2a17c077e3dd175dc92bdb';
 
 /// Copied from Dart SDK
 class _SystemHash {

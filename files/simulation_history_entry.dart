@@ -1,6 +1,6 @@
 // lib/features/simulations/presentation/models/simulation_history_entry.dart
-// NEW FILE — extracted from simulations_screen.dart so it can be imported
-// by both simulation_providers.dart and simulations_screen.dart.
+// Standalone model — extracted so it can be imported by both
+// simulation_providers.dart and simulations_screen.dart without circular deps.
 
 class SimulationHistoryEntry {
   final String   scenarioName;

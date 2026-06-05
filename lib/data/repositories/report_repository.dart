@@ -1,81 +1,50 @@
-import 'package:attackshield/shared/models/models.dart';
-import '../../core/errors/errors.dart';
-import '../services/services.dart';
+
+// lib/data/repositories/report_repository.dart
+// NEW FILE — report summary persistence.
+
+// ignore_for_file: file_names
+
+import 'dart:convert';
+
+import 'package:attackshield/data/services/local_storage_service.dart';
+import 'package:get_storage/get_storage.dart';
+
+import '../../shared/models/report_summary.dart';
 
 abstract class ReportRepository {
   Future<List<ReportSummary>> getAllReports();
-  Future<ReportSummary?> getLatestReport();
   Future<void> saveReport(ReportSummary report);
   Future<void> deleteReport(String id);
-  Future<void> clearAllReports();
 }
 
 class ReportRepositoryImpl implements ReportRepository {
-  final LocalStorageService _storageService;
-  static const String _key = 'reports';
+  final LocalStorageService storage;
+  ReportRepositoryImpl(this.storage);
 
-  ReportRepositoryImpl(this._storageService);
+  final _box2 = GetStorage();
+  static const _kReportsKey = 'report_summaries_v1';
 
   @override
   Future<List<ReportSummary>> getAllReports() async {
     try {
-      final data = _storageService.read<List>(_key);
-      if (data == null) return [];
-      final reports = data
-          .map((e) => ReportSummary.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-      // Sort newest first
-      reports.sort((a, b) {
-        final aDate = a.generatedAt ?? DateTime(2000);
-        final bDate = b.generatedAt ?? DateTime(2000);
-        return bDate.compareTo(aDate);
-      });
-      return reports;
-    } catch (e) {
-      throw DataException(message: 'Failed to fetch reports: $e');
-    }
-  }
-
-  @override
-  Future<ReportSummary?> getLatestReport() async {
-    final reports = await getAllReports();
-    return reports.isEmpty ? null : reports.first;
+      final raw = _box2.read<String>(_kReportsKey);
+      if (raw == null) return [];
+      final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
+      return list.map(ReportSummary.fromJson).toList();
+    } catch (_) { return []; }
   }
 
   @override
   Future<void> saveReport(ReportSummary report) async {
-    try {
-      final reports = await getAllReports();
-      reports.insert(0, report); // newest first
-      await _storageService.write(
-        _key,
-        reports.map((r) => r.toJson()).toList(),
-      );
-    } catch (e) {
-      throw DataException(message: 'Failed to save report: $e');
-    }
+    final all = await getAllReports();
+    all.insert(0, report);
+    await _box2.write(_kReportsKey, jsonEncode(all.map((r) => r.toJson()).toList()));
   }
 
   @override
   Future<void> deleteReport(String id) async {
-    try {
-      final reports = await getAllReports();
-      reports.removeWhere((r) => r.id == id);
-      await _storageService.write(
-        _key,
-        reports.map((r) => r.toJson()).toList(),
-      );
-    } catch (e) {
-      throw DataException(message: 'Failed to delete report: $e');
-    }
-  }
-
-  @override
-  Future<void> clearAllReports() async {
-    try {
-      await _storageService.remove(_key);
-    } catch (e) {
-      throw DataException(message: 'Failed to clear reports: $e');
-    }
+    final all = await getAllReports();
+    all.removeWhere((r) => r.id == id);
+    await _box2.write(_kReportsKey, jsonEncode(all.map((r) => r.toJson()).toList()));
   }
 }

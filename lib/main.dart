@@ -1,14 +1,8 @@
-// lib/main.dart
-// FIX: correct router import path (lib/core/routing/ not lib/core/router/)
-// FIX: PlainLanguageService.ensureLoaded() called at startup so plain_language_mappings.json
-//      is always available before the first screen opens.
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:get_storage/get_storage.dart';
-
-import 'core/routing/app_router.dart'; // FIX: was core/router/
+import 'core/routing/app_router.dart';
 import 'data/services/plain_language_service.dart';
 import 'data/services/local_storage_service.dart';
 

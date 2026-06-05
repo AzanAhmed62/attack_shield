@@ -37,11 +37,7 @@ class AlertRepositoryImpl implements AlertRepository {
   @override
   Future<AlertItem?> getAlertById(String id) async {
     final all = await getAllAlerts();
-    try {
-      return all.firstWhere((a) => a.id == id);
-    } catch (_) {
-      return null;
-    }
+    try { return all.firstWhere((a) => a.id == id); } catch (_) { return null; }
   }
 
   @override
@@ -54,7 +50,7 @@ class AlertRepositoryImpl implements AlertRepository {
   @override
   Future<void> updateAlert(AlertItem alert) async {
     final all = await getAllAlerts();
-    final i = all.indexWhere((a) => a.id == alert.id);
+    final i   = all.indexWhere((a) => a.id == alert.id);
     if (i == -1) return;
     all[i] = alert;
     await _persist(all);

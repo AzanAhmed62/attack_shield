@@ -10,11 +10,11 @@ import 'package:flutter/foundation.dart';
 const _kAssetPath = 'assets/data/plain_language_mappings.json';
 
 class PlainTechniqueData {
-  final String  techniqueId;
-  final String  plainTitle;
-  final String  simpleSummary;
-  final String  businessRisk;
-  final String  urgencyLevel;        // Critical | High | Medium | Low
+  final String techniqueId;
+  final String plainTitle;
+  final String simpleSummary;
+  final String businessRisk;
+  final String urgencyLevel; // Critical | High | Medium | Low
   final List<String> remediationSteps;
   final List<String> realWorldExamples;
 
@@ -30,20 +30,23 @@ class PlainTechniqueData {
 
   factory PlainTechniqueData.fromJson(String id, Map<String, dynamic> json) {
     return PlainTechniqueData(
-      techniqueId:     id,
-      plainTitle:      json['plain_title']       as String? ?? '',
-      simpleSummary:   json['simple_summary']    as String? ?? '',
-      businessRisk:    json['business_risk']      as String? ?? '',
-      urgencyLevel:    json['urgency_level']      as String? ?? 'Medium',
-      remediationSteps: (json['remediation_steps'] as List?)?.cast<String>() ?? [],
-      realWorldExamples: (json['real_world_examples'] as List?)?.cast<String>() ?? [],
+      techniqueId: id,
+      plainTitle: json['plain_title'] as String? ?? '',
+      simpleSummary: json['simple_summary'] as String? ?? '',
+      businessRisk: json['business_risk'] as String? ?? '',
+      urgencyLevel: json['urgency_level'] as String? ?? 'Medium',
+      remediationSteps:
+          (json['remediation_steps'] as List?)?.cast<String>() ?? [],
+      realWorldExamples:
+          (json['real_world_examples'] as List?)?.cast<String>() ?? [],
     );
   }
 }
 
 class PlainLanguageService {
   // Singleton
-  static final PlainLanguageService _instance = PlainLanguageService._internal();
+  static final PlainLanguageService _instance =
+      PlainLanguageService._internal();
   factory PlainLanguageService() => _instance;
   PlainLanguageService._internal();
 
@@ -54,12 +57,16 @@ class PlainLanguageService {
     if (_cache != null) return;
     try {
       final jsonString = await rootBundle.loadString(_kAssetPath);
-      final raw        = jsonDecode(jsonString) as Map<String, dynamic>;
-      _cache = raw.map((id, data) => MapEntry(
-        id,
-        PlainTechniqueData.fromJson(id, data as Map<String, dynamic>),
-      ));
-      debugPrint('[PlainLanguage] Loaded ${_cache!.length} technique mappings.');
+      final raw = jsonDecode(jsonString) as List<dynamic>;
+      _cache = {};
+      for (final item in raw) {
+        final data = item as Map<String, dynamic>;
+        final id = data['techniqueId'] as String;
+        _cache![id] = PlainTechniqueData.fromJson(id, data);
+      }
+      debugPrint(
+        '[PlainLanguage] Loaded ${_cache!.length} technique mappings.',
+      );
     } catch (e) {
       debugPrint('[PlainLanguage] Failed to load mappings: $e');
       _cache = {};
@@ -97,11 +104,12 @@ class PlainLanguageService {
     if (data == null) return null;
     return {
       'simpleExplanation': data.simpleSummary,
-      'realWorldExample':  data.realWorldExamples.isNotEmpty
-          ? data.realWorldExamples.first : null,
-      'businessImpact':    data.businessRisk,
-      'urgencyLevel':      data.urgencyLevel,
-      'topThreeActions':   data.remediationSteps.take(3).toList(),
+      'realWorldExample': data.realWorldExamples.isNotEmpty
+          ? data.realWorldExamples.first
+          : null,
+      'businessImpact': data.businessRisk,
+      'urgencyLevel': data.urgencyLevel,
+      'topThreeActions': data.remediationSteps.take(3).toList(),
     };
   }
 }

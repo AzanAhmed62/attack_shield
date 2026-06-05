@@ -18,7 +18,8 @@ Future<List<ReportSummary>> allReports(Ref ref) async {
 @Riverpod(keepAlive: false)
 Future<ReportSummary?> latestReport(Ref ref) async {
   final repository = ref.watch(reportRepositoryProvider);
-  return repository.getLatestReport();
+  final all = await repository.getAllReports();
+  return all.isEmpty ? null : all.first;
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
@@ -45,7 +46,10 @@ Future<void> deleteReport(Ref ref, String id) async {
 @Riverpod(keepAlive: false)
 Future<void> clearAllReports(Ref ref) async {
   final repository = ref.watch(reportRepositoryProvider);
-  await repository.clearAllReports();
+  final all = await repository.getAllReports();
+  for (final report in all) {
+    await repository.deleteReport(report.id);
+  }
   ref.invalidate(allReportsProvider);
   ref.invalidate(latestReportProvider);
 }

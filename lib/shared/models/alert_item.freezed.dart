@@ -26,10 +26,15 @@ mixin _$AlertItem {
   String get description => throw _privateConstructorUsedError;
   AlertPriority get priority => throw _privateConstructorUsedError;
   AlertStatus get status => throw _privateConstructorUsedError;
-  String get source => throw _privateConstructorUsedError;
+  String get source =>
+      throw _privateConstructorUsedError; // Technique linkage (new)
+  String? get linkedTechniqueId => throw _privateConstructorUsedError;
+  @Deprecated('Use linkedTechniqueId')
   String? get relatedTechniqueId => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
-  DateTime get updatedAt => throw _privateConstructorUsedError;
+  DateTime? get updatedAt =>
+      throw _privateConstructorUsedError; // Read tracking (new)
+  bool get isRead => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
 
   /// Serializes this AlertItem to a JSON map.
@@ -54,9 +59,11 @@ abstract class $AlertItemCopyWith<$Res> {
     AlertPriority priority,
     AlertStatus status,
     String source,
-    String? relatedTechniqueId,
+    String? linkedTechniqueId,
+    @Deprecated('Use linkedTechniqueId') String? relatedTechniqueId,
     DateTime createdAt,
-    DateTime updatedAt,
+    DateTime? updatedAt,
+    bool isRead,
     String? notes,
   });
 }
@@ -82,9 +89,11 @@ class _$AlertItemCopyWithImpl<$Res, $Val extends AlertItem>
     Object? priority = null,
     Object? status = null,
     Object? source = null,
+    Object? linkedTechniqueId = freezed,
     Object? relatedTechniqueId = freezed,
     Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? updatedAt = freezed,
+    Object? isRead = null,
     Object? notes = freezed,
   }) {
     return _then(
@@ -113,6 +122,10 @@ class _$AlertItemCopyWithImpl<$Res, $Val extends AlertItem>
                 ? _value.source
                 : source // ignore: cast_nullable_to_non_nullable
                       as String,
+            linkedTechniqueId: freezed == linkedTechniqueId
+                ? _value.linkedTechniqueId
+                : linkedTechniqueId // ignore: cast_nullable_to_non_nullable
+                      as String?,
             relatedTechniqueId: freezed == relatedTechniqueId
                 ? _value.relatedTechniqueId
                 : relatedTechniqueId // ignore: cast_nullable_to_non_nullable
@@ -121,10 +134,14 @@ class _$AlertItemCopyWithImpl<$Res, $Val extends AlertItem>
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
                       as DateTime,
-            updatedAt: null == updatedAt
+            updatedAt: freezed == updatedAt
                 ? _value.updatedAt
                 : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
+                      as DateTime?,
+            isRead: null == isRead
+                ? _value.isRead
+                : isRead // ignore: cast_nullable_to_non_nullable
+                      as bool,
             notes: freezed == notes
                 ? _value.notes
                 : notes // ignore: cast_nullable_to_non_nullable
@@ -151,9 +168,11 @@ abstract class _$$AlertItemImplCopyWith<$Res>
     AlertPriority priority,
     AlertStatus status,
     String source,
-    String? relatedTechniqueId,
+    String? linkedTechniqueId,
+    @Deprecated('Use linkedTechniqueId') String? relatedTechniqueId,
     DateTime createdAt,
-    DateTime updatedAt,
+    DateTime? updatedAt,
+    bool isRead,
     String? notes,
   });
 }
@@ -178,9 +197,11 @@ class __$$AlertItemImplCopyWithImpl<$Res>
     Object? priority = null,
     Object? status = null,
     Object? source = null,
+    Object? linkedTechniqueId = freezed,
     Object? relatedTechniqueId = freezed,
     Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? updatedAt = freezed,
+    Object? isRead = null,
     Object? notes = freezed,
   }) {
     return _then(
@@ -209,6 +230,10 @@ class __$$AlertItemImplCopyWithImpl<$Res>
             ? _value.source
             : source // ignore: cast_nullable_to_non_nullable
                   as String,
+        linkedTechniqueId: freezed == linkedTechniqueId
+            ? _value.linkedTechniqueId
+            : linkedTechniqueId // ignore: cast_nullable_to_non_nullable
+                  as String?,
         relatedTechniqueId: freezed == relatedTechniqueId
             ? _value.relatedTechniqueId
             : relatedTechniqueId // ignore: cast_nullable_to_non_nullable
@@ -217,10 +242,14 @@ class __$$AlertItemImplCopyWithImpl<$Res>
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
                   as DateTime,
-        updatedAt: null == updatedAt
+        updatedAt: freezed == updatedAt
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                  as DateTime?,
+        isRead: null == isRead
+            ? _value.isRead
+            : isRead // ignore: cast_nullable_to_non_nullable
+                  as bool,
         notes: freezed == notes
             ? _value.notes
             : notes // ignore: cast_nullable_to_non_nullable
@@ -236,13 +265,15 @@ class _$AlertItemImpl implements _AlertItem {
   const _$AlertItemImpl({
     required this.id,
     required this.title,
-    required this.description,
-    required this.priority,
-    required this.status,
-    required this.source,
-    this.relatedTechniqueId,
+    this.description = '',
+    this.priority = AlertPriority.medium,
+    this.status = AlertStatus.open,
+    this.source = 'Manual',
+    this.linkedTechniqueId,
+    @Deprecated('Use linkedTechniqueId') this.relatedTechniqueId,
     required this.createdAt,
-    required this.updatedAt,
+    this.updatedAt,
+    this.isRead = false,
     this.notes,
   });
 
@@ -254,25 +285,37 @@ class _$AlertItemImpl implements _AlertItem {
   @override
   final String title;
   @override
+  @JsonKey()
   final String description;
   @override
+  @JsonKey()
   final AlertPriority priority;
   @override
+  @JsonKey()
   final AlertStatus status;
   @override
+  @JsonKey()
   final String source;
+  // Technique linkage (new)
   @override
+  final String? linkedTechniqueId;
+  @override
+  @Deprecated('Use linkedTechniqueId')
   final String? relatedTechniqueId;
   @override
   final DateTime createdAt;
   @override
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
+  // Read tracking (new)
+  @override
+  @JsonKey()
+  final bool isRead;
   @override
   final String? notes;
 
   @override
   String toString() {
-    return 'AlertItem(id: $id, title: $title, description: $description, priority: $priority, status: $status, source: $source, relatedTechniqueId: $relatedTechniqueId, createdAt: $createdAt, updatedAt: $updatedAt, notes: $notes)';
+    return 'AlertItem(id: $id, title: $title, description: $description, priority: $priority, status: $status, source: $source, linkedTechniqueId: $linkedTechniqueId, relatedTechniqueId: $relatedTechniqueId, createdAt: $createdAt, updatedAt: $updatedAt, isRead: $isRead, notes: $notes)';
   }
 
   @override
@@ -288,12 +331,15 @@ class _$AlertItemImpl implements _AlertItem {
                 other.priority == priority) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.source, source) || other.source == source) &&
+            (identical(other.linkedTechniqueId, linkedTechniqueId) ||
+                other.linkedTechniqueId == linkedTechniqueId) &&
             (identical(other.relatedTechniqueId, relatedTechniqueId) ||
                 other.relatedTechniqueId == relatedTechniqueId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
+            (identical(other.isRead, isRead) || other.isRead == isRead) &&
             (identical(other.notes, notes) || other.notes == notes));
   }
 
@@ -307,9 +353,11 @@ class _$AlertItemImpl implements _AlertItem {
     priority,
     status,
     source,
+    linkedTechniqueId,
     relatedTechniqueId,
     createdAt,
     updatedAt,
+    isRead,
     notes,
   );
 
@@ -331,13 +379,15 @@ abstract class _AlertItem implements AlertItem {
   const factory _AlertItem({
     required final String id,
     required final String title,
-    required final String description,
-    required final AlertPriority priority,
-    required final AlertStatus status,
-    required final String source,
-    final String? relatedTechniqueId,
+    final String description,
+    final AlertPriority priority,
+    final AlertStatus status,
+    final String source,
+    final String? linkedTechniqueId,
+    @Deprecated('Use linkedTechniqueId') final String? relatedTechniqueId,
     required final DateTime createdAt,
-    required final DateTime updatedAt,
+    final DateTime? updatedAt,
+    final bool isRead,
     final String? notes,
   }) = _$AlertItemImpl;
 
@@ -355,13 +405,18 @@ abstract class _AlertItem implements AlertItem {
   @override
   AlertStatus get status;
   @override
-  String get source;
+  String get source; // Technique linkage (new)
   @override
+  String? get linkedTechniqueId;
+  @override
+  @Deprecated('Use linkedTechniqueId')
   String? get relatedTechniqueId;
   @override
   DateTime get createdAt;
   @override
-  DateTime get updatedAt;
+  DateTime? get updatedAt; // Read tracking (new)
+  @override
+  bool get isRead;
   @override
   String? get notes;
 

@@ -19,7 +19,7 @@ dependencies:
   # State Management
   riverpod: ^2.4.0
   hooks_riverpod: ^2.4.0
-  flutter_hooks: ^0.20.0 # ADDED — required for HookConsumerWidget
+  flutter_hooks: ^0.20.0        # ADDED — required for HookConsumerWidget
   riverpod_annotation: ^2.3.0
 
   # Serialization

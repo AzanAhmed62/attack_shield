@@ -1,11 +1,11 @@
-import 'package:attackshield/shared/models/security_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+
 import 'package:attackshield/core/theme/theme.dart';
-import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/shared/models/models.dart';
+import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/core/services/ai_service.dart';
 
 class ThreatIntelMapperScreen extends ConsumerStatefulWidget {
@@ -147,12 +147,12 @@ class _ThreatIntelMapperScreenState
           ? result.mappedTechniques.first.techniqueId
           : null;
 
-      final securityAlert = SecurityAlert(
+      final securityAlert = AlertItem(
         id: const Uuid().v4(),
         title: result.alertTitle,
         description: result.summary,
-        severity: _priorityToSeverity(priority),
-        status: 'open',
+        priority: priority,
+        status: AlertStatus.open,
         source: 'AI Threat Intel Mapper',
         linkedTechniqueId: relatedId,
         createdAt: DateTime.now(),
@@ -185,15 +185,6 @@ class _ThreatIntelMapperScreenState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  String _priorityToSeverity(AlertPriority priority) {
-    return switch (priority) {
-      AlertPriority.critical => 'critical',
-      AlertPriority.high => 'high',
-      AlertPriority.medium => 'medium',
-      AlertPriority.low => 'low',
-    };
   }
 }
 

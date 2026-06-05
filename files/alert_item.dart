@@ -9,8 +9,7 @@ part 'alert_item.freezed.dart';
 part 'alert_item.g.dart';
 
 enum AlertPriority { low, medium, high, critical }
-
-enum AlertStatus { open, acknowledged, resolved }
+enum AlertStatus   { open, acknowledged, resolved }
 
 @freezed
 class AlertItem with _$AlertItem {
@@ -19,15 +18,16 @@ class AlertItem with _$AlertItem {
     required String title,
     @Default('') String description,
     @Default(AlertPriority.medium) AlertPriority priority,
-    @Default(AlertStatus.open) AlertStatus status,
-    @Default('Manual') String source,
+    @Default(AlertStatus.open)     AlertStatus   status,
+    @Default('Manual')             String        source,
 
     // Technique linkage (new)
     String? linkedTechniqueId,
-    @Deprecated('Use linkedTechniqueId') String? relatedTechniqueId,
+    @Deprecated('Use linkedTechniqueId')
+    String? relatedTechniqueId,
 
     required DateTime createdAt,
-    DateTime? updatedAt,
+    @Default(DateTime.now) DateTime updatedAt,
 
     // Read tracking (new)
     @Default(false) bool isRead,
@@ -44,14 +44,10 @@ extension AlertItemX on AlertItem {
   /// Returns a String severity matching our UI convention.
   String get severity {
     switch (priority) {
-      case AlertPriority.critical:
-        return 'critical';
-      case AlertPriority.high:
-        return 'high';
-      case AlertPriority.medium:
-        return 'medium';
-      case AlertPriority.low:
-        return 'low';
+      case AlertPriority.critical: return 'critical';
+      case AlertPriority.high:     return 'high';
+      case AlertPriority.medium:   return 'medium';
+      case AlertPriority.low:      return 'low';
     }
   }
 
@@ -69,35 +65,28 @@ extension AlertItemFactory on AlertItem {
     required String id,
     required String title,
     String description = '',
-    String severity = 'medium',
-    String source = 'Manual',
+    String severity    = 'medium',
+    String source      = 'Manual',
     String? linkedTechniqueId,
     String? notes,
   }) {
     AlertPriority p;
     switch (severity) {
-      case 'critical':
-        p = AlertPriority.critical;
-        break;
-      case 'high':
-        p = AlertPriority.high;
-        break;
-      case 'low':
-        p = AlertPriority.low;
-        break;
-      default:
-        p = AlertPriority.medium;
+      case 'critical': p = AlertPriority.critical; break;
+      case 'high':     p = AlertPriority.high;     break;
+      case 'low':      p = AlertPriority.low;       break;
+      default:         p = AlertPriority.medium;
     }
     return AlertItem(
-      id: id,
-      title: title,
-      description: description,
-      priority: p,
-      source: source,
-      linkedTechniqueId: linkedTechniqueId,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      notes: notes,
+      id:                  id,
+      title:               title,
+      description:         description,
+      priority:            p,
+      source:              source,
+      linkedTechniqueId:   linkedTechniqueId,
+      createdAt:           DateTime.now(),
+      updatedAt:           DateTime.now(),
+      notes:               notes,
     );
   }
 }

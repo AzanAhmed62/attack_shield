@@ -23,15 +23,19 @@ SecurityAsset _$SecurityAssetFromJson(Map<String, dynamic> json) {
 mixin _$SecurityAsset {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  String get description => throw _privateConstructorUsedError;
-  String get type =>
-      throw _privateConstructorUsedError; // 'Network' | 'Server' | 'Workstation' | 'Application' | 'Cloud'
+  AssetType get type => throw _privateConstructorUsedError;
   AssetCriticality get criticality => throw _privateConstructorUsedError;
-  List<String> get platforms =>
-      throw _privateConstructorUsedError; // OS/platforms this asset runs
+  String get description => throw _privateConstructorUsedError;
+  List<String> get relatedTechniqueIds => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
-  DateTime get discoveredAt => throw _privateConstructorUsedError;
+  List<String> get platforms => throw _privateConstructorUsedError;
+  DateTime get createdAt => throw _privateConstructorUsedError;
+  DateTime? get lastUpdated => throw _privateConstructorUsedError;
+  DateTime? get discoveredAt => throw _privateConstructorUsedError;
   DateTime? get lastScanned => throw _privateConstructorUsedError;
+  String? get owner => throw _privateConstructorUsedError;
+  String? get ipAddress => throw _privateConstructorUsedError;
+  String? get operatingSystem => throw _privateConstructorUsedError;
 
   /// Serializes this SecurityAsset to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,13 +57,19 @@ abstract class $SecurityAssetCopyWith<$Res> {
   $Res call({
     String id,
     String name,
-    String description,
-    String type,
+    AssetType type,
     AssetCriticality criticality,
-    List<String> platforms,
+    String description,
+    List<String> relatedTechniqueIds,
     List<String> tags,
-    DateTime discoveredAt,
+    List<String> platforms,
+    DateTime createdAt,
+    DateTime? lastUpdated,
+    DateTime? discoveredAt,
     DateTime? lastScanned,
+    String? owner,
+    String? ipAddress,
+    String? operatingSystem,
   });
 }
 
@@ -80,13 +90,19 @@ class _$SecurityAssetCopyWithImpl<$Res, $Val extends SecurityAsset>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? description = null,
     Object? type = null,
     Object? criticality = null,
-    Object? platforms = null,
+    Object? description = null,
+    Object? relatedTechniqueIds = null,
     Object? tags = null,
-    Object? discoveredAt = null,
+    Object? platforms = null,
+    Object? createdAt = null,
+    Object? lastUpdated = freezed,
+    Object? discoveredAt = freezed,
     Object? lastScanned = freezed,
+    Object? owner = freezed,
+    Object? ipAddress = freezed,
+    Object? operatingSystem = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -98,34 +114,58 @@ class _$SecurityAssetCopyWithImpl<$Res, $Val extends SecurityAsset>
                 ? _value.name
                 : name // ignore: cast_nullable_to_non_nullable
                       as String,
-            description: null == description
-                ? _value.description
-                : description // ignore: cast_nullable_to_non_nullable
-                      as String,
             type: null == type
                 ? _value.type
                 : type // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as AssetType,
             criticality: null == criticality
                 ? _value.criticality
                 : criticality // ignore: cast_nullable_to_non_nullable
                       as AssetCriticality,
-            platforms: null == platforms
-                ? _value.platforms
-                : platforms // ignore: cast_nullable_to_non_nullable
+            description: null == description
+                ? _value.description
+                : description // ignore: cast_nullable_to_non_nullable
+                      as String,
+            relatedTechniqueIds: null == relatedTechniqueIds
+                ? _value.relatedTechniqueIds
+                : relatedTechniqueIds // ignore: cast_nullable_to_non_nullable
                       as List<String>,
             tags: null == tags
                 ? _value.tags
                 : tags // ignore: cast_nullable_to_non_nullable
                       as List<String>,
-            discoveredAt: null == discoveredAt
+            platforms: null == platforms
+                ? _value.platforms
+                : platforms // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            createdAt: null == createdAt
+                ? _value.createdAt
+                : createdAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            lastUpdated: freezed == lastUpdated
+                ? _value.lastUpdated
+                : lastUpdated // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            discoveredAt: freezed == discoveredAt
                 ? _value.discoveredAt
                 : discoveredAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
+                      as DateTime?,
             lastScanned: freezed == lastScanned
                 ? _value.lastScanned
                 : lastScanned // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            owner: freezed == owner
+                ? _value.owner
+                : owner // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            ipAddress: freezed == ipAddress
+                ? _value.ipAddress
+                : ipAddress // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            operatingSystem: freezed == operatingSystem
+                ? _value.operatingSystem
+                : operatingSystem // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -144,13 +184,19 @@ abstract class _$$SecurityAssetImplCopyWith<$Res>
   $Res call({
     String id,
     String name,
-    String description,
-    String type,
+    AssetType type,
     AssetCriticality criticality,
-    List<String> platforms,
+    String description,
+    List<String> relatedTechniqueIds,
     List<String> tags,
-    DateTime discoveredAt,
+    List<String> platforms,
+    DateTime createdAt,
+    DateTime? lastUpdated,
+    DateTime? discoveredAt,
     DateTime? lastScanned,
+    String? owner,
+    String? ipAddress,
+    String? operatingSystem,
   });
 }
 
@@ -170,13 +216,19 @@ class __$$SecurityAssetImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? description = null,
     Object? type = null,
     Object? criticality = null,
-    Object? platforms = null,
+    Object? description = null,
+    Object? relatedTechniqueIds = null,
     Object? tags = null,
-    Object? discoveredAt = null,
+    Object? platforms = null,
+    Object? createdAt = null,
+    Object? lastUpdated = freezed,
+    Object? discoveredAt = freezed,
     Object? lastScanned = freezed,
+    Object? owner = freezed,
+    Object? ipAddress = freezed,
+    Object? operatingSystem = freezed,
   }) {
     return _then(
       _$SecurityAssetImpl(
@@ -188,34 +240,58 @@ class __$$SecurityAssetImplCopyWithImpl<$Res>
             ? _value.name
             : name // ignore: cast_nullable_to_non_nullable
                   as String,
-        description: null == description
-            ? _value.description
-            : description // ignore: cast_nullable_to_non_nullable
-                  as String,
         type: null == type
             ? _value.type
             : type // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as AssetType,
         criticality: null == criticality
             ? _value.criticality
             : criticality // ignore: cast_nullable_to_non_nullable
                   as AssetCriticality,
-        platforms: null == platforms
-            ? _value._platforms
-            : platforms // ignore: cast_nullable_to_non_nullable
+        description: null == description
+            ? _value.description
+            : description // ignore: cast_nullable_to_non_nullable
+                  as String,
+        relatedTechniqueIds: null == relatedTechniqueIds
+            ? _value._relatedTechniqueIds
+            : relatedTechniqueIds // ignore: cast_nullable_to_non_nullable
                   as List<String>,
         tags: null == tags
             ? _value._tags
             : tags // ignore: cast_nullable_to_non_nullable
                   as List<String>,
-        discoveredAt: null == discoveredAt
+        platforms: null == platforms
+            ? _value._platforms
+            : platforms // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        createdAt: null == createdAt
+            ? _value.createdAt
+            : createdAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        lastUpdated: freezed == lastUpdated
+            ? _value.lastUpdated
+            : lastUpdated // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        discoveredAt: freezed == discoveredAt
             ? _value.discoveredAt
             : discoveredAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
+                  as DateTime?,
         lastScanned: freezed == lastScanned
             ? _value.lastScanned
             : lastScanned // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        owner: freezed == owner
+            ? _value.owner
+            : owner // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        ipAddress: freezed == ipAddress
+            ? _value.ipAddress
+            : ipAddress // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        operatingSystem: freezed == operatingSystem
+            ? _value.operatingSystem
+            : operatingSystem // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -227,15 +303,22 @@ class _$SecurityAssetImpl implements _SecurityAsset {
   const _$SecurityAssetImpl({
     required this.id,
     required this.name,
-    this.description = '',
-    this.type = '',
+    this.type = AssetType.server,
     this.criticality = AssetCriticality.medium,
-    final List<String> platforms = const [],
+    this.description = '',
+    final List<String> relatedTechniqueIds = const [],
     final List<String> tags = const [],
-    required this.discoveredAt,
+    final List<String> platforms = const [],
+    required this.createdAt,
+    this.lastUpdated,
+    this.discoveredAt,
     this.lastScanned,
-  }) : _platforms = platforms,
-       _tags = tags;
+    this.owner,
+    this.ipAddress,
+    this.operatingSystem,
+  }) : _relatedTechniqueIds = relatedTechniqueIds,
+       _tags = tags,
+       _platforms = platforms;
 
   factory _$SecurityAssetImpl.fromJson(Map<String, dynamic> json) =>
       _$$SecurityAssetImplFromJson(json);
@@ -246,14 +329,32 @@ class _$SecurityAssetImpl implements _SecurityAsset {
   final String name;
   @override
   @JsonKey()
-  final String description;
-  @override
-  @JsonKey()
-  final String type;
-  // 'Network' | 'Server' | 'Workstation' | 'Application' | 'Cloud'
+  final AssetType type;
   @override
   @JsonKey()
   final AssetCriticality criticality;
+  @override
+  @JsonKey()
+  final String description;
+  final List<String> _relatedTechniqueIds;
+  @override
+  @JsonKey()
+  List<String> get relatedTechniqueIds {
+    if (_relatedTechniqueIds is EqualUnmodifiableListView)
+      return _relatedTechniqueIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_relatedTechniqueIds);
+  }
+
+  final List<String> _tags;
+  @override
+  @JsonKey()
+  List<String> get tags {
+    if (_tags is EqualUnmodifiableListView) return _tags;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_tags);
+  }
+
   final List<String> _platforms;
   @override
   @JsonKey()
@@ -263,25 +364,24 @@ class _$SecurityAssetImpl implements _SecurityAsset {
     return EqualUnmodifiableListView(_platforms);
   }
 
-  // OS/platforms this asset runs
-  final List<String> _tags;
-  // OS/platforms this asset runs
   @override
-  @JsonKey()
-  List<String> get tags {
-    if (_tags is EqualUnmodifiableListView) return _tags;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_tags);
-  }
-
+  final DateTime createdAt;
   @override
-  final DateTime discoveredAt;
+  final DateTime? lastUpdated;
+  @override
+  final DateTime? discoveredAt;
   @override
   final DateTime? lastScanned;
+  @override
+  final String? owner;
+  @override
+  final String? ipAddress;
+  @override
+  final String? operatingSystem;
 
   @override
   String toString() {
-    return 'SecurityAsset(id: $id, name: $name, description: $description, type: $type, criticality: $criticality, platforms: $platforms, tags: $tags, discoveredAt: $discoveredAt, lastScanned: $lastScanned)';
+    return 'SecurityAsset(id: $id, name: $name, type: $type, criticality: $criticality, description: $description, relatedTechniqueIds: $relatedTechniqueIds, tags: $tags, platforms: $platforms, createdAt: $createdAt, lastUpdated: $lastUpdated, discoveredAt: $discoveredAt, lastScanned: $lastScanned, owner: $owner, ipAddress: $ipAddress, operatingSystem: $operatingSystem)';
   }
 
   @override
@@ -291,20 +391,33 @@ class _$SecurityAssetImpl implements _SecurityAsset {
             other is _$SecurityAssetImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
             (identical(other.type, type) || other.type == type) &&
             (identical(other.criticality, criticality) ||
                 other.criticality == criticality) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            const DeepCollectionEquality().equals(
+              other._relatedTechniqueIds,
+              _relatedTechniqueIds,
+            ) &&
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
             const DeepCollectionEquality().equals(
               other._platforms,
               _platforms,
             ) &&
-            const DeepCollectionEquality().equals(other._tags, _tags) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.lastUpdated, lastUpdated) ||
+                other.lastUpdated == lastUpdated) &&
             (identical(other.discoveredAt, discoveredAt) ||
                 other.discoveredAt == discoveredAt) &&
             (identical(other.lastScanned, lastScanned) ||
-                other.lastScanned == lastScanned));
+                other.lastScanned == lastScanned) &&
+            (identical(other.owner, owner) || other.owner == owner) &&
+            (identical(other.ipAddress, ipAddress) ||
+                other.ipAddress == ipAddress) &&
+            (identical(other.operatingSystem, operatingSystem) ||
+                other.operatingSystem == operatingSystem));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -313,13 +426,19 @@ class _$SecurityAssetImpl implements _SecurityAsset {
     runtimeType,
     id,
     name,
-    description,
     type,
     criticality,
-    const DeepCollectionEquality().hash(_platforms),
+    description,
+    const DeepCollectionEquality().hash(_relatedTechniqueIds),
     const DeepCollectionEquality().hash(_tags),
+    const DeepCollectionEquality().hash(_platforms),
+    createdAt,
+    lastUpdated,
     discoveredAt,
     lastScanned,
+    owner,
+    ipAddress,
+    operatingSystem,
   );
 
   /// Create a copy of SecurityAsset
@@ -340,13 +459,19 @@ abstract class _SecurityAsset implements SecurityAsset {
   const factory _SecurityAsset({
     required final String id,
     required final String name,
-    final String description,
-    final String type,
+    final AssetType type,
     final AssetCriticality criticality,
-    final List<String> platforms,
+    final String description,
+    final List<String> relatedTechniqueIds,
     final List<String> tags,
-    required final DateTime discoveredAt,
+    final List<String> platforms,
+    required final DateTime createdAt,
+    final DateTime? lastUpdated,
+    final DateTime? discoveredAt,
     final DateTime? lastScanned,
+    final String? owner,
+    final String? ipAddress,
+    final String? operatingSystem,
   }) = _$SecurityAssetImpl;
 
   factory _SecurityAsset.fromJson(Map<String, dynamic> json) =
@@ -357,19 +482,31 @@ abstract class _SecurityAsset implements SecurityAsset {
   @override
   String get name;
   @override
-  String get description;
-  @override
-  String get type; // 'Network' | 'Server' | 'Workstation' | 'Application' | 'Cloud'
+  AssetType get type;
   @override
   AssetCriticality get criticality;
   @override
-  List<String> get platforms; // OS/platforms this asset runs
+  String get description;
+  @override
+  List<String> get relatedTechniqueIds;
   @override
   List<String> get tags;
   @override
-  DateTime get discoveredAt;
+  List<String> get platforms;
+  @override
+  DateTime get createdAt;
+  @override
+  DateTime? get lastUpdated;
+  @override
+  DateTime? get discoveredAt;
   @override
   DateTime? get lastScanned;
+  @override
+  String? get owner;
+  @override
+  String? get ipAddress;
+  @override
+  String? get operatingSystem;
 
   /// Create a copy of SecurityAsset
   /// with the given fields replaced by the non-null parameter values.

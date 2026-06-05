@@ -25,7 +25,8 @@ Future<Map<String, int>> assetCountByType(Ref ref) async {
   final assets = await ref.watch(allAssetsProvider.future);
   final counts = <String, int>{};
   for (final a in assets) {
-    counts[a.type] = (counts[a.type] ?? 0) + 1;
+    final typeStr = a.type.toString().split('.').last;
+    counts[typeStr] = (counts[typeStr] ?? 0) + 1;
   }
   return counts;
 }
@@ -34,9 +35,7 @@ Future<Map<String, int>> assetCountByType(Ref ref) async {
 @Riverpod(keepAlive: false)
 Future<int> criticalAssetCount(Ref ref) async {
   final assets = await ref.watch(allAssetsProvider.future);
-  return assets
-      .where((a) => a.criticality == AssetCriticality.critical)
-      .length;
+  return assets.where((a) => a.criticality == AssetCriticality.critical).length;
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
@@ -44,7 +43,7 @@ Future<int> criticalAssetCount(Ref ref) async {
 @Riverpod(keepAlive: false)
 Future<void> createAsset(Ref ref, SecurityAsset asset) async {
   final repository = ref.watch(assetRepositoryProvider);
-  await repository.createAsset(asset);
+  await repository.saveAsset(asset);
   ref.invalidate(allAssetsProvider);
   ref.invalidate(assetCountByTypeProvider);
   ref.invalidate(criticalAssetCountProvider);
@@ -53,7 +52,7 @@ Future<void> createAsset(Ref ref, SecurityAsset asset) async {
 @Riverpod(keepAlive: false)
 Future<void> updateAsset(Ref ref, SecurityAsset asset) async {
   final repository = ref.watch(assetRepositoryProvider);
-  await repository.updateAsset(asset);
+  await repository.saveAsset(asset);
   ref.invalidate(allAssetsProvider);
   ref.invalidate(assetCountByTypeProvider);
 }
@@ -70,7 +69,7 @@ Future<void> deleteAsset(Ref ref, String id) async {
 @Riverpod(keepAlive: false)
 Future<void> clearAllAssets(Ref ref) async {
   final repository = ref.watch(assetRepositoryProvider);
-  await repository.clearAllAssets();
+  await repository.clearAll();
   ref.invalidate(allAssetsProvider);
   ref.invalidate(assetCountByTypeProvider);
   ref.invalidate(criticalAssetCountProvider);

@@ -6,11 +6,11 @@ part of 'alert_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$alertsHash() => r'7428612054c1630776bfdc44ab2d35e3fda2d630';
+String _$alertsHash() => r'9b83719955d89ce27e7e0e12138758f8c9345913';
 
 /// See also [alerts].
 @ProviderFor(alerts)
-final alertsProvider = AutoDisposeFutureProvider<List<SecurityAlert>>.internal(
+final alertsProvider = AutoDisposeFutureProvider<List<AlertItem>>.internal(
   alerts,
   name: r'alertsProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -22,8 +22,8 @@ final alertsProvider = AutoDisposeFutureProvider<List<SecurityAlert>>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AlertsRef = AutoDisposeFutureProviderRef<List<SecurityAlert>>;
-String _$openAlertCountHash() => r'466fcf9e51cd6ddfc9671cd6be24732c0ecf351b';
+typedef AlertsRef = AutoDisposeFutureProviderRef<List<AlertItem>>;
+String _$openAlertCountHash() => r'28071dc57bae1c5da75df028c6f097dd8072c84c';
 
 /// See also [openAlertCount].
 @ProviderFor(openAlertCount)
@@ -41,7 +41,7 @@ final openAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
 // ignore: unused_element
 typedef OpenAlertCountRef = AutoDisposeFutureProviderRef<int>;
 String _$criticalAlertCountHash() =>
-    r'c67d01cadd762d0aa5de07e58d2d44f36c0eb101';
+    r'4958f18e334c7e5a4ec9d74abbdd74400975b98f';
 
 /// See also [criticalAlertCount].
 @ProviderFor(criticalAlertCount)
@@ -58,7 +58,7 @@ final criticalAlertCountProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef CriticalAlertCountRef = AutoDisposeFutureProviderRef<int>;
-String _$alertActionsHash() => r'f50b9fa339d84ac9e961ed40ea2aa49bf1bc7343';
+String _$alertActionsHash() => r'a331351cc461929ac48bdd9540d2b4e563679442';
 
 /// See also [AlertActions].
 @ProviderFor(AlertActions)

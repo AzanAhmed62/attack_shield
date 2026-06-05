@@ -21,14 +21,19 @@ class RiskTrendLineChart extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Coverage Trend',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Coverage Trend',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 16),
               Center(
                 child: Column(
                   children: [
-                    const Icon(Icons.show_chart,
-                        color: AppTheme.primaryColor, size: 36),
+                    const Icon(
+                      Icons.show_chart,
+                      color: AppTheme.primaryColor,
+                      size: 36,
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Generate at least 2 reports to see trends',
@@ -47,24 +52,18 @@ class RiskTrendLineChart extends StatelessWidget {
 
     // Oldest first for the chart
     final ordered = [...reports]
-      ..sort((a, b) {
-        final aDate = a.generatedAt ?? DateTime(2000);
-        final bDate = b.generatedAt ?? DateTime(2000);
-        return aDate.compareTo(bDate);
-      });
+      ..sort((a, b) => a.generatedAt.compareTo(b.generatedAt));
 
     final coverageSpots = ordered.asMap().entries.map((e) {
-      return FlSpot(e.key.toDouble(), e.value.coveragePercentage);
+      return FlSpot(e.key.toDouble(), e.value.coveragePercent);
     }).toList();
     final riskSpots = ordered.asMap().entries.map((e) {
-      return FlSpot(e.key.toDouble(), e.value.riskScore);
+      return FlSpot(e.key.toDouble(), e.value.orgRiskScore);
     }).toList();
 
     // Date labels
     final dateLabels = ordered
-        .map((r) => DateFormat('MMM d').format(
-              r.generatedAt ?? DateTime.now(),
-            ))
+        .map((r) => DateFormat('MMM d').format(r.generatedAt))
         .toList();
 
     return Card(
@@ -73,13 +72,15 @@ class RiskTrendLineChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              Text('Coverage & Risk Trend',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 4),
-              Text(
-                'Saved report history across ${ordered.length} snapshots',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+            Text(
+              'Coverage & Risk Trend',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Saved report history across ${ordered.length} snapshots',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 20),
             SizedBox(
               height: 180,
@@ -106,7 +107,9 @@ class RiskTrendLineChart extends StatelessWidget {
                         getTitlesWidget: (v, _) => Text(
                           '${v.toInt()}',
                           style: const TextStyle(
-                              fontSize: 10, color: Colors.grey),
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ),
@@ -128,13 +131,16 @@ class RiskTrendLineChart extends StatelessWidget {
                           return Text(
                             dateLabels[i],
                             style: const TextStyle(
-                                fontSize: 10, color: Colors.grey),
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
                           );
                         },
                       ),
                     ),
                     topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     rightTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -158,8 +164,9 @@ class RiskTrendLineChart extends StatelessWidget {
                           return LineTooltipItem(
                             '${isCoverage ? 'Coverage' : 'Risk'} ${s.y.toStringAsFixed(1)}',
                             const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           );
                         }).toList();
                       },
@@ -176,11 +183,11 @@ class RiskTrendLineChart extends StatelessWidget {
                       dotData: FlDotData(
                         getDotPainter: (spot, xPercentage, barData, index) =>
                             FlDotCirclePainter(
-                          radius: 4,
-                          color: AppTheme.primaryColor,
-                          strokeWidth: 2,
-                          strokeColor: AppTheme.backgroundColor,
-                        ),
+                              radius: 4,
+                              color: AppTheme.primaryColor,
+                              strokeWidth: 2,
+                              strokeColor: AppTheme.backgroundColor,
+                            ),
                       ),
                       belowBarData: BarAreaData(
                         show: true,
@@ -197,11 +204,11 @@ class RiskTrendLineChart extends StatelessWidget {
                       dotData: FlDotData(
                         getDotPainter: (spot, xPercentage, barData, index) =>
                             FlDotCirclePainter(
-                          radius: 3.5,
-                          color: AppTheme.accentColor,
-                          strokeWidth: 2,
-                          strokeColor: AppTheme.backgroundColor,
-                        ),
+                              radius: 3.5,
+                              color: AppTheme.accentColor,
+                              strokeWidth: 2,
+                              strokeColor: AppTheme.backgroundColor,
+                            ),
                       ),
                     ),
                   ],
@@ -226,26 +233,27 @@ class RiskTrendLineChart extends StatelessWidget {
                   _TrendBadge(
                     label: 'First',
                     value:
-                        '${ordered.first.coveragePercentage.toStringAsFixed(1)}%',
+                        '${ordered.first.coveragePercent.toStringAsFixed(1)}%',
                     color: Colors.grey,
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward,
-                      size: 16, color: Colors.grey),
+                  const Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
                   const SizedBox(width: 8),
                   _TrendBadge(
                     label: 'Latest',
                     value:
-                        '${ordered.last.coveragePercentage.toStringAsFixed(1)}%',
-                    color: ordered.last.coveragePercentage >=
-                            ordered.first.coveragePercentage
+                        '${ordered.last.coveragePercent.toStringAsFixed(1)}%',
+                    color:
+                        ordered.last.coveragePercent >=
+                            ordered.first.coveragePercent
                         ? AppTheme.successColor
                         : AppTheme.dangerColor,
                   ),
                   const SizedBox(width: 12),
                   _DeltaBadge(
-                    delta: ordered.last.coveragePercentage -
-                        ordered.first.coveragePercentage,
+                    delta:
+                        ordered.last.coveragePercent -
+                        ordered.first.coveragePercent,
                   ),
                 ],
               ),
@@ -260,21 +268,25 @@ class _TrendBadge extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _TrendBadge(
-      {required this.label, required this.value, required this.color});
+  const _TrendBadge({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label,
-            style:
-                Theme.of(context).textTheme.bodySmall),
-        Text(value,
-            style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 14)),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
       ],
     );
   }
@@ -306,9 +318,10 @@ class _DeltaBadge extends StatelessWidget {
           Text(
             '${isPositive ? '+' : ''}${delta.toStringAsFixed(1)}%',
             style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.bold),
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

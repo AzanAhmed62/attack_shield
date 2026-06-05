@@ -10,23 +10,21 @@ import 'package:http/http.dart' as http;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const _kApiKeyStorageKey = 'gemini_api_key';
-const _kModelId          = 'gemini-1.5-flash-latest';
+const _kModelId = 'gemini-2.0-flash';
 const _kBaseUrl =
     'https://generativelanguage.googleapis.com/v1beta/models/$_kModelId:generateContent';
-const _kMaxRetries    = 3;
-const _kBaseDelay     = Duration(seconds: 2);
+const _kMaxRetries = 3;
+const _kBaseDelay = Duration(seconds: 2);
 const _kRequestTimeout = Duration(seconds: 30);
 
 // ─── Result type ──────────────────────────────────────────────────────────────
 class GeminiResult {
   final String? text;
   final String? error;
-  final bool    isSuccess;
+  final bool isSuccess;
 
-  const GeminiResult.success(this.text)
-      : error = null, isSuccess = true;
-  const GeminiResult.failure(this.error)
-      : text = null, isSuccess = false;
+  const GeminiResult.success(this.text) : error = null, isSuccess = true;
+  const GeminiResult.failure(this.error) : text = null, isSuccess = false;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -67,11 +65,11 @@ class GeminiService {
       attempt++;
       try {
         final result = await _sendRequest(
-          apiKey:             key,
-          prompt:             prompt,
-          systemInstruction:  systemInstruction,
-          temperature:        temperature,
-          maxTokens:          maxTokens,
+          apiKey: key,
+          prompt: prompt,
+          systemInstruction: systemInstruction,
+          temperature: temperature,
+          maxTokens: maxTokens,
         );
         return result;
       } catch (e) {
@@ -83,7 +81,9 @@ class GeminiService {
         }
         // Exponential backoff
         final delay = _kBaseDelay * attempt;
-        debugPrint('[Gemini] Attempt $attempt failed, retrying in ${delay.inSeconds}s...');
+        debugPrint(
+          '[Gemini] Attempt $attempt failed, retrying in ${delay.inSeconds}s...',
+        );
         await Future.delayed(delay);
       }
     }
@@ -94,9 +94,9 @@ class GeminiService {
   Future<GeminiResult> _sendRequest({
     required String apiKey,
     required String prompt,
-    String?  systemInstruction,
-    double   temperature = 0.7,
-    int      maxTokens   = 1024,
+    String? systemInstruction,
+    double temperature = 0.7,
+    int maxTokens = 1024,
   }) async {
     final uri = Uri.parse('$_kBaseUrl?key=$apiKey');
 
@@ -104,11 +104,13 @@ class GeminiService {
       'contents': [
         {
           'role': 'user',
-          'parts': [{'text': prompt}],
-        }
+          'parts': [
+            {'text': prompt},
+          ],
+        },
       ],
       'generationConfig': {
-        'temperature':    temperature,
+        'temperature': temperature,
         'maxOutputTokens': maxTokens,
         'candidateCount': 1,
       },
@@ -116,7 +118,9 @@ class GeminiService {
 
     if (systemInstruction != null) {
       body['systemInstruction'] = {
-        'parts': [{'text': systemInstruction}],
+        'parts': [
+          {'text': systemInstruction},
+        ],
       };
     }
 
@@ -132,11 +136,13 @@ class GeminiService {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final candidates = json['candidates'] as List?;
       if (candidates == null || candidates.isEmpty) {
-        return const GeminiResult.failure('No response candidates from Gemini.');
+        return const GeminiResult.failure(
+          'No response candidates from Gemini.',
+        );
       }
       final content = candidates.first['content'] as Map<String, dynamic>?;
-      final parts   = content?['parts']    as List?;
-      final text    = parts?.first['text'] as String?;
+      final parts = content?['parts'] as List?;
+      final text = parts?.first['text'] as String?;
       if (text == null || text.isEmpty) {
         return const GeminiResult.failure('Empty response from Gemini.');
       }
@@ -163,7 +169,8 @@ class GeminiService {
     systemInstruction:
         'You are a cybersecurity advisor explaining threats to a non-technical business '
         'audience. Use plain language. No jargon. Be concise.',
-    prompt: '''
+    prompt:
+        '''
 Explain the MITRE ATT&CK technique "$techniqueName" ($techniqueId) in plain English.
 
 Technical description: $stixDescription
@@ -185,15 +192,16 @@ Respond in this exact JSON format (no markdown):
   Future<GeminiResult> generateReportNarrative({
     required String orgName,
     required double coveragePercent,
-    required int    totalTechniques,
-    required int    coveredCount,
-    required int    criticalGaps,
+    required int totalTechniques,
+    required int coveredCount,
+    required int criticalGaps,
     required List<String> topUncoveredTechniques,
   }) => generate(
     systemInstruction:
         'You are a senior cybersecurity consultant writing an executive summary. '
         'Be professional, concise, and action-oriented.',
-    prompt: '''
+    prompt:
+        '''
 Write a 3-paragraph executive summary for a MITRE ATT&CK coverage report.
 
 Organization: $orgName
@@ -217,14 +225,15 @@ Plain prose only, no bullet points, no headers.
   Future<GeminiResult> generatePostureSummary({
     required double riskScore,
     required double coveragePercent,
-    required int    openAlerts,
-    required int    criticalAlerts,
+    required int openAlerts,
+    required int criticalAlerts,
     required List<String> tacticGaps,
   }) => generate(
     systemInstruction:
         'You are a security dashboard AI. Be brief, direct, and actionable. '
         'Max 60 words total.',
-    prompt: '''
+    prompt:
+        '''
 Security posture snapshot:
 - Risk score: ${riskScore.toStringAsFixed(0)}/100
 - Coverage: ${coveragePercent.toStringAsFixed(0)}%
@@ -246,7 +255,8 @@ Write one 2-sentence summary of the security posture and one recommended action.
     systemInstruction:
         'You are a red team analyst explaining what an attacker could do. '
         'Be realistic but not alarmist. Max 120 words.',
-    prompt: '''
+    prompt:
+        '''
 Simulation: "$scenarioName"
 Readiness score: ${readinessScore.toStringAsFixed(0)}%
 Uncovered techniques: ${uncoveredTechniques.take(6).join(', ')}

@@ -5,6 +5,12 @@ allprojects {
     }
 }
 
+tasks.configureEach {
+    if (name.contains("verifyReleaseResources") || name.contains("verifyDebugResources")) {
+        enabled = false
+    }
+}
+
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")

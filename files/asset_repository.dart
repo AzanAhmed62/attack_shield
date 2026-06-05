@@ -29,44 +29,28 @@ class AssetRepositoryImpl implements AssetRepository {
       if (raw == null || raw.isEmpty) return [];
       final list = (jsonDecode(raw) as List).cast<Map<String, dynamic>>();
       return list.map(SecurityAsset.fromJson).toList();
-    } catch (_) {
-      return [];
-    }
+    } catch (_) { return []; }
   }
 
   @override
   Future<SecurityAsset?> getAssetById(String id) async {
     final all = await getAllAssets();
-    try {
-      return all.firstWhere((a) => a.id == id);
-    } catch (_) {
-      return null;
-    }
+    try { return all.firstWhere((a) => a.id == id); } catch (_) { return null; }
   }
 
   @override
   Future<void> saveAsset(SecurityAsset asset) async {
     final all = await getAllAssets();
-    final i = all.indexWhere((a) => a.id == asset.id);
-    if (i == -1) {
-      all.add(asset);
-    } else {
-      all[i] = asset;
-    }
-    await _box.write(
-      _kAssetsKey,
-      jsonEncode(all.map((a) => a.toJson()).toList()),
-    );
+    final i   = all.indexWhere((a) => a.id == asset.id);
+    if (i == -1) { all.add(asset); } else { all[i] = asset; }
+    await _box.write(_kAssetsKey, jsonEncode(all.map((a) => a.toJson()).toList()));
   }
 
   @override
   Future<void> deleteAsset(String id) async {
     final all = await getAllAssets();
     all.removeWhere((a) => a.id == id);
-    await _box.write(
-      _kAssetsKey,
-      jsonEncode(all.map((a) => a.toJson()).toList()),
-    );
+    await _box.write(_kAssetsKey, jsonEncode(all.map((a) => a.toJson()).toList()));
   }
 
   @override

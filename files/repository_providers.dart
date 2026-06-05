@@ -1,7 +1,6 @@
 // lib/shared/providers/repository_providers.dart
 // FULL REPLACEMENT — all repositories registered, OsintService added.
 
-import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/attack_technique_repository.dart';

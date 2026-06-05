@@ -2,7 +2,6 @@
 // NEW FILE — simulation providers extracted from simulations_screen.dart.
 // @riverpod annotations cannot live inside a screen/widget file.
 
-import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/simulations/presentation/models/simulation_history_entry.dart';
@@ -17,7 +16,10 @@ Future<List<SimulationHistoryEntry>> simulationHistory(Ref ref) async {
 }
 
 @riverpod
-Future<void> saveSimulationResult(Ref ref, SimulationHistoryEntry entry) async {
+Future<void> saveSimulationResult(
+  Ref ref,
+  SimulationHistoryEntry entry,
+) async {
   await ref.read(simulationRepositoryProvider).saveSimulationResult(entry);
   ref.invalidate(simulationHistoryProvider);
 }

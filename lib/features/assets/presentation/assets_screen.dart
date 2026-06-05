@@ -9,6 +9,14 @@ import 'package:attackshield/core/widgets/widgets.dart';
 import 'package:attackshield/shared/providers/providers.dart';
 import 'package:attackshield/shared/models/models.dart';
 
+// ─── AssetType extensions ──────────────────────────────────────────────────────
+extension AssetTypeDisplay on AssetType {
+  String get displayName {
+    final name = toString().split('.').last;
+    return name[0].toUpperCase() + name.substring(1);
+  }
+}
+
 class AssetsScreen extends ConsumerWidget {
   const AssetsScreen({super.key});
 
@@ -321,17 +329,21 @@ class _AssetCard extends StatelessWidget {
 
   IconData get _typeIcon {
     switch (asset.type) {
-      case 'Network':
+      case AssetType.network:
         return Icons.router;
-      case 'Server':
+      case AssetType.server:
         return Icons.dns;
-      case 'Workstation':
+      case AssetType.workstation:
         return Icons.computer;
-      case 'Application':
+      case AssetType.application:
         return Icons.apps;
-      case 'Cloud':
+      case AssetType.cloud:
         return Icons.cloud;
-      default:
+      case AssetType.mobile:
+        return Icons.phone_iphone;
+      case AssetType.iot:
+        return Icons.devices;
+      case AssetType.other:
         return Icons.device_hub;
     }
   }
@@ -396,7 +408,7 @@ class _AssetCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
-                        asset.type,
+                        asset.type.displayName,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -669,19 +681,10 @@ class _AssetFormSheet extends StatefulWidget {
 class _AssetFormSheetState extends State<_AssetFormSheet> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
-  String _type = 'Server';
+  late AssetType _type;
   AssetCriticality _criticality = AssetCriticality.medium;
   final List<String> _platforms = [];
   final _platCtrl = TextEditingController();
-
-  static const _types = [
-    'Network',
-    'Server',
-    'Workstation',
-    'Application',
-    'Cloud',
-    'Other',
-  ];
 
   @override
   void initState() {
@@ -689,9 +692,11 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
     _nameCtrl = TextEditingController(text: widget.existing?.name ?? '');
     _descCtrl = TextEditingController(text: widget.existing?.description ?? '');
     if (widget.existing != null) {
-      _type = widget.existing!.type.isEmpty ? 'Server' : widget.existing!.type;
+      _type = widget.existing!.type;
       _criticality = widget.existing!.criticality;
       _platforms.addAll(widget.existing!.platforms);
+    } else {
+      _type = AssetType.server;
     }
   }
 
@@ -756,13 +761,16 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
             // Type dropdown
             Text('Asset Type', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
+            DropdownButtonFormField<AssetType>(
               initialValue: _type,
               decoration: const InputDecoration(),
-              items: _types
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+              items: AssetType.values
+                  .map(
+                    (t) =>
+                        DropdownMenuItem(value: t, child: Text(t.displayName)),
+                  )
                   .toList(),
-              onChanged: (v) => setState(() => _type = v ?? 'Server'),
+              onChanged: (v) => setState(() => _type = v ?? AssetType.server),
             ),
             const SizedBox(height: 10),
 
@@ -867,6 +875,7 @@ class _AssetFormSheetState extends State<_AssetFormSheet> {
                     description: _descCtrl.text.trim(),
                     type: _type,
                     criticality: _criticality,
+                    createdAt: widget.existing?.createdAt ?? DateTime.now(),
                     platforms: List.from(_platforms),
                     discoveredAt:
                         widget.existing?.discoveredAt ?? DateTime.now(),
